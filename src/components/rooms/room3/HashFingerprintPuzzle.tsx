@@ -358,7 +358,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
             {isSolved ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5 justify-center sm:justify-start">
                 <CheckCircle2 className="w-4 h-4" />
-                Puzzle 5 Solved: AEGIS_FINAL confirmed modified. Motive established.
+                Puzzle 5 Solved: later modification under Neha — original discrepancy predates her.
               </span>
             ) : (
               <span>Identify the tampered file using the hash comparison above.</span>
@@ -377,7 +377,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                   className="border-red-500/50 text-red-300 hover:bg-red-950/40 font-mono text-xs"
                 >
                   <Eye className="w-4 h-4 mr-1.5" />
-                  View Neha's Manipulated Results
+                  View EXP-17 Original vs Later Edit
                 </Button>
                 {onProceedToOverlay && (
                   <Button
@@ -446,11 +446,14 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-base sm:text-lg font-bold text-red-300 font-mono uppercase tracking-wide">
-                      Motive Established: Verma Discovered Neha's Fraud
+                    <h4 className="text-base sm:text-lg font-bold text-amber-300 font-mono uppercase tracking-wide">
+                      Twist: Neha Changed a Later Version — Not the Original
                     </h4>
-                    <p className="text-xs sm:text-sm text-red-100/90 leading-relaxed mt-1 font-sans">
-                      Opening the modified <strong>AEGIS_FINAL</strong> file reveals that experimental trial results were deliberately forged to make Neha Sen's research appear legitimate. Dr. Verma discovered this falsification and was preparing to formally report her before he was silenced. <strong>This firmly establishes her motive.</strong>
+                    <p className="text-xs sm:text-sm text-amber-50/90 leading-relaxed mt-1 font-sans">
+                      <strong>AEGIS_FINAL</strong> was modified under Neha Rao&apos;s account. But the restored original
+                      checksum chain shows the <em>first</em> discrepancy already existed earlier. Initial reviewer on
+                      EXP-17 baseline: <strong>DR. ARJUN MEHTA</strong>. Neha altered a later copy — she did not create
+                      the original falsification.
                     </p>
                   </div>
                 </div>
@@ -468,7 +471,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                     />
                   </div>
                   <p className="text-[11px] text-red-400/70 font-mono text-center">
-                    Audited document with red ink markup showing Neha's altered parameters
+                    Later revision markup under Neha — original baseline predates her edits
                   </p>
                 </div>
 
@@ -487,8 +490,8 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                           <span className="text-amber-400 font-bold">38.4% (FAILED THRESHOLD)</span>
                         </div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Neha Doctored Final:</span>
-                          <span className="text-emerald-400 font-bold">94.8% (FALSIFIED COMPLIANT)</span>
+                          <span className="text-slate-400">Later revision (Neha):</span>
+                          <span className="text-emerald-400 font-bold">94.8% (ALTERED COPY)</span>
                         </div>
                       </div>
 
@@ -499,15 +502,17 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                           <span className="text-red-400 font-bold">680 ppm (FATAL TOXICITY)</span>
                         </div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Neha Doctored Final:</span>
-                          <span className="text-emerald-400 font-bold">45 ppm (SUPPRESSED TO SAFETY)</span>
+                          <span className="text-slate-400">Later revision (Neha):</span>
+                          <span className="text-emerald-400 font-bold">45 ppm (ALTERED COPY)</span>
                         </div>
                       </div>
 
-                      <div className="p-2.5 rounded bg-red-950/30 border border-red-900/40">
-                        <div className="font-bold text-slate-300 mb-0.5">Document Audit Stamp & Author Credit</div>
-                        <div className="text-[11px] text-red-200">
-                          Timestamped revision logged by: <strong>N. Sen (Lead Biochemical Analyst)</strong>. Verma noted: <em>"Discovered Neha altered database. Deposition scheduled."</em>
+                      <div className="p-2.5 rounded bg-amber-950/30 border border-amber-900/40">
+                        <div className="font-bold text-slate-300 mb-0.5">EXP-17 ORIGINAL RECORD</div>
+                        <div className="text-[11px] text-amber-100">
+                          Initial researcher / reviewer: <strong>DR. ARJUN MEHTA</strong>. Original experiment notes do
+                          not match Verma&apos;s final report. Neha&apos;s account edits occur <em>after</em> this
+                          discrepancy already existed.
                         </div>
                       </div>
                     </div>
@@ -518,24 +523,24 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
               {/* Modal Footer */}
               <div className="mt-6 pt-4 border-t border-red-800/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-xs text-red-300/80 font-mono">
-                  Motive recorded. Evidence locked into forensic investigation file.
+                  Neha altered a later file — original falsification still points earlier.
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <Button
                     onClick={() => {
                       playKeyClick();
                       setEvidenceSaved(true);
-                      toast.success("Motive recorded: Neha manipulated the research!");
+                      toast.success("Recorded: original EXP-17 discrepancy predates Neha's edits.");
                       setShowModifiedReportModal(false);
                       if (onProceedToOverlay) {
                         onClose();
                         onProceedToOverlay();
                       }
                     }}
-                    className="bg-red-600 hover:bg-red-500 text-white font-bold font-mono text-xs w-full sm:w-auto shadow-lg shadow-red-950/50"
+                    className="bg-amber-600 hover:bg-amber-500 text-black font-bold font-mono text-xs w-full sm:w-auto shadow-lg"
                   >
                     <FileCheck className="w-4 h-4 mr-1.5" />
-                    Record Evidence & Proceed to Puzzle 6 (Overlay Mask)
+                    Record Evidence & Continue Overlay Mask
                   </Button>
                 </div>
               </div>

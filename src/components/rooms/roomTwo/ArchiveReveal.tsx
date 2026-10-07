@@ -49,6 +49,9 @@ export default function ArchiveReveal({ onClose, onComplete }: ArchiveRevealProp
               Access, alteration, and timing all line up with Neha. She had every reason to fear what Verma would
               find.
             </p>
+            <p className="text-slate-400 text-sm">
+              EXP-17 also references archived experimental records. Physical archive index required.
+            </p>
             <p className="text-slate-500 text-xs font-mono">
               Open item: original modification record unavailable — history gap remains unexplained.
             </p>
@@ -58,7 +61,7 @@ export default function ArchiveReveal({ onClose, onComplete }: ArchiveRevealProp
             onClick={onComplete}
             className="w-full rounded-md bg-sky-500/20 border border-sky-400/40 px-4 py-3 text-sm font-medium text-sky-100 hover:bg-sky-500/30"
           >
-            Log Archive Evidence
+            Log Evidence — Update Trail
           </button>
         </div>
       </div>

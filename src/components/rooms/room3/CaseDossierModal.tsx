@@ -73,8 +73,8 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
                 <span className="text-xs font-mono text-slate-400">AEGIS_FINAL Checksum Mismatch</span>
               </div>
               {isHashSolved ? (
-                <span className="text-xs font-mono text-emerald-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> MOTIVE CONFIRMED
+                  <span className="text-xs font-mono text-amber-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> LATER EDIT LOGGED
                 </span>
               ) : (
                 <span className="text-xs font-mono text-amber-400/80">PENDING PUZZLE 5</span>
@@ -84,7 +84,9 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isHashSolved ? (
                 <span>
-                  <strong>Verdict:</strong> Comparing cryptographic hashes against Verma's notebook confirmed <strong>AEGIS_FINAL was modified</strong>. Experimental trial results were doctored to make Neha Sen's research appear legitimate. Verma uncovered this fraud, giving Neha a lethal motive to silence him before her deposition.
+                  <strong>Finding:</strong> AEGIS_FINAL was modified under Neha Rao&apos;s account — but the original
+                  EXP-17 discrepancy predates her edits. Initial reviewer: <strong>Dr. Arjun Mehta</strong>. Neha
+                  altered a later copy; she did not create the first falsification.
                 </span>
               ) : (
                 "Solve Puzzle 5 (Hash / Digital Fingerprint) on the archive terminal to verify whether any AEGIS file was modified."
@@ -109,7 +111,7 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
               </div>
               {isOverlaySolved ? (
                 <span className="text-xs font-mono text-amber-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> "20:31 — LAB — N.R."
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> EXP-17 ORIGINAL
                 </span>
               ) : (
                 <span className="text-xs font-mono text-amber-400/80">PENDING PUZZLE 6</span>
@@ -119,7 +121,9 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isOverlaySolved ? (
                 <span>
-                  <strong>Verdict:</strong> Aligning the transparent overlay mask over the Facility Personnel Access Ledger revealed the hidden stencil string: <strong>"20:31 — LAB — N.R."</strong> Neha Sen is definitively placed inside the laboratory at 20:31, minutes before the incident.
+                  <strong>Finding:</strong> Overlay recovered the <strong>EXP-17 ORIGINAL RECORD</strong> stamp —
+                  initial reviewer <strong>Dr. Arjun Mehta</strong>. Neha was hiding something, but the original
+                  manipulation was not hers.
                 </span>
               ) : (
                 "Solve Puzzle 6 (Overlay Mask) by aligning the transparent sheet over the archive documents."
@@ -131,10 +135,12 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
           <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-700/40 text-xs font-mono space-y-1.5">
             <div className="flex items-center gap-2 text-indigo-300 font-bold">
               <Server className="w-4 h-4 text-indigo-400" />
-              NEXT INVESTIGATION PHASE: SERVER ROOM (ROOM 4)
+              NEXT INVESTIGATION PHASE: SERVER ROOM
             </div>
             <p className="text-indigo-200/90 leading-relaxed font-sans">
-              We know Neha entered the lab at 20:31, and we know her motive. But what did she execute immediately following her entry? The archive records indicate network routing logs were redirected to the <strong>Central Server Room</strong>.
+              Physical records confirm an earlier discrepancy. Digital modification logs in the{" "}
+              <strong>Server Room</strong> may identify who made the original change — and who had motive to silence
+              Verma.
             </p>
           </div>
         </div>

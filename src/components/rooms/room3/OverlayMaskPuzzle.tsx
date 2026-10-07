@@ -104,7 +104,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
           } catch {
             // Ignore
           }
-          toast.success("Alignment Locked! Hidden markings revealed: '20:31 — LAB — N.R.'");
+          toast.success("Alignment Locked! Original EXP-17 stamp revealed.");
         }
         return true;
       }
@@ -514,33 +514,38 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
 
               {isAligned && activePage.isCorrectPage ? (
                 <div className="space-y-3">
-                  <div className="p-3 rounded-lg bg-black/80 border-2 border-amber-400 text-center shadow-lg">
-                    <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.7)] animate-pulse">
-                      "20:31 — LAB — N.R."
+                  <div className="p-3 rounded-lg bg-black/80 border-2 border-amber-400 text-center shadow-lg space-y-2">
+                    <span className="block text-lg sm:text-xl font-black font-mono tracking-wide text-amber-400">
+                      EXP-17 ORIGINAL RECORD
+                    </span>
+                    <span className="block text-sm font-mono text-amber-200">
+                      Initial reviewer: DR. ARJUN MEHTA
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs font-sans text-amber-100/90 leading-relaxed">
                     <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-700/40 text-xs">
-                      <strong className="text-amber-300 font-mono">CRITICAL EVIDENCE:</strong>
+                      <strong className="text-amber-300 font-mono">CRITICAL TWIST:</strong>
                       <p className="mt-1">
-                        The players now have conclusive evidence that <strong>Neha was in the laboratory at 20:31</strong>.
+                        Original experiment notes do not match Verma&apos;s final report. The first falsification
+                        predates Neha&apos;s later edits.
                       </p>
-                      <p className="mt-1 text-amber-200/80 italic">
-                        "But they still need to establish what happened after she entered."
+                      <p className="mt-1 text-amber-200/80">
+                        Neha <em>did</em> alter a later version — but she was covering something that already existed.
                       </p>
                     </div>
 
                     <div className="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-700/40 text-xs">
                       <strong className="text-indigo-300 font-mono flex items-center gap-1.5">
                         <Server className="w-3.5 h-3.5 text-indigo-400" />
-                        REFERENCE TO FINAL ROOM (SERVER ROOM):
+                        NEXT LEAD — SERVER ROOM
                       </strong>
                       <p className="mt-1 text-indigo-100/90">
-                        The ledger margin annotates: <em>"Access relay transferred to Central Server Room at 20:31. Terminal session initiated on Server Rack Gateway."</em>
+                        Physical records confirm an earlier discrepancy. Digital modification logs may identify who
+                        made the original change.
                       </p>
                       <p className="mt-1 text-cyan-300 text-[11px] font-mono">
-                        Next Destination: Server Room (Room 4) to trace the final digital actions.
+                        Proceed to Server Room for original digital logs.
                       </p>
                     </div>
                   </div>
@@ -566,7 +571,8 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
                   Room 3 Archive Investigation Complete!
                 </div>
                 <p className="text-[11px] leading-relaxed text-emerald-100/80">
-                  Both Puzzle 5 (Hash Digital Fingerprint) and Puzzle 6 (Overlay Mask) have been deciphered. You have established Neha's motive and her presence at 20:31.
+                  Hash + overlay confirm: Neha altered later records, but the original manipulation points earlier —
+                  toward Dr. Arjun Mehta. Digital logs are in the Server Room.
                 </p>
               </div>
             )}
@@ -578,7 +584,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
           <div className="text-xs text-slate-400 font-mono text-center sm:text-left">
             {isAligned && activePage.isCorrectPage ? (
               <span className="text-amber-400 font-bold">
-                ✓ Timeline clue unlocked: 20:31 — LAB — N.R. (Reference: Server Room)
+                ✓ Original EXP-17 stamp recovered — Server Room next
               </span>
             ) : (
               <span>Place the overlay over each page until the markings line up.</span>

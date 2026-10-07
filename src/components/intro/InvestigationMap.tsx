@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { LoadingScreen } from "./LoadingScreen";
 import { useGame } from "@/contexts/GameContext";
 import { toast } from "sonner";
+import {
+  getInvestigationState,
+  getRoomStatusLabel,
+  isRoomUnlocked,
+  mapLocationIdToRoom,
+  type RoomKey,
+} from "@/lib/investigationState";
 
 interface Location {
   id: string;
@@ -78,6 +85,7 @@ export const InvestigationMap = () => {
   const [activeTeaserId, setActiveTeaserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState<LocationWithTeaser | null>(null);
+  const [investTick, setInvestTick] = useState(0);
 
   useEffect(() => {
     // TEMP: prefill correct answers so rooms unlock without typing
@@ -92,10 +100,31 @@ export const InvestigationMap = () => {
     setPuzzleSolved(true);
   }, [setPuzzleSolved]);
 
+  useEffect(() => {
+    // Refresh lock status when returning from a room
+    setInvestTick((t) => t + 1);
+    const onFocus = () => setInvestTick((t) => t + 1);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  const investigation = getInvestigationState();
+  void investTick;
+
   const handleLocationClick = (location: LocationWithTeaser) => {
-    // Navigate to the room directly
+    const room = mapLocationIdToRoom(location.id);
+    if (!room || !isRoomUnlocked(room, investigation)) {
+      toast.error("Location locked — follow the evidence trail from the previous site.");
+      return;
+    }
     setLoadingLocation(location);
     setIsLoading(true);
+  };
+
+  const statusFor = (id: string) => {
+    const room = mapLocationIdToRoom(id) as RoomKey | null;
+    if (!room) return "LOCKED";
+    return getRoomStatusLabel(room, investigation);
   };
 
   const handleAnswerChange = (clueIndex: number, value: string) => {
@@ -174,11 +203,11 @@ export const InvestigationMap = () => {
             {/* Title */}
             <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 text-center w-full">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-cyan-400 mb-2 animate-fade-in whitespace-nowrap drop-shadow-[0_0_20px_rgba(0,200,255,0.8)]">
-                CRIME SCENE INVESTIGATION
+                THE LAST SESSION
               </h2>
               <p className="font-body text-white/60 tracking-wider animate-fade-in"
                 style={{ animationDelay: '0.3s' }}>
-                Analyze the investigation sites
+                Follow the evidence trail — rooms unlock in order
               </p>
             </div>
             
@@ -204,10 +233,17 @@ export const InvestigationMap = () => {
             </svg>
             
             {/* Location Markers */}
-            {locations.map((location, index) => (
+            {locations.map((location, index) => {
+              const status = statusFor(location.id);
+              const locked = status === "LOCKED";
+              const complete = status === "COMPLETE";
+              const markerColor = locked ? "hsl(0 0% 40%)" : location.color;
+              return (
               <div
                 key={location.id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group animate-marker-appear"
+                className={`absolute transform -translate-x-1/2 -translate-y-1/2 group animate-marker-appear ${
+                  locked ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                }`}
                 style={{
                   left: location.position.x,
                   top: location.position.y,
@@ -217,33 +253,34 @@ export const InvestigationMap = () => {
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => handleLocationClick(location)}
               >
-                {/* Outer Glow Pulse */}
+                {!locked && (
                 <div
                   className="absolute inset-0 rounded-full animate-ping opacity-50"
                   style={{
                     width: '200px',
                     height: '120px',
-                    backgroundColor: location.color,
+                    backgroundColor: markerColor,
                     left: '50%',
                     top: '50%',
                     transform: 'translate(-50%, -50%)',
                     animationDuration: '2s',
                   }}
                 />
+                )}
                 
                 {/* Marker Circle */}
                 <div
                   className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    hoveredId === location.id ? 'scale-125' : 'scale-100'
+                    hoveredId === location.id && !locked ? 'scale-125' : 'scale-100'
                   }`}
                   style={{
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    border: `3px solid ${location.color}`,
-                    boxShadow: `0 0 30px ${location.color}, inset 0 0 20px ${location.color}`,
+                    border: `3px solid ${markerColor}`,
+                    boxShadow: locked ? 'none' : `0 0 30px ${markerColor}, inset 0 0 20px ${markerColor}`,
                   }}
                 >
-                  <div style={{ color: location.color }}>
-                    {location.icon}
+                  <div style={{ color: markerColor }}>
+                    {locked ? <Lock className="w-8 h-8" /> : complete ? <CheckCircle2 className="w-8 h-8" /> : location.icon}
                   </div>
                 </div>
 
@@ -254,15 +291,16 @@ export const InvestigationMap = () => {
                   }`}
                 >
                   <div
-                    className="px-4 py-2 rounded font-body text-sm font-semibold"
+                    className="px-4 py-2 rounded font-body text-sm font-semibold text-center"
                     style={{
                       backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                      border: `1px solid ${location.color}`,
-                      color: location.color,
-                      boxShadow: `0 0 20px ${location.color}`,
+                      border: `1px solid ${markerColor}`,
+                      color: markerColor,
+                      boxShadow: locked ? 'none' : `0 0 20px ${markerColor}`,
                     }}
                   >
-                    {location.name}
+                    <div>{location.name}</div>
+                    <div className="text-[10px] tracking-wider mt-0.5 opacity-80">{status}</div>
                   </div>
                 </div>
                 
@@ -307,7 +345,8 @@ export const InvestigationMap = () => {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         </>
       ) : (

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { resetInvestigationState } from "@/lib/investigationState";
 
 interface GameContextType {
   timeRemaining: number;
@@ -59,6 +60,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("d2_solved");
       sessionStorage.removeItem("d3_solved");
+      resetInvestigationState();
     }
   };
 

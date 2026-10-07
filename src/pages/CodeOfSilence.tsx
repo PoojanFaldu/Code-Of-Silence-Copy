@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
+import { getInvestigationState, getRoomStatusLabel, isRoomUnlocked, type RoomKey } from "@/lib/investigationState";
 
 const CodeOfSilence = () => {
   const { timeRemaining } = useGame();
@@ -104,21 +105,28 @@ const CodeOfSilence = () => {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             {[
-              { name: "Dr. Verma's Office", icon: "📁", desc: "Personal files and notes", room: "verma" },
-              { name: "Research Lab", icon: "🔬", desc: "Experimental data", room: "research" },
-              { name: "Archives", icon: "📚", desc: "Historical records", room: "archive" },
-              { name: "Server Files", icon: "💾", desc: "Digital evidence", room: "server" }
-            ].map((folder, idx) => (
+              { name: "Dr. Verma's Office", icon: "📁", desc: "Personal files and notes", room: "verma" as RoomKey },
+              { name: "Research Lab", icon: "🔬", desc: "Experimental data", room: "research" as RoomKey },
+              { name: "Archives", icon: "📚", desc: "Historical records", room: "archive" as RoomKey },
+              { name: "Server Files", icon: "💾", desc: "Digital evidence", room: "server" as RoomKey }
+            ].map((folder, idx) => {
+              const state = getInvestigationState();
+              const unlocked = isRoomUnlocked(folder.room, state);
+              const status = getRoomStatusLabel(folder.room, state);
+              return (
               <a
                 key={idx}
-                href={`/game?room=${folder.room}`}
+                href={unlocked ? `/game?room=${folder.room}` : undefined}
+                onClick={(e) => {
+                  if (!unlocked) e.preventDefault();
+                }}
                 style={{
                   background: 'rgba(125,211,252,0.05)',
                   border: '1px solid rgba(125,211,252,0.2)',
                   borderRadius: '8px',
                   padding: '20px',
-                  cursor: 'pointer',
-                  opacity: 1,
+                  cursor: unlocked ? 'pointer' : 'not-allowed',
+                  opacity: unlocked ? 1 : 0.45,
                   transition: 'all 0.2s',
                   textAlign: 'center',
                   textDecoration: 'none',
@@ -128,9 +136,11 @@ const CodeOfSilence = () => {
                 <div style={{ fontSize: '48px', marginBottom: '8px' }}>{folder.icon}</div>
                 <div style={{ fontSize: '16px', fontWeight: 600, color: '#7dd3fc', marginBottom: '4px' }}>{folder.name}</div>
                 <div style={{ fontSize: '13px', color: '#9ca3af' }}>{folder.desc}</div>
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#34d399' }}>✓ Available</div>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: status === 'LOCKED' ? '#f87171' : '#34d399' }}>
+                  {status}
+                </div>
               </a>
-            ))}
+            );})}
           </div>
           <button
             onClick={() => setView('landing')}

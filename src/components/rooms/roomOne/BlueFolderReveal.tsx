@@ -110,7 +110,7 @@ export default function BlueFolderReveal({ onClose, onComplete }: BlueFolderReve
             onClick={onComplete}
             className="w-full rounded-md bg-blue-500/20 border border-blue-400/40 px-4 py-3 text-sm font-medium text-blue-100 hover:bg-blue-500/30"
           >
-            Log Clue — Continue to Research Lab
+            Log Evidence — Update Trail
           </button>
         </div>
       </div>
