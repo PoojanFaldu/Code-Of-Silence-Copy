@@ -85,17 +85,7 @@ export const InvestigationMap = () => {
   }, []);
 
   const handleLocationClick = (location: LocationWithTeaser) => {
-    if (!puzzleSolved) {
-      // Just show teaser if puzzle not solved
-      setActiveTeaserId(location.id);
-      setTimeout(() => setActiveTeaserId(null), 5000);
-      toast.error("Solve the puzzle to unlock room access!", {
-        description: "Decode the investigation sequence first.",
-      });
-      return;
-    }
-    
-    // If puzzle is solved, navigate to the room
+    // Navigate to the room directly
     setLoadingLocation(location);
     setIsLoading(true);
   };
@@ -107,15 +97,6 @@ export const InvestigationMap = () => {
     if (clue && value.trim().toLowerCase() === clue.answer.toLowerCase()) {
       const newRevealedNumbers = new Set(revealedNumbers).add(clue.number);
       setRevealedNumbers(newRevealedNumbers);
-      
-      // Check if all 4 clues are solved
-      if (newRevealedNumbers.size === 4 && !puzzleSolved) {
-        setPuzzleSolved(true);
-        toast.success("🎉 Puzzle Solved! All rooms are now unlocked!", {
-          description: "You can now access all investigation sites.",
-          duration: 5000,
-        });
-      }
     }
   };
 
@@ -258,22 +239,6 @@ export const InvestigationMap = () => {
                   </div>
                 </div>
 
-                {/* Lock/Unlock Badge */}
-                <div
-                  className="absolute -top-2 -right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{
-                    backgroundColor: puzzleSolved ? 'hsl(120 100% 30%)' : 'hsl(0 100% 40%)',
-                    border: `2px solid ${puzzleSolved ? 'hsl(120 100% 50%)' : 'hsl(0 100% 60%)'}`,
-                    boxShadow: `0 0 15px ${puzzleSolved ? 'hsl(120 100% 50%)' : 'hsl(0 100% 60%)'}`,
-                  }}
-                >
-                  {puzzleSolved ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <Lock className="w-4 h-4 text-red-400" />
-                  )}
-                </div>
-                
                 {/* Location Label */}
                 <div
                   className={`absolute top-24 left-1/2 transform -translate-x-1/2 whitespace-nowrap transition-all duration-300 ${
@@ -335,30 +300,6 @@ export const InvestigationMap = () => {
                 )}
               </div>
             ))}
-          </div>
-
-          {/* Reveal Puzzle Button & Status */}
-          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 animate-fade-in flex flex-col items-center gap-4">
-            {puzzleSolved && (
-              <div className="px-6 py-3 rounded-lg font-display font-bold text-green-400 border-2 border-green-500/50 bg-black/80"
-                style={{
-                  boxShadow: "0 0 30px rgba(0, 255, 0, 0.3)",
-                }}
-              >
-                ✓ All Rooms Unlocked - Click any location to investigate
-              </div>
-            )}
-            <Button
-              onClick={() => setShowPuzzle(true)}
-              className="h-16 px-8 text-lg font-display font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-2 border-cyan-500/50 transition-all duration-300"
-              style={{
-                boxShadow: "0 0 40px rgba(0, 200, 255, 0.4)",
-              }}
-            >
-              {puzzleSolved 
-                ? "View Solution" 
-                : "The path is hidden… Enter a room name to discover its true order."}
-            </Button>
           </div>
         </>
       ) : (
