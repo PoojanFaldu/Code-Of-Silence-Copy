@@ -11,17 +11,14 @@ import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
 import FocusDetector from "@/components/rooms/interaction/FocusDetector";
 import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
+import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
 
 type Overlay = null | "logic" | "report" | "network" | "archive";
 
-type Progress = {
-  logicSolved: boolean;
-  reportSeen: boolean;
-  networkSolved: boolean;
-  archiveLogged: boolean;
-};
+/** 0 logic → 1 report → 2 network → 3 archive → 4 complete */
+type Step = 0 | 1 | 2 | 3 | 4;
 
 // Resting on the white workstation desk (left console)
 const LOGIC_POS: [number, number, number] = [-0.55, 3.02, 4.35];
@@ -92,59 +89,58 @@ const RoomTwo = () => {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
-  const [progress, setProgress] = useState<Progress>({
-    logicSolved: false,
-    reportSeen: false,
-    networkSolved: false,
-    archiveLogged: false,
-  });
+  const [step, setStep] = useState<Step>(0);
 
-  const statusText = progress.archiveLogged
-    ? "Neha looks like the killer — but the original modification history is still missing."
-    : progress.networkSolved
-      ? "Archive open — review the access log."
-      : progress.reportSeen
-        ? "Neha's section was altered. Find the secure archive workstation."
-        : progress.logicSolved
-          ? "Terminal unlocked — read the Experiment 17 report."
-          : "Office notes pointed here. Find the logic gate control panel.";
+  const activePos = step === 0 || step === 1 ? LOGIC_POS : step === 2 || step === 3 ? MONITOR_POS : null;
 
   const targets: InteractTarget[] = useMemo(
     () => [
       {
         id: "logic",
-        label: progress.logicSolved && !progress.reportSeen ? "Research terminal" : "Logic gate panel",
+        label: "Logic gate panel",
         position: LOGIC_POS,
-        active: true,
+        active: step === 0,
+        maxDistance: 2.8,
+      },
+      {
+        id: "report",
+        label: "Research terminal",
+        position: LOGIC_POS,
+        active: step === 1,
+        maxDistance: 2.8,
+      },
+      {
+        id: "network",
+        label: "Archive gateway",
+        position: MONITOR_POS,
+        active: step === 2,
         maxDistance: 2.8,
       },
       {
         id: "archive",
-        label: progress.networkSolved ? "Archive log" : "Secure archive",
+        label: "Access log",
         position: MONITOR_POS,
-        active: progress.reportSeen,
+        active: step === 3,
         maxDistance: 2.8,
       },
     ],
-    [progress.logicSolved, progress.reportSeen, progress.networkSolved]
+    [step]
   );
 
   const handleInteract = (id: string) => {
-    if (id === "logic") {
-      setOverlay(progress.logicSolved && !progress.reportSeen ? "report" : "logic");
-    }
-    if (id === "archive") {
-      setOverlay(progress.networkSolved ? "archive" : "network");
-    }
+    if (id === "logic" && step === 0) setOverlay("logic");
+    if (id === "report" && step === 1) setOverlay("report");
+    if (id === "network" && step === 2) setOverlay("network");
+    if (id === "archive" && step === 3) setOverlay("archive");
   };
 
-  const controlsEnabled = overlay === null;
+  const controlsEnabled = overlay === null && !showTrail;
 
   return (
     <div className="h-screen w-screen bg-black relative">
-      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-emerald-400/30 bg-black/80 px-4 py-3 text-sm text-slate-200 pointer-events-none">
-        <p className="text-[11px] uppercase tracking-wider text-emerald-300 mb-1">Room 2 · Research Lab</p>
-        <p>{statusText}</p>
+      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-emerald-400/25 bg-black/75 px-4 py-3 text-sm text-slate-300 pointer-events-none">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-300/90 mb-1">Research Lab</p>
+        <p className="text-xs text-slate-400">Search the lab. Aim · Press E</p>
       </div>
 
       <Canvas camera={{ position: [0, 4, 8], fov: 75 }}>
@@ -158,10 +154,11 @@ const RoomTwo = () => {
 
         <Suspense fallback={null}>
           <LoadModel />
-          <LogicTerminal solved={progress.logicSolved} />
-          <ArchiveWorkstation unlocked={progress.reportSeen} restored={progress.networkSolved} />
+          <LogicTerminal solved={step > 0} />
+          <ArchiveWorkstation unlocked={step >= 2} restored={step >= 3} />
+          {activePos && <ActivePulse position={activePos} visible={controlsEnabled} />}
 
-          <FirstPersonController boundary={ROOM2_BOUNDARY} controlsEnabled={controlsEnabled} moveSpeed={0.025} />
+          <FirstPersonController boundary={ROOM2_BOUNDARY} controlsEnabled={controlsEnabled} moveSpeed={0.018} />
           <FocusDetector
             targets={targets}
             enabled={controlsEnabled}
@@ -177,8 +174,8 @@ const RoomTwo = () => {
         <LogicGatesPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
-            setProgress((p) => ({ ...p, logicSolved: true }));
-            setOverlay("report");
+            setStep(1);
+            setOverlay(null);
           }}
         />
       )}
@@ -186,12 +183,12 @@ const RoomTwo = () => {
       {overlay === "report" && (
         <ResearchReport
           onClose={() => {
-            setProgress((p) => ({ ...p, reportSeen: true }));
+            setStep(2);
             setOverlay(null);
           }}
           onContinue={() => {
-            setProgress((p) => ({ ...p, reportSeen: true }));
-            setOverlay("network");
+            setStep(2);
+            setOverlay(null);
           }}
         />
       )}
@@ -200,8 +197,8 @@ const RoomTwo = () => {
         <NetworkPortPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
-            setProgress((p) => ({ ...p, networkSolved: true }));
-            setOverlay("archive");
+            setStep(3);
+            setOverlay(null);
           }}
         />
       )}
@@ -210,7 +207,7 @@ const RoomTwo = () => {
         <ArchiveReveal
           onClose={() => setOverlay(null)}
           onComplete={() => {
-            setProgress((p) => ({ ...p, archiveLogged: true }));
+            setStep(4);
             setOverlay(null);
             setInvestigationState({
               room2Complete: true,
@@ -227,9 +224,9 @@ const RoomTwo = () => {
       {showTrail && (
         <EvidenceTrailModal
           findings={[
-            "Neha altered EXP-17 and accessed the archive at 21:17.",
-            "Original modification history is still unavailable.",
-            "EXP-17 references archived experimental records — physical archive index required.",
+            "EXP-17 current values do not match the baseline.",
+            "Neha Rao is linked to the latest archive access.",
+            "Physical archived copies of EXP-17 may explain the missing history.",
           ]}
           nextRoomLabel="Archives"
           onStay={() => setShowTrail(false)}

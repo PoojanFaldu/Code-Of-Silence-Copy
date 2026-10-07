@@ -6,60 +6,36 @@ interface NetworkPortPuzzleProps {
 }
 
 const PORT_REF = [
-  { port: "21", service: "FTP" },
-  { port: "22", service: "SSH" },
-  { port: "25", service: "SMTP" },
-  { port: "53", service: "DNS" },
-  { port: "80", service: "HTTP" },
-  { port: "443", service: "HTTPS / SSL" },
-];
-
-const SERVICES = [
-  { id: "ftp", label: "FTP", port: "21", hint: "File transfer (not encrypted by default)" },
-  { id: "ssh", label: "SSH", port: "22", hint: "Secure remote shell" },
-  { id: "smtp", label: "SMTP", port: "25", hint: "Email delivery" },
-  { id: "dns", label: "DNS", port: "53", hint: "Name lookup" },
-  { id: "http", label: "HTTP", port: "80", hint: "Web — not secure" },
-  { id: "https", label: "HTTPS / SSL", port: "443", hint: "Secure web connection" },
+  { port: "21", service: "FTP", note: "File transfer" },
+  { port: "22", service: "SSH", note: "Remote shell" },
+  { port: "25", service: "SMTP", note: "Mail delivery" },
+  { port: "53", service: "DNS", note: "Name lookup" },
+  { port: "80", service: "HTTP", note: "Unencrypted web" },
+  { port: "443", service: "HTTPS / SSL", note: "Encrypted web" },
 ];
 
 export default function NetworkPortPuzzle({ onSolved, onClose }: NetworkPortPuzzleProps) {
-  const [selected, setSelected] = useState<string | null>(null);
   const [portInput, setPortInput] = useState("");
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [solved, setSolved] = useState(false);
 
-  const selectedService = SERVICES.find((s) => s.id === selected) ?? null;
-
-  const tryUnlock = (port: string, serviceOk: boolean) => {
-    const normalized = port.replace(/\D/g, "");
-    if (normalized === "443" && serviceOk) {
+  const handleSubmit = () => {
+    if (solved) return;
+    const normalized = portInput.replace(/\D/g, "");
+    if (normalized === "443") {
       setSolved(true);
-      setMessage({ text: "Secure archive connection established.", ok: true });
+      setMessage({ text: "Connection accepted.", ok: true });
       setTimeout(onSolved, 900);
       return;
     }
-    if (serviceOk && normalized && normalized !== "443") {
-      setMessage({
-        text: `${selectedService?.label} uses port ${selectedService?.port} — but the archive needs a secure web connection.`,
-        ok: false,
-      });
+    if (!normalized) {
+      setMessage({ text: "Enter a port number from the reference card.", ok: false });
       return;
     }
-    if (!serviceOk) {
-      setMessage({
-        text: "Wrong service. The clue says: secure web connection.",
-        ok: false,
-      });
-      return;
-    }
-    setMessage({ text: "Enter the port number for the selected service.", ok: false });
-  };
-
-  const handleSubmit = () => {
-    if (solved) return;
-    const isHttps = selected === "https";
-    tryUnlock(portInput, isHttps);
+    setMessage({
+      text: "Rejected. Re-read the terminal note and match it to the reference card.",
+      ok: false,
+    });
   };
 
   return (
@@ -67,10 +43,8 @@ export default function NetworkPortPuzzle({ onSolved, onClose }: NetworkPortPuzz
       <div className="w-full max-w-2xl rounded-xl border border-sky-500/30 bg-[#071018] shadow-2xl overflow-hidden my-4">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-sky-200">Secure Archive Connection</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Identify the correct service used to access Verma&apos;s archived research.
-            </p>
+            <h2 className="text-lg font-semibold text-sky-200">Archive Gateway</h2>
+            <p className="text-xs text-slate-400 mt-1">SECURE ARCHIVE CONNECTION REQUIRED</p>
           </div>
           <button
             onClick={onClose}
@@ -81,66 +55,41 @@ export default function NetworkPortPuzzle({ onSolved, onClose }: NetworkPortPuzz
         </div>
 
         <div className="px-5 py-5 space-y-4">
-          <div className="rounded-lg border border-amber-400/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-100">
-            Clue: <strong>&quot;The archive can only be accessed through a secure web connection.&quot;</strong>
+          <div className="rounded-lg border border-white/10 bg-black/40 p-4 font-mono text-xs text-slate-300 space-y-2">
+            <p className="text-slate-500">// terminal.log — last admin note</p>
+            <p>&quot;Shell access denied. Mail relay offline. Name service ignored.&quot;</p>
+            <p>&quot;Only encrypted page traffic reaches the vault.&quot;</p>
+            <p className="text-slate-500 pt-1">// end note</p>
           </div>
 
           <div className="rounded-lg border border-white/10 bg-black/30 p-3">
             <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Reference Card — Common Ports</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {PORT_REF.map((row) => (
                 <div
                   key={row.port}
-                  className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 font-mono text-xs text-slate-300"
+                  className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 font-mono text-xs text-slate-300 flex justify-between gap-2"
                 >
-                  <span className="text-sky-300">{row.port}</span>
-                  <span className="text-slate-500"> → </span>
-                  {row.service}
+                  <span>
+                    <span className="text-sky-300">{row.port}</span>
+                    <span className="text-slate-500"> → </span>
+                    {row.service}
+                  </span>
+                  <span className="text-slate-500">{row.note}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div>
-            <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Select service</p>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {SERVICES.map((svc) => {
-                const active = selected === svc.id;
-                return (
-                  <button
-                    key={svc.id}
-                    disabled={solved}
-                    onClick={() => {
-                      setSelected(svc.id);
-                      setPortInput(svc.port);
-                      setMessage(null);
-                    }}
-                    className={`rounded-xl border px-3 py-3 text-left transition ${
-                      active
-                        ? "border-sky-400/60 bg-sky-500/15"
-                        : "border-white/10 bg-black/30 hover:bg-white/5"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-slate-100">{svc.label}</span>
-                      <span className="font-mono text-xs text-sky-300">:{svc.port}</span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-slate-500">{svc.hint}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <label className="text-[11px] uppercase tracking-wider text-slate-500">Confirm port number</label>
+            <label className="text-[11px] uppercase tracking-wider text-slate-500">Port number</label>
             <div className="flex gap-2">
               <input
                 value={portInput}
                 onChange={(e) => setPortInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 disabled={solved}
-                placeholder="e.g. 443"
+                placeholder="Enter port"
                 className="flex-1 rounded-md border border-white/15 bg-black/40 px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-sky-400/60"
               />
               <button

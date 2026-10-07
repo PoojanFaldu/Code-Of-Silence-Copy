@@ -16,7 +16,7 @@ const PITCH_LIMIT = 1.2; // ~70 degrees
 export default function FirstPersonController({
   boundary,
   controlsEnabled = true,
-  moveSpeed = 0.025,
+  moveSpeed = 0.018,
   mouseSensitivity = 0.002,
   onPositionUpdate,
 }: FirstPersonControllerProps) {

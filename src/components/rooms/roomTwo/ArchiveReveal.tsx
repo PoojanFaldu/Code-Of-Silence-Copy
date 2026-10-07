@@ -33,8 +33,7 @@ export default function ArchiveReveal({ onClose, onComplete }: ArchiveRevealProp
           </div>
 
           <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-            Neha accessed the archive and touched EXP-17. Combined with the altered research section, she looks
-            like the prime suspect.
+            The latest access and the altered section both carry Neha Rao&apos;s name.
           </div>
 
           <div className="rounded-lg border border-amber-400/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-100/90 space-y-1">

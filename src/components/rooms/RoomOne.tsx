@@ -11,19 +11,18 @@ import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
 import FocusDetector from "@/components/rooms/interaction/FocusDetector";
 import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
+import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
 
 type Overlay = null | "laser" | "drawer" | "cipher" | "folder";
 
-type Progress = {
-  laserSolved: boolean;
-  cipherSolved: boolean;
-  folderOpened: boolean;
-};
+/** 0 laser → 1 drawer → 2 cipher → 3 folder → 4 complete */
+type Step = 0 | 1 | 2 | 3 | 4;
 
 const DESK_DEVICE_POS: [number, number, number] = [1.28, 2.205, 0.62];
 const DRAWER_POS: [number, number, number] = [1.42, 1.95, 0.85];
+const CIPHER_POS: [number, number, number] = [1.15, 2.21, 0.88];
 const FOLDER_POS: [number, number, number] = [0.98, 2.22, 1.05];
 
 const ROOM1_BOUNDARY = {
@@ -110,13 +109,13 @@ function BlueFolderProp({ visible }: { visible: boolean }) {
   );
 }
 
-function DeskNote({ visible }: { visible: boolean }) {
+function CipherScrap({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <group position={[1.0, 2.16, 0.78]} rotation={[-0.1, 0.4, 0.05]}>
+    <group position={CIPHER_POS} rotation={[-0.12, 0.5, 0.02]}>
       <mesh castShadow>
-        <boxGeometry args={[0.18, 0.002, 0.12]} />
-        <meshStandardMaterial color="#f5e6c8" />
+        <boxGeometry args={[0.14, 0.002, 0.1]} />
+        <meshStandardMaterial color="#efe6d5" />
       </mesh>
     </group>
   );
@@ -127,19 +126,18 @@ const RoomOne = () => {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
-  const [progress, setProgress] = useState<Progress>({
-    laserSolved: false,
-    cipherSolved: false,
-    folderOpened: false,
-  });
+  const [step, setStep] = useState<Step>(0);
 
-  const statusText = progress.folderOpened
-    ? "Neha looks suspicious. Experiment 17 leads to the Research Lab."
-    : progress.cipherSolved
-      ? "Decoded. Open the blue folder on the desk."
-      : progress.laserSolved
-        ? "Drawer unlocked. Read Verma's encrypted note."
-        : "Look around Verma's desk. Aim at objects and press E.";
+  const activePos =
+    step === 0
+      ? DESK_DEVICE_POS
+      : step === 1
+        ? ([DRAWER_POS[0], DRAWER_POS[1] + 0.05, DRAWER_POS[2]] as [number, number, number])
+        : step === 2
+          ? CIPHER_POS
+          : step === 3
+            ? FOLDER_POS
+            : null;
 
   const targets: InteractTarget[] = useMemo(
     () => [
@@ -147,40 +145,48 @@ const RoomOne = () => {
         id: "laser",
         label: "Optical device",
         position: DESK_DEVICE_POS,
-        active: true,
+        active: step === 0,
         maxDistance: 2.6,
       },
       {
         id: "drawer",
         label: "Concealed drawer",
         position: [DRAWER_POS[0], DRAWER_POS[1] + 0.05, DRAWER_POS[2]],
-        active: progress.laserSolved,
+        active: step === 1,
+        maxDistance: 2.6,
+      },
+      {
+        id: "cipher",
+        label: "Encrypted scrap",
+        position: CIPHER_POS,
+        active: step === 2,
         maxDistance: 2.6,
       },
       {
         id: "folder",
         label: "Blue folder",
         position: FOLDER_POS,
-        active: progress.cipherSolved,
+        active: step === 3,
         maxDistance: 2.6,
       },
     ],
-    [progress.laserSolved, progress.cipherSolved]
+    [step]
   );
 
   const handleInteract = (id: string) => {
-    if (id === "laser") setOverlay("laser");
-    if (id === "drawer") setOverlay("drawer");
-    if (id === "folder") setOverlay("folder");
+    if (id === "laser" && step === 0) setOverlay("laser");
+    if (id === "drawer" && step === 1) setOverlay("drawer");
+    if (id === "cipher" && step === 2) setOverlay("cipher");
+    if (id === "folder" && step === 3) setOverlay("folder");
   };
 
-  const controlsEnabled = overlay === null;
+  const controlsEnabled = overlay === null && !showTrail;
 
   return (
     <div className="h-screen w-screen bg-black relative">
-      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-cyan-400/30 bg-black/80 px-4 py-3 text-sm text-slate-200 pointer-events-none">
-        <p className="text-[11px] uppercase tracking-wider text-cyan-300 mb-1">Room 1 · Dr. Verma&apos;s Office</p>
-        <p>{statusText}</p>
+      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-cyan-400/25 bg-black/75 px-4 py-3 text-sm text-slate-300 pointer-events-none">
+        <p className="text-[11px] uppercase tracking-wider text-cyan-300/90 mb-1">Dr. Verma&apos;s Office</p>
+        <p className="text-xs text-slate-400">Search the desk. Aim · Press E</p>
       </div>
 
       <Canvas gl={{ antialias: true, alpha: true }} camera={{ position: [0, 3, 0], fov: 75 }}>
@@ -193,12 +199,13 @@ const RoomOne = () => {
 
         <Suspense fallback={null}>
           <LoadModel />
-          <DeskNote visible={!progress.laserSolved} />
-          <LaserDevice solved={progress.laserSolved} />
-          <ConcealedDrawer unlocked={progress.laserSolved} />
-          <BlueFolderProp visible={progress.cipherSolved} />
+          <LaserDevice solved={step > 0} />
+          <ConcealedDrawer unlocked={step >= 1} />
+          <CipherScrap visible={step >= 2} />
+          <BlueFolderProp visible={step >= 3} />
+          {activePos && <ActivePulse position={activePos} visible={controlsEnabled} />}
 
-          <FirstPersonController boundary={ROOM1_BOUNDARY} controlsEnabled={controlsEnabled} moveSpeed={0.028} />
+          <FirstPersonController boundary={ROOM1_BOUNDARY} controlsEnabled={controlsEnabled} moveSpeed={0.02} />
           <FocusDetector
             targets={targets}
             enabled={controlsEnabled}
@@ -214,8 +221,8 @@ const RoomOne = () => {
         <LaserDeflectionPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
-            setProgress((p) => ({ ...p, laserSolved: true }));
-            setOverlay("drawer");
+            setStep(1);
+            setOverlay(null);
           }}
         />
       )}
@@ -223,7 +230,10 @@ const RoomOne = () => {
       {overlay === "drawer" && (
         <DrawerNote
           onClose={() => setOverlay(null)}
-          onContinue={() => setOverlay(progress.cipherSolved ? null : "cipher")}
+          onContinue={() => {
+            setStep(2);
+            setOverlay(null);
+          }}
         />
       )}
 
@@ -231,8 +241,8 @@ const RoomOne = () => {
         <CipherPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
-            setProgress((p) => ({ ...p, cipherSolved: true }));
-            setOverlay("folder");
+            setStep(3);
+            setOverlay(null);
           }}
         />
       )}
@@ -241,7 +251,7 @@ const RoomOne = () => {
         <BlueFolderReveal
           onClose={() => setOverlay(null)}
           onComplete={() => {
-            setProgress((p) => ({ ...p, folderOpened: true }));
+            setStep(4);
             setOverlay(null);
             setInvestigationState({
               room1Complete: true,
@@ -257,9 +267,9 @@ const RoomOne = () => {
       {showTrail && (
         <EvidenceTrailModal
           findings={[
-            "Verma was investigating research-data manipulation.",
-            "Neha Rao appears repeatedly in his notes — she looks suspicious.",
-            "Experiment 17 is stored in the Research Laboratory.",
+            "Verma was auditing research-data inconsistencies.",
+            "One name appears often in his notes: Neha Rao.",
+            "Experiment 17 records are kept in the Research Laboratory.",
           ]}
           nextRoomLabel="Research Lab"
           onStay={() => setShowTrail(false)}

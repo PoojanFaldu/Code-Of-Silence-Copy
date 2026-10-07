@@ -19,7 +19,7 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
 
         <div className="px-5 py-6 space-y-5">
           <p className="text-sm text-slate-400">
-            The laser finds its target. A slim drawer beneath the desk slides open — Verma left something behind.
+            A slim drawer slides open beneath the desk. Verma left a folded note — and something underneath it.
           </p>
 
           <div className="rounded-lg border border-amber-700/40 bg-[#1c160f] p-5 shadow-inner">
@@ -30,15 +30,15 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
             <p className="mt-4 text-right text-xs tracking-widest text-amber-500/80">— D. VERMA</p>
           </div>
 
-          <p className="text-sm text-slate-300">
-            Under the note sits a second scrap — ciphered letters and a faint cipher reference.
+          <p className="text-sm text-slate-400">
+            Beneath the note: a second scrap covered in scrambled letters. It looks important.
           </p>
 
           <button
             onClick={onContinue}
             className="w-full rounded-md bg-amber-500/20 border border-amber-400/40 px-4 py-3 text-sm font-medium text-amber-100 hover:bg-amber-500/30"
           >
-            Examine Encrypted Note
+            Take the Encrypted Scrap
           </button>
         </div>
       </div>

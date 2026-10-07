@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
-  playKeyClick, playHashScanTone, playTamperAlert, 
+  playKeyClick, playHashScanTone, 
   playSuccessChime, playErrorBuzz 
 } from "./audio";
 import { toast } from "sonner";
@@ -98,15 +98,8 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
     setTimeout(() => {
       setScannedFiles((prev) => ({ ...prev, [fileId]: true }));
       setScanningFile(null);
-      if (fileId === "final") {
-        playTamperAlert();
-        toast.warning("ALERT: Hash mismatch detected on AEGIS_FINAL!", {
-          description: "Computed digital fingerprint does not match Verma's notebook record.",
-        });
-      } else {
-        playKeyClick();
-        toast.success(`Computed hash verified for ${files.find(f => f.id === fileId)?.name}`);
-      }
+      playKeyClick();
+      toast.message(`Hash computed for ${files.find((f) => f.id === fileId)?.name}. Compare with the notebook record.`);
     }, 850);
   };
 
@@ -116,15 +109,15 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
     setTimeout(() => {
       setScannedFiles({ v1: true, v2: true, final: true });
       setScanningFile(null);
-      playTamperAlert();
-      toast.warning("Verification complete: AEGIS_FINAL shows cryptographic tamper mismatch!");
+      playKeyClick();
+      toast.message("All hashes computed. Compare each against Verma's notebook.");
     }, 1200);
   };
 
   const handleConfirmModifiedSelection = () => {
     if (!selectedModifiedChoice) {
       playErrorBuzz();
-      toast.error("Please select which file was modified based on your hash comparison.");
+      toast.error("Flag a file before confirming.");
       return;
     }
 
@@ -138,10 +131,10 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
       } catch {
         // Ignore session storage errors
       }
-      toast.success("Deduction Correct: AEGIS_FINAL was modified!");
+      toast.success("Checksums don't match — file contents unlocked.");
     } else {
       playErrorBuzz();
-      toast.error("Incorrect: That file's computed hash exactly matches Verma's notebook.");
+      toast.error("That hash matches the notebook. Try another file.");
     }
   };
 
@@ -165,7 +158,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 font-mono font-bold tracking-wider border border-cyan-500/30">
-                  PUZZLE 5 — DIGITAL FORENSICS
+                  DIGITAL FORENSICS
                 </span>
                 <span className="text-xs text-cyan-400/70 font-mono">HASH CHECKSUM VERIFIER v4.2</span>
               </div>
@@ -239,24 +232,21 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
             {files.map((file) => {
               const isScanned = scannedFiles[file.id];
               const isScanning = scanningFile === file.id || scanningFile === "all";
-              const isMismatch = isScanned && file.isTampered;
               const isSelected = selectedModifiedChoice === file.id;
 
               return (
                 <div
                   key={file.id}
                   className={`p-4 rounded-xl border transition-all ${
-                    isMismatch 
-                      ? "bg-red-950/20 border-red-500/50 shadow-lg shadow-red-950/40" 
-                      : isScanned 
-                      ? "bg-emerald-950/15 border-emerald-500/40" 
+                    isScanned
+                      ? "bg-slate-900/50 border-cyan-500/30"
                       : "bg-slate-900/40 border-slate-700/40"
                   } ${isSelected ? "ring-2 ring-cyan-400" : ""}`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
                     <div className="flex items-center space-x-3">
                       <div className={`p-2 rounded-lg font-mono font-bold text-xs ${
-                        isMismatch ? "bg-red-900/50 text-red-300" : isScanned ? "bg-emerald-900/50 text-emerald-300" : "bg-slate-800 text-slate-300"
+                        isScanned ? "bg-cyan-900/40 text-cyan-300" : "bg-slate-800 text-slate-300"
                       }`}>
                         <FileText className="w-5 h-5" />
                       </div>
@@ -325,21 +315,12 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                     <div className={`lg:col-span-6 p-2.5 rounded-lg border ${
                       !isScanned 
                         ? "bg-black/30 border-dashed border-white/20 text-slate-500" 
-                        : isMismatch 
-                        ? "bg-red-950/40 border-red-500/50 text-red-200" 
-                        : "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
+                        : "bg-black/50 border-cyan-500/30 text-cyan-100"
                     }`}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-bold">
                           SYSTEM COMPUTED FILE HASH:
                         </span>
-                        {isScanned && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                            isMismatch ? "bg-red-900 text-red-200" : "bg-emerald-900 text-emerald-200"
-                          }`}>
-                            {isMismatch ? "TAMPERED / MISMATCH" : "VERIFIED / MATCH"}
-                          </span>
-                        )}
                       </div>
                       <div className="break-all select-all font-mono text-[11px]">
                         {isScanned ? file.computedHash : "Hash not calculated yet. Click 'Calculate Hash'."}
@@ -358,10 +339,10 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
             {isSolved ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5 justify-center sm:justify-start">
                 <CheckCircle2 className="w-4 h-4" />
-                Puzzle 5 Solved: later modification under Neha — original discrepancy predates her.
+                File contents unlocked — review the revision log.
               </span>
             ) : (
-              <span>Identify the tampered file using the hash comparison above.</span>
+              <span>Compare notebook hashes to system hashes, then flag the file that differs.</span>
             )}
           </div>
 
@@ -377,7 +358,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                   className="border-red-500/50 text-red-300 hover:bg-red-950/40 font-mono text-xs"
                 >
                   <Eye className="w-4 h-4 mr-1.5" />
-                  View EXP-17 Original vs Later Edit
+                  View Revision Log
                 </Button>
                 {onProceedToOverlay && (
                   <Button
@@ -388,7 +369,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                     }}
                     className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-bold font-mono text-xs shadow-lg shadow-emerald-950/50"
                   >
-                    Proceed to Overlay Mask (Puzzle 6)
+                    Continue to Overlay Mask
                     <ArrowRight className="w-4 h-4 ml-1.5" />
                   </Button>
                 )}
@@ -400,15 +381,13 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold font-mono text-xs w-full sm:w-auto shadow-lg shadow-cyan-950/50"
               >
                 <Unlock className="w-4 h-4 mr-1.5" />
-                Confirm & Open Modified File
+                Confirm Flagged File
               </Button>
             )}
           </div>
         </div>
 
-        {/* ========================================================
-            MODIFIED FILE AUDIT MODAL (Reveals Neha's Motive)
-           ======================================================== */}
+        {/* Revision log unlocked after correct hash pick */}
         {showModifiedReportModal && (
           <div 
             className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-black/95 backdrop-blur-xl animate-fade-in overflow-y-auto"
@@ -418,7 +397,6 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
               className="relative w-full max-w-4xl my-auto rounded-2xl border border-red-500/50 bg-gradient-to-b from-[#180a0a] via-[#0f0505] to-black p-5 sm:p-7 shadow-2xl shadow-red-950/80 text-white"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-red-500/30">
                 <div className="flex items-center space-x-3">
                   <div className="p-2.5 rounded-lg bg-red-900/40 border border-red-500/50 text-red-400">
@@ -426,10 +404,10 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                   </div>
                   <div>
                     <span className="text-xs px-2 py-0.5 rounded bg-red-900/60 text-red-300 font-mono font-bold tracking-wider border border-red-500/30">
-                      FORENSIC REVELATION • CRITICAL EVIDENCE
+                      REVISION LOG • AEGIS_FINAL
                     </span>
                     <h3 className="text-xl sm:text-2xl font-bold font-mono text-white mt-0.5">
-                      AEGIS_FINAL — Manipulated Research Report
+                      Recovered File Metadata
                     </h3>
                   </div>
                 </div>
@@ -441,78 +419,72 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 </button>
               </div>
 
-              {/* High Impact Motive Summary Box */}
-              <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-red-950/60 to-black border-2 border-red-600/70 shadow-lg shadow-red-950/50">
+              <div className="mt-4 p-4 rounded-xl bg-black/50 border border-amber-700/50">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-base sm:text-lg font-bold text-amber-300 font-mono uppercase tracking-wide">
-                      Twist: Neha Changed a Later Version — Not the Original
-                    </h4>
-                    <p className="text-xs sm:text-sm text-amber-50/90 leading-relaxed mt-1 font-sans">
-                      <strong>AEGIS_FINAL</strong> was modified under Neha Rao&apos;s account. But the restored original
-                      checksum chain shows the <em>first</em> discrepancy already existed earlier. Initial reviewer on
-                      EXP-17 baseline: <strong>DR. ARJUN MEHTA</strong>. Neha altered a later copy — she did not create
-                      the original falsification.
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs sm:text-sm text-amber-50/90 leading-relaxed font-sans space-y-1.5">
+                    <p>
+                      Last write attributed to account: <strong className="font-mono">N. RAO</strong>
+                      {" "}— timestamp after Verma&apos;s notebook entry.
+                    </p>
+                    <p>
+                      Embedded EXP-17 baseline stamp lists initial reviewer:{" "}
+                      <strong className="font-mono">DR. ARJUN MEHTA</strong>
+                      {" "}— dated earlier than the Rao write.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Side-by-Side Comparison & Document Image */}
               <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* Forensic Document Photo */}
                 <div className="lg:col-span-5 space-y-2">
                   <div className="rounded-xl overflow-hidden border border-red-600/40 bg-black shadow-lg">
                     <img 
                       src="/evidence/aegis_falsified_report.jpg" 
-                      alt="AEGIS Falsified Research Report Document" 
+                      alt="AEGIS research report document" 
                       className="w-full object-cover"
                     />
                   </div>
                   <p className="text-[11px] text-red-400/70 font-mono text-center">
-                    Later revision markup under Neha — original baseline predates her edits
+                    Recovered report page — compare trial figures below
                   </p>
                 </div>
 
-                {/* Data Comparison Table */}
                 <div className="lg:col-span-7 space-y-3 font-mono text-xs">
                   <div className="p-3.5 rounded-xl bg-black/60 border border-red-900/60 space-y-2.5">
                     <div className="text-xs font-bold text-red-400 uppercase tracking-wide pb-1.5 border-b border-red-900/40">
-                      Discrepancy Audit — Original vs Altered AEGIS_FINAL
+                      Trial figures — notebook original vs this file
                     </div>
 
                     <div className="space-y-2">
                       <div className="p-2.5 rounded bg-red-950/30 border border-red-900/40">
-                        <div className="font-bold text-slate-300 mb-0.5">Trial Metric: Efficacy Tolerance Rate</div>
+                        <div className="font-bold text-slate-300 mb-0.5">Efficacy Tolerance Rate</div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Verma Original Trial:</span>
-                          <span className="text-amber-400 font-bold">38.4% (FAILED THRESHOLD)</span>
+                          <span className="text-slate-400">Verma notebook:</span>
+                          <span className="text-amber-400 font-bold">38.4%</span>
                         </div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Later revision (Neha):</span>
-                          <span className="text-emerald-400 font-bold">94.8% (ALTERED COPY)</span>
+                          <span className="text-slate-400">This file:</span>
+                          <span className="text-emerald-400 font-bold">94.8%</span>
                         </div>
                       </div>
 
                       <div className="p-2.5 rounded bg-red-950/30 border border-red-900/40">
-                        <div className="font-bold text-slate-300 mb-0.5">Trial Metric: Cytotoxic Cell Necrosis</div>
+                        <div className="font-bold text-slate-300 mb-0.5">Cytotoxic Cell Necrosis</div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Verma Original Trial:</span>
-                          <span className="text-red-400 font-bold">680 ppm (FATAL TOXICITY)</span>
+                          <span className="text-slate-400">Verma notebook:</span>
+                          <span className="text-red-400 font-bold">680 ppm</span>
                         </div>
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Later revision (Neha):</span>
-                          <span className="text-emerald-400 font-bold">45 ppm (ALTERED COPY)</span>
+                          <span className="text-slate-400">This file:</span>
+                          <span className="text-emerald-400 font-bold">45 ppm</span>
                         </div>
                       </div>
 
                       <div className="p-2.5 rounded bg-amber-950/30 border border-amber-900/40">
-                        <div className="font-bold text-slate-300 mb-0.5">EXP-17 ORIGINAL RECORD</div>
+                        <div className="font-bold text-slate-300 mb-0.5">EXP-17 baseline stamp</div>
                         <div className="text-[11px] text-amber-100">
-                          Initial researcher / reviewer: <strong>DR. ARJUN MEHTA</strong>. Original experiment notes do
-                          not match Verma&apos;s final report. Neha&apos;s account edits occur <em>after</em> this
-                          discrepancy already existed.
+                          Reviewer field: <strong>DR. ARJUN MEHTA</strong>. Notebook trial values do not match this file&apos;s published figures.
                         </div>
                       </div>
                     </div>
@@ -520,17 +492,16 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="mt-6 pt-4 border-t border-red-800/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-xs text-red-300/80 font-mono">
-                  Neha altered a later file — original falsification still points earlier.
+                  Physical overlay may recover the unaltered EXP-17 sheet.
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <Button
                     onClick={() => {
                       playKeyClick();
                       setEvidenceSaved(true);
-                      toast.success("Recorded: original EXP-17 discrepancy predates Neha's edits.");
+                      toast.success("Revision log recorded.");
                       setShowModifiedReportModal(false);
                       if (onProceedToOverlay) {
                         onClose();
@@ -540,7 +511,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                     className="bg-amber-600 hover:bg-amber-500 text-black font-bold font-mono text-xs w-full sm:w-auto shadow-lg"
                   >
                     <FileCheck className="w-4 h-4 mr-1.5" />
-                    Record Evidence & Continue Overlay Mask
+                    Record & Open Overlay Mask
                   </Button>
                 </div>
               </div>

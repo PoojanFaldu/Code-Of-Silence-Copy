@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { 
   X, Layers, CheckCircle2, AlertTriangle, ArrowRight, 
-  HelpCircle, Sparkles, RefreshCw, Move, FileText, 
-  ShieldCheck, Check, Crosshair, Eye, Lock, Unlock, Server
+  HelpCircle, Move, FileText, Check, Lock, Server
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -46,11 +45,11 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
     },
     {
       id: 2,
-      title: "Facility Personnel Access Ledger",
+      title: "EXP-17 Trial Baseline Sheet",
       docCode: "DOC-ARCH-094",
-      category: "Security Ledger (Confidential)",
+      category: "Experiment Notes (Restricted)",
       isCorrectPage: true,
-      pageAlignmentMark: { x: 120, y: 70 }, // Target alignment coordinates
+      pageAlignmentMark: { x: 120, y: 70 },
     },
     {
       id: 3,
@@ -70,7 +69,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
     },
   ];
 
-  const [activePageId, setActivePageId] = useState<number>(2); // Start on Page 2 or let player switch
+  const [activePageId, setActivePageId] = useState<number>(initialSolved ? 2 : 1);
   const [overlayPos, setOverlayPos] = useState<{ x: number; y: number }>(
     initialSolved ? { x: 120, y: 70 } : { x: 30, y: 10 }
   );
@@ -104,7 +103,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
           } catch {
             // Ignore
           }
-          toast.success("Alignment Locked! Original EXP-17 stamp revealed.");
+          toast.success("Markings locked — hidden stamp visible.");
         }
         return true;
       }
@@ -152,17 +151,6 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
     }
   };
 
-  const handleSnapAlign = () => {
-    playPaperSlide();
-    if (activePageId !== 2) {
-      setActivePageId(2);
-    }
-    setOverlayPos({ x: TARGET_X, y: TARGET_Y });
-    setTimeout(() => {
-      checkAlignment(TARGET_X, TARGET_Y, 2);
-    }, 100);
-  };
-
   const handlePageChange = (pageId: number) => {
     playPaperSlide();
     setActivePageId(pageId);
@@ -189,7 +177,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 font-mono font-bold tracking-wider border border-indigo-500/30">
-                  PUZZLE 6 — ARCHIVE INVESTIGATION
+                  ARCHIVE INVESTIGATION
                 </span>
                 <span className="text-xs text-indigo-400/70 font-mono">OPTICAL STENCIL OVERLAY</span>
               </div>
@@ -209,27 +197,17 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
           </button>
         </div>
 
-        {/* Narrative & Instructions Banner */}
-        <div className="mt-4 p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="mt-4 p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-indigo-300 font-mono text-xs font-bold uppercase tracking-wider">
               <HelpCircle className="w-4 h-4 text-indigo-400" />
-              Investigation Instructions
+              Overlay Sheet
             </div>
             <p className="text-xs text-indigo-100/90 leading-relaxed font-sans">
-              Among the archive files is a <strong>transparent overlay sheet</strong>. Test the overlay across the archive documents below and align the registration crosshairs (<span className="text-cyan-400 font-mono">⌖</span>) and corner notches (<span className="text-cyan-400 font-mono">⌞ ⌟</span>). When correctly aligned on the right document, hidden text will appear.
+              Drag the transparent sheet across each archive page. Match the registration crosshairs (
+              <span className="text-cyan-400 font-mono">⌖</span>) and corner notches (
+              <span className="text-cyan-400 font-mono">⌞ ⌟</span>) printed on the sheet to marks on the page.
             </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSnapAlign}
-              className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 font-mono text-xs"
-            >
-              <Crosshair className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
-              Auto-Align to Markings
-            </Button>
           </div>
         </div>
 
@@ -303,53 +281,18 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
               {/* Document Text Noise / Grid Contents */}
               <div className="font-mono text-[11px] leading-relaxed text-slate-500/80 select-none space-y-2 pointer-events-none">
                 {activePage.id === 2 ? (
-                  /* THE TARGET DOCUMENT (Facility Personnel Access Ledger) */
-                  <div className="space-y-1.5 text-slate-400">
-                    <div className="grid grid-cols-6 text-[10px] text-slate-500 border-b border-slate-800 pb-1">
-                      <span>TIMESTAMP</span>
-                      <span>DOOR ID</span>
-                      <span>BADGE #</span>
-                      <span>PERSONNEL</span>
-                      <span>STATUS</span>
-                      <span>ROUTING</span>
+                  <div className="space-y-2 text-slate-400">
+                    <p>PROTOCOL EXP-17 // SERIES AEGIS // BASELINE RUN</p>
+                    <p>SAMPLE BATCH: A-17-B // INCUBATION: 48H // CONTROL: MATCHED</p>
+                    <p>EFFICACY TOLERANCE (RAW): 38.4% // THRESHOLD: 70%</p>
+                    <p>CYTOTOXIC NECROSIS (RAW): 680 ppm // SAFETY CEILING: 120 ppm</p>
+                    <div className={`relative bg-slate-900/30 py-1 px-1 rounded transition-all ${
+                      isAligned ? "text-amber-300" : "text-slate-500"
+                    }`}>
+                      REVIEWER FIELD: [STAMPED — ALIGN OVERLAY]
                     </div>
-                    <div className="grid grid-cols-6 text-slate-500">
-                      <span>19:45:10</span><span>DR-02</span><span>B-8812</span><span>A. Rao</span><span>EXIT</span><span>ADMIN</span>
-                    </div>
-                    <div className="grid grid-cols-6 text-slate-500">
-                      <span>20:05:22</span><span>DR-04</span><span>B-4190</span><span>K. Malik</span><span>ENTRY</span><span>CORRIDOR</span>
-                    </div>
-                    <div className="grid grid-cols-6 text-slate-400">
-                      <span>20:18:04</span><span>DR-01</span><span>B-1002</span><span>P. Verma</span><span>ENTRY</span><span>OFFICE</span>
-                    </div>
-                    {/* The critical row with the target characters positioned to match stencil apertures */}
-                    <div className="grid grid-cols-6 text-slate-300 font-bold relative bg-slate-900/30 py-0.5 px-1 rounded">
-                      <span className={`${isAligned ? "text-amber-400 font-black scale-105" : "text-slate-300"} transition-all`}>
-                        20:31
-                      </span>
-                      <span>DR-09</span>
-                      <span className={`${isAligned ? "text-amber-400 font-black scale-105" : "text-slate-400"} transition-all`}>
-                        —
-                      </span>
-                      <span className={`${isAligned ? "text-amber-400 font-black scale-105" : "text-slate-200"} transition-all`}>
-                        LAB
-                      </span>
-                      <span className={`${isAligned ? "text-amber-400 font-black scale-105" : "text-slate-400"} transition-all`}>
-                        —
-                      </span>
-                      <span className={`${isAligned ? "text-amber-400 font-black scale-105" : "text-slate-200"} transition-all`}>
-                        N.R.
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-6 text-slate-500">
-                      <span>20:48:19</span><span>DR-07</span><span>B-3104</span><span>H. Bose</span><span>EXIT</span><span>ARCHIVE</span>
-                    </div>
-                    <div className="grid grid-cols-6 text-slate-500">
-                      <span>21:12:00</span><span>DR-09</span><span>B-9900</span><span>SYS-AUTO</span><span>LOCK</span><span>PERIMETER</span>
-                    </div>
-                    <div className="grid grid-cols-6 text-slate-500">
-                      <span>21:30:15</span><span>DR-12</span><span>B-0000</span><span>ALARM-OFF</span><span>CLEAR</span><span>STATION</span>
-                    </div>
+                    <p>NOTES: Do not publish raw figures until secondary review clears deposition packet.</p>
+                    <p>ATTACHMENT: optical registration marks on this sheet match archival stencil set.</p>
                   </div>
                 ) : (
                   /* Decoy Document Noise */
@@ -523,71 +466,51 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs font-sans text-amber-100/90 leading-relaxed">
-                    <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-700/40 text-xs">
-                      <strong className="text-amber-300 font-mono">CRITICAL TWIST:</strong>
-                      <p className="mt-1">
-                        Original experiment notes do not match Verma&apos;s final report. The first falsification
-                        predates Neha&apos;s later edits.
-                      </p>
-                      <p className="mt-1 text-amber-200/80">
-                        Neha <em>did</em> alter a later version — but she was covering something that already existed.
-                      </p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-700/40 text-xs">
-                      <strong className="text-indigo-300 font-mono flex items-center gap-1.5">
-                        <Server className="w-3.5 h-3.5 text-indigo-400" />
-                        NEXT LEAD — SERVER ROOM
-                      </strong>
-                      <p className="mt-1 text-indigo-100/90">
-                        Physical records confirm an earlier discrepancy. Digital modification logs may identify who
-                        made the original change.
-                      </p>
-                      <p className="mt-1 text-cyan-300 text-[11px] font-mono">
-                        Proceed to Server Room for original digital logs.
-                      </p>
-                    </div>
+                  <div className="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-700/40 text-xs">
+                    <strong className="text-indigo-300 font-mono flex items-center gap-1.5">
+                      <Server className="w-3.5 h-3.5 text-indigo-400" />
+                      SERVER ROOM
+                    </strong>
+                    <p className="mt-1 text-indigo-100/90">
+                      Digital write logs for this sheet may still be on the rack.
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="p-6 text-center space-y-2">
                   <Lock className="w-8 h-8 mx-auto text-slate-600 mb-2" />
                   <p className="text-xs text-slate-400">
-                    Overlay markings not aligned with document markings.
+                    Overlay markings not aligned with this page.
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    Switch to the right document page and move the overlay over the registration points.
+                    Try other documents and drag until the marks line up.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Evidence Saved Confirmation */}
             {isAligned && activePage.isCorrectPage && (
               <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-xs text-emerald-200 space-y-2">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-300 font-mono">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  Room 3 Archive Investigation Complete!
+                  Stamp recovered
                 </div>
                 <p className="text-[11px] leading-relaxed text-emerald-100/80">
-                  Hash + overlay confirm: Neha altered later records, but the original manipulation points earlier —
-                  toward Dr. Arjun Mehta. Digital logs are in the Server Room.
+                  Physical EXP-17 stamp logged. Check the case dossier, then the Server Room.
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer Bar */}
         <div className="mt-6 pt-4 border-t border-indigo-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs text-slate-400 font-mono text-center sm:text-left">
             {isAligned && activePage.isCorrectPage ? (
               <span className="text-amber-400 font-bold">
-                ✓ Original EXP-17 stamp recovered — Server Room next
+                ✓ EXP-17 stamp recovered
               </span>
             ) : (
-              <span>Place the overlay over each page until the markings line up.</span>
+              <span>Drag the overlay; switch pages if marks do not line up.</span>
             )}
           </div>
 
@@ -609,7 +532,7 @@ export const OverlayMaskPuzzle: React.FC<OverlayMaskPuzzleProps> = ({
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold font-mono text-xs shadow-lg shadow-indigo-950/60 flex-1 sm:flex-none"
               >
                 <Server className="w-4 h-4 mr-1.5" />
-                Proceed to Server Room (Final Room)
+                Proceed to Server Room
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             )}

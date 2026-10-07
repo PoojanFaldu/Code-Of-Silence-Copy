@@ -13,8 +13,12 @@ import { playKeyClick, playPaperSlide } from "./room3/audio";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
 import FocusDetector from "@/components/rooms/interaction/FocusDetector";
 import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
+import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
+
+/** 0 notebook → 1 hash → 2 overlay → 3 dossier → 4 complete */
+type Step = 0 | 1 | 2 | 3 | 4;
 
 const ROOM3_BOUNDARY = {
   minX: -1.357,
@@ -50,31 +54,29 @@ const RoomThree = () => {
   const [isDossierOpen, setIsDossierOpen] = useState(false);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
+  const [step, setStep] = useState<Step>(0);
 
-  const [isHashSolved, setIsHashSolved] = useState(() => {
-    return sessionStorage.getItem("room3_puzzle5_solved") === "true";
-  });
-  const [isOverlaySolved, setIsOverlaySolved] = useState(() => {
-    return sessionStorage.getItem("room3_puzzle6_solved") === "true";
-  });
+  const [isHashSolved, setIsHashSolved] = useState(false);
+  const [isOverlaySolved, setIsOverlaySolved] = useState(false);
 
   const handleHashSolved = () => {
     setIsHashSolved(true);
+    setStep(2);
     setInvestigationState({ nehaRedHerringRevealed: true, arjunEvidenceFound: true });
   };
 
   const handleOverlaySolved = () => {
     setIsOverlaySolved(true);
+    setStep(3);
     setInvestigationState({
-      room3Complete: true,
       nehaRedHerringRevealed: true,
       arjunEvidenceFound: true,
-      finalUnlocked: true,
     });
   };
 
   const handleProceedToServerRoom = () => {
     playKeyClick();
+    setStep(4);
     setInvestigationState({
       room3Complete: true,
       arjunEvidenceFound: true,
@@ -90,12 +92,16 @@ const RoomThree = () => {
   const isAnyModalOpen = isNotebookOpen || isHashPuzzleOpen || isOverlayPuzzleOpen || isDossierOpen || showTrail;
   const controlsEnabled = !isAnyModalOpen;
 
-  const statusText =
-    isHashSolved && isOverlaySolved
-      ? "Original manipulation predates Neha — Server Room next"
-      : isHashSolved
-        ? "Neha changed a later copy — find the overlay mask"
-        : "Search the archives. Aim at objects and press E.";
+  const activePos =
+    step === 0
+      ? ROOM3_TARGET_POSITIONS.notebook
+      : step === 1
+        ? ROOM3_TARGET_POSITIONS.hash
+        : step === 2
+          ? ROOM3_TARGET_POSITIONS.overlay
+          : step === 3
+            ? ROOM3_TARGET_POSITIONS.dossier
+            : null;
 
   const targets: InteractTarget[] = useMemo(
     () => [
@@ -103,50 +109,50 @@ const RoomThree = () => {
         id: "notebook",
         label: "Verma's Notebook",
         position: ROOM3_TARGET_POSITIONS.notebook,
-        active: true,
-        maxDistance: 2.8,
-      },
-      {
-        id: "dossier",
-        label: "Case File",
-        position: ROOM3_TARGET_POSITIONS.dossier,
-        active: true,
+        active: step === 0,
         maxDistance: 2.8,
       },
       {
         id: "hash",
-        label: isHashSolved ? "Hash Terminal (solved)" : "Hash Verification Terminal",
+        label: "Archive terminal",
         position: ROOM3_TARGET_POSITIONS.hash,
-        active: true,
+        active: step === 1,
         maxDistance: 3.0,
       },
       {
         id: "overlay",
-        label: isOverlaySolved ? "Overlay Lightbox (solved)" : "Overlay Mask Lightbox",
+        label: "Overlay lightbox",
         position: ROOM3_TARGET_POSITIONS.overlay,
-        active: true,
+        active: step === 2,
+        maxDistance: 2.8,
+      },
+      {
+        id: "dossier",
+        label: "Case file",
+        position: ROOM3_TARGET_POSITIONS.dossier,
+        active: step === 3,
         maxDistance: 2.8,
       },
     ],
-    [isHashSolved, isOverlaySolved]
+    [step]
   );
 
   const handleInteract = (id: string) => {
-    if (id === "notebook") {
+    if (id === "notebook" && step === 0) {
       playPaperSlide();
       setIsNotebookOpen(true);
     }
-    if (id === "dossier") {
-      playKeyClick();
-      setIsDossierOpen(true);
-    }
-    if (id === "hash") {
+    if (id === "hash" && step === 1) {
       playKeyClick();
       setIsHashPuzzleOpen(true);
     }
-    if (id === "overlay") {
+    if (id === "overlay" && step === 2) {
       playPaperSlide();
       setIsOverlayPuzzleOpen(true);
+    }
+    if (id === "dossier" && step === 3) {
+      playKeyClick();
+      setIsDossierOpen(true);
     }
   };
 
@@ -162,10 +168,11 @@ const RoomThree = () => {
         <Suspense fallback={null}>
           <LoadModel />
           <RoomThree3DObjects isHashSolved={isHashSolved} isOverlaySolved={isOverlaySolved} />
+          {activePos && <ActivePulse position={activePos} visible={controlsEnabled} />}
           <FirstPersonController
             boundary={ROOM3_BOUNDARY}
             controlsEnabled={controlsEnabled}
-            moveSpeed={0.012}
+            moveSpeed={0.009}
           />
           <FocusDetector
             targets={targets}
@@ -180,10 +187,10 @@ const RoomThree = () => {
         <div className="flex items-center gap-3 rounded-full border border-cyan-500/30 bg-black/85 px-5 py-2.5 shadow-2xl backdrop-blur-md">
           <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-400" />
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-white sm:text-sm">
-            Room 3 — The Archives
+            Archives
           </span>
           <span className="text-white/40 text-xs">|</span>
-          <span className="font-mono text-xs text-cyan-300">{statusText}</span>
+          <span className="font-mono text-xs text-cyan-300">Aim · Press E</span>
         </div>
       </div>
 
@@ -204,10 +211,13 @@ const RoomThree = () => {
 
       <VermaNotebookModal
         isOpen={isNotebookOpen}
-        onClose={() => setIsNotebookOpen(false)}
+        onClose={() => {
+          setIsNotebookOpen(false);
+          if (step === 0) setStep(1);
+        }}
         onOpenHashPuzzle={() => {
           setIsNotebookOpen(false);
-          setIsHashPuzzleOpen(true);
+          if (step === 0) setStep(1);
         }}
       />
 
@@ -217,11 +227,9 @@ const RoomThree = () => {
         onSolved={handleHashSolved}
         onProceedToOverlay={() => {
           setIsHashPuzzleOpen(false);
-          setIsOverlayPuzzleOpen(true);
         }}
         onOpenNotebook={() => {
           setIsHashPuzzleOpen(false);
-          setIsNotebookOpen(true);
         }}
         initialSolved={isHashSolved}
       />

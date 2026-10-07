@@ -136,13 +136,13 @@ export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflec
     }
 
     const parts: string[] = [];
-    if (result.hitSensors.length === 0) parts.push("No sensors were struck.");
-    else parts.push(`Sensors hit: ${result.hitSensors.join(" → ") || "none"}`);
+    if (result.hitSensors.length === 0) parts.push("No sensors registered a hit.");
+    else parts.push(`Sensors contacted: ${result.hitSensors.join(", ")}`);
     if (result.hitSensors.join("") !== SENSORS.map((s) => s.id).join("")) {
-      parts.push("Required order is 1 → 2 → 3 → 4.");
+      parts.push("Sequence rejected — check the order of contacts.");
     }
-    if (result.usedMirrors.includes("M5")) parts.push("M5 intercepted the beam — it must stay clear.");
-    if (!result.hitTarget) parts.push("Lock was not reached.");
+    if (result.usedMirrors.includes("M5")) parts.push("A decoy mirror interrupted the beam.");
+    if (!result.hitTarget) parts.push("The lock never received the beam.");
     setFeedback(parts.join(" "));
   };
 
@@ -173,38 +173,22 @@ export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflec
         <div className="grid gap-4 px-5 py-4 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-3">
             <div className="rounded-lg border border-cyan-400/25 bg-cyan-500/5 p-3 text-sm text-slate-200 space-y-2">
-              <p className="text-[11px] uppercase tracking-wider text-cyan-300">Path Constraints</p>
-              <ol className="list-decimal list-inside space-y-1.5 text-slate-300">
-                <li>
-                  Strike sensors in order <strong className="text-white">1 → 2 → 3 → 4</strong>, then the{" "}
-                  <strong className="text-white">LOCK</strong>.
-                </li>
-                <li>
-                  Sensor 1 is reached while the beam still travels <strong className="text-white">east</strong>.
-                </li>
-                <li>
-                  After sensor 1, the beam must travel <strong className="text-white">south</strong> to sensor 2.
-                </li>
-                <li>
-                  After sensor 2, the beam must travel <strong className="text-white">east</strong> to sensor 3.
-                </li>
-                <li>
-                  After sensor 3, the beam must travel <strong className="text-white">north</strong> to sensor 4,
-                  then <strong className="text-white">east</strong> into the lock.
-                </li>
-                <li>
-                  Use mirrors <strong className="text-white">M1–M4</strong> only.{" "}
-                  <strong className="text-amber-200">M5 must not touch the beam</strong>.
-                </li>
-              </ol>
+              <p className="text-[11px] uppercase tracking-wider text-cyan-300">Field notes</p>
+              <ul className="list-disc list-inside space-y-1.5 text-slate-300">
+                <li>The lock will not open until every numbered sensor has been struck.</li>
+                <li>Sensor numbers must increase as the beam progresses — never skip or reverse.</li>
+                <li>Exactly four mirrors may redirect the beam. One mirror on the board is a decoy.</li>
+                <li>The decoy sits near the center of the grid. Keep the beam clear of it.</li>
+              </ul>
               <div className="pt-2 border-t border-white/10 text-xs text-slate-400 space-y-1">
+                <p className="text-[11px] uppercase tracking-wider text-cyan-300/80 mb-1">Reference</p>
                 <p>
-                  <span className="text-cyan-200 font-mono">/</span> reflects: E↔N, W↔S
+                  <span className="text-cyan-200 font-mono">/</span> reflects: E↔N · W↔S
                 </p>
                 <p>
-                  <span className="text-cyan-200 font-mono">\</span> reflects: E↔S, W↔N
+                  <span className="text-cyan-200 font-mono">\</span> reflects: E↔S · W↔N
                 </p>
-                <p>Click a mirror to flip between / and \.</p>
+                <p>Click a mirror to flip its orientation. Test only when ready.</p>
               </div>
             </div>
 

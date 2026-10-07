@@ -70,31 +70,31 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
                 }`}>
                   EXHIBIT A: HASH TAMPERING
                 </span>
-                <span className="text-xs font-mono text-slate-400">AEGIS_FINAL Checksum Mismatch</span>
+                <span className="text-xs font-mono text-slate-400">AEGIS checksum audit</span>
               </div>
               {isHashSolved ? (
                   <span className="text-xs font-mono text-amber-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> LATER EDIT LOGGED
+                  <CheckCircle2 className="w-3.5 h-3.5" /> LOGGED
                 </span>
               ) : (
-                <span className="text-xs font-mono text-amber-400/80">PENDING PUZZLE 5</span>
+                <span className="text-xs font-mono text-amber-400/80">INCOMPLETE</span>
               )}
             </div>
 
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isHashSolved ? (
                 <span>
-                  <strong>Finding:</strong> AEGIS_FINAL was modified under Neha Rao&apos;s account — but the original
-                  EXP-17 discrepancy predates her edits. Initial reviewer: <strong>Dr. Arjun Mehta</strong>. Neha
-                  altered a later copy; she did not create the first falsification.
+                  AEGIS_FINAL digest differs from Verma&apos;s notebook. Last write: account{" "}
+                  <strong className="font-mono">N. RAO</strong>. Embedded EXP-17 stamp lists reviewer{" "}
+                  <strong className="font-mono">DR. ARJUN MEHTA</strong> on an earlier date.
                 </span>
               ) : (
-                "Solve Puzzle 5 (Hash / Digital Fingerprint) on the archive terminal to verify whether any AEGIS file was modified."
+                "Hash verification on the archive terminal not yet complete."
               )}
             </p>
           </div>
 
-          {/* Evidence 2: Timeline Presence (Puzzle 6) */}
+          {/* Evidence 2: Overlay */}
           <div className={`p-4 rounded-xl border transition-all ${
             isOverlaySolved 
               ? "bg-amber-950/30 border-amber-500/50 shadow-md shadow-amber-950/30" 
@@ -105,28 +105,27 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
                 <span className={`p-1.5 rounded text-xs font-mono font-bold ${
                   isOverlaySolved ? "bg-amber-900/70 text-amber-200" : "bg-slate-800 text-slate-400"
                 }`}>
-                  EXHIBIT B: TIMELINE EVIDENCE
+                  EXHIBIT B: PHYSICAL OVERLAY
                 </span>
-                <span className="text-xs font-mono text-slate-400">Optical Stencil Decryption</span>
+                <span className="text-xs font-mono text-slate-400">Archive stencil</span>
               </div>
               {isOverlaySolved ? (
                 <span className="text-xs font-mono text-amber-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> EXP-17 ORIGINAL
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> LOGGED
                 </span>
               ) : (
-                <span className="text-xs font-mono text-amber-400/80">PENDING PUZZLE 6</span>
+                <span className="text-xs font-mono text-amber-400/80">INCOMPLETE</span>
               )}
             </div>
 
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isOverlaySolved ? (
                 <span>
-                  <strong>Finding:</strong> Overlay recovered the <strong>EXP-17 ORIGINAL RECORD</strong> stamp —
-                  initial reviewer <strong>Dr. Arjun Mehta</strong>. Neha was hiding something, but the original
-                  manipulation was not hers.
+                  Overlay recovered stamp: <strong>EXP-17 ORIGINAL RECORD</strong> — initial reviewer{" "}
+                  <strong className="font-mono">DR. ARJUN MEHTA</strong>.
                 </span>
               ) : (
-                "Solve Puzzle 6 (Overlay Mask) by aligning the transparent sheet over the archive documents."
+                "Overlay mask alignment on archive documents not yet complete."
               )}
             </p>
           </div>
@@ -135,12 +134,10 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
           <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-700/40 text-xs font-mono space-y-1.5">
             <div className="flex items-center gap-2 text-indigo-300 font-bold">
               <Server className="w-4 h-4 text-indigo-400" />
-              NEXT INVESTIGATION PHASE: SERVER ROOM
+              NEXT: SERVER ROOM
             </div>
             <p className="text-indigo-200/90 leading-relaxed font-sans">
-              Physical records confirm an earlier discrepancy. Digital modification logs in the{" "}
-              <strong>Server Room</strong> may identify who made the original change — and who had motive to silence
-              Verma.
+              Original digital modification logs may still be on the server rack.
             </p>
           </div>
         </div>

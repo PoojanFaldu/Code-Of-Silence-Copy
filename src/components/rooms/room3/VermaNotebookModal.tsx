@@ -176,7 +176,7 @@ export const VermaNotebookModal: React.FC<VermaNotebookModalProps> = ({
 
               {/* Verma's Handwritten Warning Quote */}
               <div className="p-3 rounded-lg bg-amber-950/30 border-l-2 border-amber-500 font-serif italic text-amber-200/90 text-xs leading-relaxed">
-                "Note to self: The final AEGIS dataset submitted by Neha exhibits statistical anomalies that defy our baseline chemistry. Check the computed file fingerprint on the Archive Workstation against my master hash above. Any discrepancy confirms tampering." — Dr. Verma
+                "Filed these digests the night the deposition went out. If any revision drifts, the numbers will tell." — Dr. Verma
               </div>
             </div>
           </div>
@@ -185,7 +185,7 @@ export const VermaNotebookModal: React.FC<VermaNotebookModalProps> = ({
         {/* Footer Actions */}
         <div className="mt-6 pt-4 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs text-amber-400/70 font-mono text-center sm:text-left">
-            Next step: Compare hashes on the Archive Workstation to detect modified files.
+            Archive workstation can recompute digests against these entries.
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
@@ -204,7 +204,7 @@ export const VermaNotebookModal: React.FC<VermaNotebookModalProps> = ({
               className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-bold font-mono shadow-lg shadow-amber-900/50 flex-1 sm:flex-none"
             >
               <Fingerprint className="w-4 h-4 mr-2" />
-              Verify Hashes on Terminal (Puzzle 5)
+              Open Archive Terminal
             </Button>
           </div>
         </div>

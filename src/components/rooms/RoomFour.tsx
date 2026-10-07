@@ -5,12 +5,16 @@ import * as THREE from "three";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
 import FocusDetector from "@/components/rooms/interaction/FocusDetector";
 import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
+import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import {
   isCorrectMurderer,
   isNehaAccusation,
   setInvestigationState,
 } from "@/lib/investigationState";
+
+/** 0 box → 1 flashlight → 2 UV document → 3 accusation path */
+type Step = 0 | 1 | 2 | 3;
 
 const ROOM4_BOUNDARY = {
   minX: -0.401,
@@ -20,7 +24,8 @@ const ROOM4_BOUNDARY = {
   y: 3,
 };
 
-const BOX_POS: [number, number, number] = [0.2, 2.76, 4.3];
+/** On floor beside crates — clear of book pile / bed */
+const BOX_POS: [number, number, number] = [0.45, 2.505, 5.05];
 const FLASHLIGHT_POS: [number, number, number] = [-0.2, 2.76, 4.2];
 const PAPER_POS: [number, number, number] = [0.1, 2.95, 4.1];
 
@@ -70,6 +75,7 @@ const RoomFour = () => {
   const [answerError, setAnswerError] = useState(false);
   const [errorHint, setErrorHint] = useState("");
   const [focused, setFocused] = useState<FocusedInteractable>(null);
+  const [step, setStep] = useState<Step>(0);
 
   const targetFront = 25;
   const targetSide = 75;
@@ -77,8 +83,12 @@ const RoomFour = () => {
   useEffect(() => {
     if (Math.abs(shadowFront - targetFront) < 5 && Math.abs(shadowSide - targetSide) < 5) {
       setBoxUnlocked(true);
+      if (showShadowPuzzle) {
+        setShowShadowPuzzle(false);
+        setShowEvidence(true);
+      }
     }
-  }, [shadowFront, shadowSide]);
+  }, [shadowFront, shadowSide, showShadowPuzzle]);
 
   const modalOpen =
     showShadowPuzzle ||
@@ -89,48 +99,57 @@ const RoomFour = () => {
     gameWon;
   const controlsEnabled = !modalOpen;
 
+  const activePos =
+    step === 0 ? BOX_POS : step === 1 ? FLASHLIGHT_POS : step === 2 ? PAPER_POS : null;
+
   const targets: InteractTarget[] = useMemo(
     () => [
       {
         id: "box",
-        label: boxUnlocked ? "Evidence Box (Unlocked)" : "Shadow Evidence Box",
+        label: boxUnlocked ? "Evidence box" : "Locked evidence box",
         position: BOX_POS,
-        active: true,
+        active: step === 0,
         maxDistance: 1.8,
       },
       {
         id: "flashlight",
-        label: uvEnabled ? "UV Flashlight (ON)" : "UV Flashlight",
+        label: uvEnabled ? "UV flashlight (on)" : "UV flashlight",
         position: FLASHLIGHT_POS,
-        active: true,
+        active: step === 1,
         maxDistance: 1.8,
       },
       {
         id: "paper",
-        label: "Document (UV reaction)",
+        label: "Faded printout",
         position: PAPER_POS,
-        active: uvEnabled,
+        active: step === 2 && uvEnabled,
         maxDistance: 1.8,
       },
     ],
-    [boxUnlocked, uvEnabled]
+    [step, boxUnlocked, uvEnabled]
   );
 
   const handleInteract = (id: string) => {
-    if (id === "box") {
+    if (id === "box" && step === 0) {
       if (boxUnlocked) setShowEvidence(true);
       else setShowShadowPuzzle(true);
     }
-    if (id === "flashlight") {
-      setUvEnabled((v) => !v);
+    if (id === "flashlight" && step === 1) {
+      setUvEnabled(true);
+      setStep(2);
     }
-    if (id === "paper") {
-      if (uvEnabled) setShowUvClue(true);
+    if (id === "paper" && step === 2 && uvEnabled) {
+      setShowUvClue(true);
     }
   };
 
   return (
     <div className="h-screen w-screen bg-black relative">
+      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-slate-500/30 bg-black/75 px-4 py-3 text-sm text-slate-300 pointer-events-none">
+        <p className="text-[11px] uppercase tracking-wider text-slate-300 mb-1">Server Room</p>
+        <p className="text-xs text-slate-400">Search carefully. Aim · Press E</p>
+      </div>
+
       <Canvas camera={{ position: [0, 3, 5], fov: 75 }}>
         <PerspectiveCamera makeDefault position={[0, 3, 5]} fov={75} />
 
@@ -150,7 +169,7 @@ const RoomFour = () => {
 
         <Suspense fallback={null}>
           <LoadModel />
-          <UvPaperSheet uvOn={uvEnabled} />
+          {(step >= 2 || uvEnabled) && <UvPaperSheet uvOn={uvEnabled} />}
 
           <group position={BOX_POS}>
             <Box scale={[0.15, 0.08, 0.15]}>
@@ -158,16 +177,20 @@ const RoomFour = () => {
             </Box>
           </group>
 
-          <group position={FLASHLIGHT_POS}>
-            <Cylinder rotation={[0, 0, Math.PI / 2]} scale={[0.02, 0.12, 0.02]}>
-              <meshStandardMaterial color="#111111" metalness={0.4} roughness={0.4} />
-            </Cylinder>
-          </group>
+          {step >= 1 && (
+            <group position={FLASHLIGHT_POS}>
+              <Cylinder rotation={[0, 0, Math.PI / 2]} scale={[0.02, 0.12, 0.02]}>
+                <meshStandardMaterial color="#111111" metalness={0.4} roughness={0.4} />
+              </Cylinder>
+            </group>
+          )}
+
+          {activePos && <ActivePulse position={activePos} visible={controlsEnabled} />}
 
           <FirstPersonController
             boundary={ROOM4_BOUNDARY}
             controlsEnabled={controlsEnabled}
-            moveSpeed={0.008}
+            moveSpeed={0.006}
           />
           <FocusDetector
             targets={targets}
@@ -255,7 +278,10 @@ const RoomFour = () => {
               </p>
             </div>
             <button
-              onClick={() => setShowEvidence(false)}
+              onClick={() => {
+                setShowEvidence(false);
+                setStep(1);
+              }}
               className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition-colors"
             >
               Close

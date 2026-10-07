@@ -325,7 +325,7 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
           {message ? (
             <p className={`text-sm ${solved ? "text-emerald-300" : "text-amber-300"}`}>{message}</p>
           ) : (
-            <p className="text-sm text-slate-500">Hint: OUT2 wants C off; OUT3 wants E off and D on.</p>
+            <p className="text-sm text-slate-500">Trace each gate from left to right until every OUT is 1.</p>
           )}
           <button
             onClick={handleUnlock}

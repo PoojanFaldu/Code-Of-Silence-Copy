@@ -51,12 +51,10 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
             </div>
 
             <p className="mt-3 text-sm text-slate-400">
-              Neha&apos;s section carries the altered values. The incomplete history is a gap in the record — not
-              an alibi.
+              The incomplete history means this may not show the earliest change — only the latest associated name.
             </p>
             <p className="mt-3 text-sm text-sky-200/90">
-              Secure archive access is still locked on the nearby workstation. That log may show who touched
-              EXP-17 last.
+              A sealed workstation nearby still refuses connection. Its access log might show who touched EXP-17.
             </p>
           </div>
 
@@ -64,7 +62,7 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
             onClick={onContinue}
             className="w-full rounded-md bg-lime-500/20 border border-lime-400/40 px-4 py-3 text-sm font-medium text-lime-100 hover:bg-lime-500/30"
           >
-            Open Secure Archive Terminal
+            Close Report
           </button>
         </div>
       </div>
