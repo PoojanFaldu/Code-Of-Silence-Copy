@@ -12,7 +12,7 @@ const ANSWER = "CHECK THE BLUE FOLDER";
 export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
   const [input, setInput] = useState("");
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
-  const [preview, setPreview] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const normalize = (value: string) =>
     value
@@ -23,11 +23,14 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
 
   const handleSubmit = () => {
     if (normalize(input) === ANSWER) {
-      setMessage({ text: "Decoded. The blue folder is in this office — find it.", ok: true });
+      setMessage({ text: "Decoded. Look for the blue folder in this office.", ok: true });
       setTimeout(onSolved, 900);
       return;
     }
-    setMessage({ text: "That doesn't match. Remember: every letter shifts by the same amount.", ok: false });
+    setMessage({
+      text: "That doesn't match. Every letter shifts by the same amount — try again.",
+      ok: false,
+    });
   };
 
   return (
@@ -52,12 +55,12 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
             <p className="font-mono text-xl tracking-widest text-violet-100">{CIPHERTEXT}</p>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-slate-300">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-slate-300 space-y-1">
             <p>
-              <span className="text-violet-300 font-medium">Reference:</span> Caesar Cipher — every
-              letter has been shifted by the same amount.
+              <span className="text-violet-300 font-medium">Reference:</span> Caesar Cipher — every letter has
+              been shifted by the same amount.
             </p>
-            <p className="mt-1">
+            <p>
               <span className="text-violet-300 font-medium">SHIFT =</span> {SHIFT}
             </p>
           </div>
@@ -79,10 +82,10 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
 
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setPreview((v) => !v)}
+              onClick={() => setShowHelp((v) => !v)}
               className="rounded-md border border-white/15 px-3 py-2 text-xs text-slate-300 hover:bg-white/5"
             >
-              {preview ? "Hide helper" : "Show shift helper"}
+              {showHelp ? "Hide helper" : "Show shift helper"}
             </button>
             <button
               onClick={handleSubmit}
@@ -92,7 +95,7 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
             </button>
           </div>
 
-          {preview && (
+          {showHelp && (
             <div className="rounded-md border border-dashed border-violet-400/30 bg-violet-500/5 p-3 font-mono text-xs text-violet-200/90">
               Shift each letter back by {SHIFT}: D→A · E→B · F→C · G→D · H→E · …
             </div>

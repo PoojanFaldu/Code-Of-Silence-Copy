@@ -1,24 +1,24 @@
 import { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Html, PerspectiveCamera } from "@react-three/drei";
+import { useGLTF, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import LogicGatesPuzzle from "@/components/rooms/roomTwo/LogicGatesPuzzle";
 import ResearchReport from "@/components/rooms/roomTwo/ResearchReport";
-import CablePatchingPuzzle from "@/components/rooms/roomTwo/CablePatchingPuzzle";
-import CctvReveal from "@/components/rooms/roomTwo/CctvReveal";
+import NetworkPortPuzzle from "@/components/rooms/roomTwo/NetworkPortPuzzle";
+import ArchiveReveal from "@/components/rooms/roomTwo/ArchiveReveal";
 import PuzzleHighlight from "@/components/rooms/PuzzleHighlight";
 
-type Overlay = null | "logic" | "report" | "cables" | "cctv";
+type Overlay = null | "logic" | "report" | "network" | "archive";
 
 type Progress = {
   logicSolved: boolean;
   reportSeen: boolean;
-  cablesSolved: boolean;
-  cctvLogged: boolean;
+  networkSolved: boolean;
+  archiveLogged: boolean;
 };
 
-const PANEL_POS: [number, number, number] = [-1.25, 3.35, 4.35];
-const MONITOR_POS: [number, number, number] = [0.85, 3.55, 5.9];
+const LOGIC_POS: [number, number, number] = [-1.32, 2.62, 4.25];
+const MONITOR_POS: [number, number, number] = [0.55, 2.85, 5.35];
 
 const LoadPaper = ({
   position = [-1.59, 2.56, 4] as [number, number, number],
@@ -33,7 +33,6 @@ const LoadPaper = ({
 
 const LoadModel = () => {
   const { scene } = useGLTF("/model/RoomTwoModel.glb");
-
   useEffect(() => {
     if (scene) {
       scene.traverse((child: THREE.Object3D) => {
@@ -44,92 +43,54 @@ const LoadModel = () => {
       });
     }
   }, [scene]);
-
   return <primitive object={scene} position={[-1, 2.8, 4]} scale={0.8} />;
 };
 
-function ControlPanel({ solved }: { solved: boolean }) {
-  const ref = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }) => {
-    if (!ref.current || solved) return;
-    ref.current.position.y = PANEL_POS[1] + Math.sin(clock.elapsedTime * 2.2) * 0.012;
-  });
-
+function LogicTerminal({ solved }: { solved: boolean }) {
   return (
-    <group ref={ref} position={PANEL_POS} rotation={[0, 0.35, 0]}>
+    <group position={LOGIC_POS} rotation={[0, 0.35, 0]}>
       <mesh castShadow>
-        <boxGeometry args={[0.55, 0.32, 0.12]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.55} roughness={0.35} />
+        <boxGeometry args={[0.48, 0.28, 0.1]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} roughness={0.4} />
       </mesh>
-      <mesh position={[0, 0.02, 0.065]}>
-        <boxGeometry args={[0.42, 0.2, 0.01]} />
+      <mesh position={[0, 0.02, 0.055]}>
+        <boxGeometry args={[0.38, 0.18, 0.01]} />
         <meshStandardMaterial
-          color={solved ? "#14532d" : "#052e16"}
-          emissive={solved ? "#22c55e" : "#4ade80"}
-          emissiveIntensity={solved ? 1.2 : 1.0}
+          color={solved ? "#14532d" : "#0f172a"}
+          emissive={solved ? "#22c55e" : "#166534"}
+          emissiveIntensity={solved ? 0.4 : 0.22}
         />
       </mesh>
-      {[-0.14, 0, 0.14].map((x, i) => (
-        <mesh key={i} position={[x, -0.1, 0.07]}>
-          <sphereGeometry args={[0.018, 12, 12]} />
-          <meshStandardMaterial
-            color={solved ? "#4ade80" : i === 2 ? "#f87171" : "#64748b"}
-            emissive={solved ? "#22c55e" : i === 2 ? "#ef4444" : "#334155"}
-            emissiveIntensity={1.2}
-          />
-        </mesh>
-      ))}
-      <pointLight position={[0, 0.05, 0.2]} intensity={1.4} color="#4ade80" distance={3} />
+      <pointLight position={[0, 0.08, 0.15]} intensity={0.22} color="#4ade80" distance={0.9} />
     </group>
   );
 }
 
-function LabMonitor({
-  unlocked,
-  restored,
-}: {
-  unlocked: boolean;
-  restored: boolean;
-}) {
-  const ref = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }) => {
-    if (!ref.current || restored || !unlocked) return;
-    ref.current.rotation.z = Math.sin(clock.elapsedTime * 6) * 0.01;
-  });
-
+function ArchiveWorkstation({ unlocked, restored }: { unlocked: boolean; restored: boolean }) {
   return (
-    <group ref={ref} position={MONITOR_POS} rotation={[0, -0.55, 0]}>
-      <mesh position={[0, -0.35, 0]} castShadow>
-        <cylinderGeometry args={[0.06, 0.1, 0.35, 16]} />
-        <meshStandardMaterial color="#334155" metalness={0.4} roughness={0.45} />
+    <group position={MONITOR_POS} rotation={[0, -0.4, 0]}>
+      <mesh position={[0, -0.18, 0.02]} castShadow>
+        <boxGeometry args={[0.3, 0.04, 0.18]} />
+        <meshStandardMaterial color="#334155" metalness={0.35} roughness={0.5} />
       </mesh>
       <mesh castShadow>
-        <boxGeometry args={[0.7, 0.45, 0.08]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.5} roughness={0.3} />
+        <boxGeometry args={[0.52, 0.34, 0.05]} />
+        <meshStandardMaterial color="#0f172a" metalness={0.45} roughness={0.35} />
       </mesh>
-      <mesh position={[0, 0, 0.045]}>
-        <boxGeometry args={[0.58, 0.34, 0.01]} />
+      <mesh position={[0, 0, 0.03]}>
+        <boxGeometry args={[0.44, 0.26, 0.01]} />
         <meshStandardMaterial
-          color={restored ? "#0c4a6e" : unlocked ? "#450a0a" : "#111827"}
-          emissive={restored ? "#38bdf8" : unlocked ? "#ef4444" : "#334155"}
-          emissiveIntensity={restored ? 1.2 : unlocked ? 1.1 : 0.3}
+          color={restored ? "#0c4a6e" : unlocked ? "#172554" : "#111827"}
+          emissive={restored ? "#0284c7" : unlocked ? "#1d4ed8" : "#1e293b"}
+          emissiveIntensity={restored ? 0.4 : unlocked ? 0.3 : 0.08}
         />
       </mesh>
       <pointLight
-        position={[0, 0, 0.25]}
-        intensity={unlocked ? 1.6 : 0.4}
-        color={restored ? "#38bdf8" : "#f87171"}
-        distance={3}
+        position={[0, 0.05, 0.2]}
+        intensity={unlocked ? 0.28 : 0.08}
+        color={restored ? "#38bdf8" : "#60a5fa"}
+        distance={1.1}
       />
-      {unlocked && !restored && (
-        <Html center distanceFactor={6} position={[0, -0.05, 0.06]} style={{ pointerEvents: "none" }}>
-          <div className="rounded bg-black/80 px-2 py-1 font-mono text-[11px] text-rose-300 border border-rose-500/50">
-            SIGNAL LOST
-          </div>
-        </Html>
-      )}
     </group>
   );
 }
@@ -159,14 +120,7 @@ const FirstPersonControls = ({
   const velocity = useRef(new THREE.Vector3());
   const moveSpeed = 0.025;
   const mouseSensitivity = 0.002;
-
-  const boundary = useRef({
-    minX: -1.875,
-    maxX: 1.8,
-    minZ: 2.225,
-    maxZ: 8.05,
-    y: 4,
-  });
+  const boundary = useRef({ minX: -1.875, maxX: 1.8, minZ: 2.225, maxZ: 8.05, y: 4 });
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -188,12 +142,10 @@ const FirstPersonControls = ({
 
   const handleMouseDown = useCallback(
     (e: MouseEvent) => {
-      if (!controlsEnabled) return;
-      if (e.button === 0) {
-        setIsMouseLooking(true);
-        previousMousePosition.current = { x: e.clientX, y: e.clientY };
-        gl.domElement.style.cursor = "none";
-      }
+      if (!controlsEnabled || e.button !== 0) return;
+      setIsMouseLooking(true);
+      previousMousePosition.current = { x: e.clientX, y: e.clientY };
+      gl.domElement.style.cursor = "none";
     },
     [gl, controlsEnabled]
   );
@@ -206,8 +158,7 @@ const FirstPersonControls = ({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isMouseLooking || !controlsEnabled) return;
-      const deltaX = e.clientX - previousMousePosition.current.x;
-      camera.rotation.y -= deltaX * mouseSensitivity;
+      camera.rotation.y -= (e.clientX - previousMousePosition.current.x) * mouseSensitivity;
       camera.rotation.x = 0;
       previousMousePosition.current = { x: e.clientX, y: e.clientY };
     },
@@ -248,23 +199,16 @@ const FirstPersonControls = ({
     if (!controlsEnabled) return;
     velocity.current.set(0, 0, 0);
     const direction = new THREE.Vector3();
-
     if (moveState.current.forward) direction.z -= 1;
     if (moveState.current.backward) direction.z += 1;
     if (moveState.current.left) direction.x -= 1;
     if (moveState.current.right) direction.x += 1;
-
     if (direction.length() > 0) direction.normalize();
-
-    const cameraEuler = new THREE.Euler(0, camera.rotation.y, 0);
-    direction.applyEuler(cameraEuler);
+    direction.applyEuler(new THREE.Euler(0, camera.rotation.y, 0));
     velocity.current.addScaledVector(direction, moveSpeed);
-
-    const newPosition = camera.position.clone().add(velocity.current);
-    const clampedPosition = clampPosition(newPosition);
-    camera.position.copy(clampedPosition);
-
-    onPositionUpdate?.([clampedPosition.x, clampedPosition.y, clampedPosition.z]);
+    const clamped = clampPosition(camera.position.clone().add(velocity.current));
+    camera.position.copy(clamped);
+    onPositionUpdate?.([clamped.x, clamped.y, clamped.z]);
   });
 
   return null;
@@ -276,40 +220,40 @@ const RoomTwo = () => {
   const [progress, setProgress] = useState<Progress>({
     logicSolved: false,
     reportSeen: false,
-    cablesSolved: false,
-    cctvLogged: false,
+    networkSolved: false,
+    archiveLogged: false,
   });
 
-  const statusText = progress.cctvLogged
-    ? "Clues logged: Neha's bag on CCTV + a small rectangular object."
-    : progress.cablesSolved
-      ? "CCTV restored — review the damaged recording."
+  const statusText = progress.archiveLogged
+    ? "Neha looks guilty — but the missing original modification record still doesn't add up."
+    : progress.networkSolved
+      ? "Archive open — review the access log."
       : progress.reportSeen
-        ? "Research altered by Neha. Fix the lab monitor (SIGNAL LOST)."
+        ? "Neha's section was altered. Connect to the secure archive (HTTPS)."
         : progress.logicSolved
-          ? "Terminal unlocked — read the research report."
-          : "Blue folder pointed here. Inspect the workstation control panel.";
+          ? "Terminal unlocked — read the Experiment 17 report."
+          : "Blue folder led here. Restore the logic gate control panel.";
 
   return (
     <div className="h-screen w-screen bg-black relative">
       <CameraCoordinates position={cameraPosition} />
 
-      <div className="absolute top-4 right-4 z-20 max-w-sm rounded-lg border-2 border-emerald-400/60 bg-black/85 px-4 py-3 text-sm text-slate-200 shadow-[0_0_30px_rgba(74,222,128,0.35)]">
-        <p className="text-[11px] uppercase tracking-wider text-emerald-300 mb-1">Room 2 · Puzzle Finder</p>
+      <div className="absolute top-4 right-4 z-20 max-w-sm rounded-lg border border-emerald-400/40 bg-black/85 px-4 py-3 text-sm text-slate-200">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-300 mb-1">Room 2 · Research Lab</p>
         <p className="mb-3">{statusText}</p>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setOverlay(progress.logicSolved && !progress.reportSeen ? "report" : "logic")}
-            className="rounded-md border border-emerald-400 bg-emerald-500/20 px-3 py-2 text-left text-sm font-semibold text-emerald-100 hover:bg-emerald-500/35"
+            className="rounded-md border border-emerald-400/50 bg-emerald-500/15 px-3 py-2 text-left text-sm text-emerald-100 hover:bg-emerald-500/25"
           >
-            ★ Open Logic Gate Panel
+            Logic gate panel
           </button>
           {progress.reportSeen && (
             <button
-              onClick={() => setOverlay(progress.cablesSolved ? "cctv" : "cables")}
-              className="rounded-md border border-sky-400 bg-sky-500/20 px-3 py-2 text-left text-sm font-semibold text-sky-100 hover:bg-sky-500/35"
+              onClick={() => setOverlay(progress.networkSolved ? "archive" : "network")}
+              className="rounded-md border border-sky-400/50 bg-sky-500/15 px-3 py-2 text-left text-sm text-sky-100 hover:bg-sky-500/25"
             >
-              ★ Open Monitor / CCTV
+              Secure archive terminal
             </button>
           )}
         </div>
@@ -327,35 +271,30 @@ const RoomTwo = () => {
         <Suspense fallback={null}>
           <LoadModel />
           <LoadPaper />
-          <ControlPanel solved={progress.logicSolved} />
-          <LabMonitor unlocked={progress.reportSeen} restored={progress.cablesSolved} />
+          <LogicTerminal solved={progress.logicSolved} />
+          <ArchiveWorkstation unlocked={progress.reportSeen} restored={progress.networkSolved} />
 
           <PuzzleHighlight
-            position={[PANEL_POS[0], 3.6, PANEL_POS[2]]}
-            label={progress.logicSolved ? "Control Panel (done)" : "PUZZLE: Logic Gates"}
-            color="#4ade80"
+            position={[LOGIC_POS[0], LOGIC_POS[1], LOGIC_POS[2]]}
+            label="Logic panel"
+            color="#34d399"
             visible={overlay === null}
             onClick={() => setOverlay(progress.logicSolved && !progress.reportSeen ? "report" : "logic")}
           />
           <PuzzleHighlight
-            position={[MONITOR_POS[0], 3.8, MONITOR_POS[2]]}
-            label={progress.cablesSolved ? "Monitor / CCTV" : "PUZZLE: Cable Patching"}
+            position={[MONITOR_POS[0], MONITOR_POS[1], MONITOR_POS[2]]}
+            label={progress.networkSolved ? "Archive log" : "Secure archive"}
             color="#38bdf8"
             visible={overlay === null && progress.reportSeen}
-            onClick={() => setOverlay(progress.cablesSolved ? "cctv" : "cables")}
+            onClick={() => setOverlay(progress.networkSolved ? "archive" : "network")}
           />
 
-          <FirstPersonControls
-            onPositionUpdate={setCameraPosition}
-            controlsEnabled={overlay === null}
-          />
+          <FirstPersonControls onPositionUpdate={setCameraPosition} controlsEnabled={overlay === null} />
         </Suspense>
       </Canvas>
 
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-6 py-3 rounded-lg border border-emerald-400/40">
-        <p className="text-emerald-100 text-sm font-mono">
-          Look for glowing beacons · Or use the ★ buttons (top-right)
-        </p>
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-6 py-3 rounded-lg border border-white/20">
+        <p className="text-white text-sm font-mono">WASD move · Click-drag look · Inspect highlighted objects</p>
       </div>
 
       {overlay === "logic" && (
@@ -376,31 +315,31 @@ const RoomTwo = () => {
           }}
           onContinue={() => {
             setProgress((p) => ({ ...p, reportSeen: true }));
-            setOverlay(null);
+            setOverlay("network");
           }}
         />
       )}
 
-      {overlay === "cables" && (
-        <CablePatchingPuzzle
+      {overlay === "network" && (
+        <NetworkPortPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
-            setProgress((p) => ({ ...p, cablesSolved: true }));
-            setOverlay("cctv");
+            setProgress((p) => ({ ...p, networkSolved: true }));
+            setOverlay("archive");
           }}
         />
       )}
 
-      {overlay === "cctv" && (
-        <CctvReveal
+      {overlay === "archive" && (
+        <ArchiveReveal
           onClose={() => setOverlay(null)}
           onComplete={() => {
-            setProgress((p) => ({ ...p, cctvLogged: true }));
+            setProgress((p) => ({ ...p, archiveLogged: true }));
             setOverlay(null);
             if (typeof window !== "undefined") {
-              sessionStorage.setItem("room2_neha_motive", "true");
-              sessionStorage.setItem("room2_cctv_bag", "true");
-              sessionStorage.setItem("room2_rect_object", "true");
+              sessionStorage.setItem("room2_neha_suspect", "true");
+              sessionStorage.setItem("room2_exp17_archive", "true");
+              sessionStorage.setItem("room2_history_missing", "true");
             }
           }}
         />

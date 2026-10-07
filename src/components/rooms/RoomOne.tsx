@@ -8,12 +8,7 @@ import CipherPuzzle from "@/components/rooms/roomOne/CipherPuzzle";
 import BlueFolderReveal from "@/components/rooms/roomOne/BlueFolderReveal";
 import PuzzleHighlight from "@/components/rooms/PuzzleHighlight";
 
-type Overlay =
-  | null
-  | "laser"
-  | "drawer"
-  | "cipher"
-  | "folder";
+type Overlay = null | "laser" | "drawer" | "cipher" | "folder";
 
 type Progress = {
   laserSolved: boolean;
@@ -21,20 +16,26 @@ type Progress = {
   folderOpened: boolean;
 };
 
-const DESK_DEVICE_POS: [number, number, number] = [1.15, 2.18, 0.55];
-const DRAWER_POS: [number, number, number] = [1.35, 1.85, 0.85];
-const FOLDER_POS: [number, number, number] = [-0.95, 2.35, -0.35];
+// Sit on the desk surface near pageOne (~y 2.20)
+const DESK_DEVICE_POS: [number, number, number] = [1.28, 2.205, 0.62];
+const DRAWER_POS: [number, number, number] = [1.42, 1.95, 0.85];
+const FOLDER_POS: [number, number, number] = [0.98, 2.22, 1.05];
 
-const LoadPaper = ({ position = [1.55, 2.2, 0.95] as [number, number, number], rotation = [0, 1.5, 0] as [number, number, number], scale = 0.02 }) => {
+const LoadPaper = ({
+  position = [1.55, 2.2, 0.95] as [number, number, number],
+  rotation = [0, 1.5, 0] as [number, number, number],
+  scale = 0.02,
+}) => {
   const PaperRef = useRef<THREE.Object3D>(null);
   const { scene } = useGLTF("/model/pageOne.glb");
-
   if (!scene) return null;
-
   return <primitive ref={PaperRef} object={scene} position={position} rotation={rotation} scale={scale} />;
 };
 
-const LoadModel = ({ position = [0, 2, 0] as [number, number, number], rotation = [0, 0, 0] as [number, number, number] }) => {
+const LoadModel = ({
+  position = [0, 2, 0] as [number, number, number],
+  rotation = [0, 0, 0] as [number, number, number],
+}) => {
   const ModelRef = useRef<THREE.Object3D>(null);
   const { scene } = useGLTF("/model/RoomOneModel.glb");
 
@@ -57,28 +58,61 @@ const LoadModel = ({ position = [0, 2, 0] as [number, number, number], rotation 
 };
 
 function LaserDevice({ solved }: { solved: boolean }) {
-  const group = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }) => {
-    if (!group.current || solved) return;
-    group.current.position.y = DESK_DEVICE_POS[1] + Math.sin(clock.elapsedTime * 2) * 0.015;
-  });
-
   return (
-    <group ref={group} position={DESK_DEVICE_POS}>
-      <mesh castShadow position={[0, 0.02, 0]}>
-        <boxGeometry args={[0.28, 0.04, 0.2]} />
-        <meshStandardMaterial color="#1f2937" metalness={0.6} roughness={0.35} />
+    <group position={DESK_DEVICE_POS} rotation={[0, -0.35, 0]}>
+      <mesh castShadow position={[0, 0.025, 0]}>
+        <boxGeometry args={[0.26, 0.05, 0.18]} />
+        <meshStandardMaterial color="#1f2937" metalness={0.55} roughness={0.4} />
       </mesh>
-      <mesh position={[-0.08, 0.08, 0]}>
-        <cylinderGeometry args={[0.025, 0.03, 0.1, 12]} />
-        <meshStandardMaterial color="#0ea5e9" emissive="#0284c7" emissiveIntensity={solved ? 1.4 : 1.2} />
+      <mesh position={[-0.07, 0.07, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.022, 0.028, 0.09, 12]} />
+        <meshStandardMaterial
+          color="#0ea5e9"
+          emissive="#0284c7"
+          emissiveIntensity={solved ? 0.55 : 0.3}
+        />
       </mesh>
-      <mesh position={[0.06, 0.07, 0]} rotation={[0, 0, Math.PI / 5]}>
-        <boxGeometry args={[0.12, 0.01, 0.08]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
+      <mesh position={[0.05, 0.055, 0]} rotation={[0, 0, Math.PI / 6]}>
+        <boxGeometry args={[0.1, 0.008, 0.07]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.25} />
       </mesh>
-      <pointLight position={[-0.08, 0.1, 0]} intensity={1.4} color="#38bdf8" distance={2.5} />
+      <pointLight position={[0, 0.12, 0]} intensity={0.25} color="#38bdf8" distance={0.9} />
+    </group>
+  );
+}
+
+function ConcealedDrawer({ unlocked }: { unlocked: boolean }) {
+  const openZ = unlocked ? 0.1 : 0;
+  return (
+    <group position={DRAWER_POS}>
+      <mesh position={[0, 0, openZ]} castShadow>
+        <boxGeometry args={[0.32, 0.07, 0.2]} />
+        <meshStandardMaterial
+          color={unlocked ? "#4a3728" : "#2a2118"}
+          emissive={unlocked ? "#92400e" : "#000000"}
+          emissiveIntensity={unlocked ? 0.2 : 0}
+        />
+      </mesh>
+      <mesh position={[0, 0, openZ + 0.11]}>
+        <boxGeometry args={[0.05, 0.012, 0.018]} />
+        <meshStandardMaterial color="#c4a574" metalness={0.7} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function BlueFolderProp({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <group position={FOLDER_POS} rotation={[-0.05, 0.35, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.2, 0.015, 0.26]} />
+        <meshStandardMaterial color="#1d4ed8" emissive="#1e3a8a" emissiveIntensity={0.25} />
+      </mesh>
+      <mesh position={[0, 0.01, -0.02]}>
+        <boxGeometry args={[0.18, 0.004, 0.22]} />
+        <meshStandardMaterial color="#e2e8f0" />
+      </mesh>
     </group>
   );
 }
@@ -92,55 +126,10 @@ function DeskNote({ visible }: { visible: boolean }) {
         <meshStandardMaterial color="#f5e6c8" />
       </mesh>
       <Html center distanceFactor={5} position={[0, 0.08, 0]} style={{ pointerEvents: "none" }}>
-        <div className="max-w-[140px] rounded bg-black/70 px-2 py-1 text-[10px] text-amber-100/90 border border-amber-500/30">
-          "It's where the light points."
+        <div className="max-w-[150px] rounded bg-black/70 px-2 py-1 text-[10px] text-amber-100/90 border border-amber-500/30">
+          The answer isn&apos;t where you are looking. It&apos;s where the light points.
         </div>
       </Html>
-    </group>
-  );
-}
-
-function ConcealedDrawer({ unlocked }: { unlocked: boolean }) {
-  const openZ = unlocked ? 0.12 : 0;
-  return (
-    <group position={DRAWER_POS}>
-      <mesh position={[0, 0, openZ]} castShadow>
-        <boxGeometry args={[0.35, 0.08, 0.22]} />
-        <meshStandardMaterial
-          color={unlocked ? "#4a3728" : "#2a2118"}
-          emissive={unlocked ? "#f59e0b" : "#000000"}
-          emissiveIntensity={unlocked ? 0.35 : 0}
-        />
-      </mesh>
-      <mesh position={[0, 0, openZ + 0.12]}>
-        <boxGeometry args={[0.06, 0.015, 0.02]} />
-        <meshStandardMaterial color="#c4a574" metalness={0.7} roughness={0.3} />
-      </mesh>
-    </group>
-  );
-}
-
-function BlueFolderProp({ visible, opened }: { visible: boolean; opened: boolean }) {
-  const ref = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }) => {
-    if (!ref.current || !visible || opened) return;
-    ref.current.position.y = FOLDER_POS[1] + Math.sin(clock.elapsedTime * 2.4) * 0.02;
-  });
-
-  if (!visible) return null;
-
-  return (
-    <group ref={ref} position={FOLDER_POS} rotation={[0, 0.6, 0]}>
-      <mesh castShadow>
-        <boxGeometry args={[0.22, 0.02, 0.28]} />
-        <meshStandardMaterial color="#1d4ed8" emissive="#3b82f6" emissiveIntensity={1.2} />
-      </mesh>
-      <mesh position={[0, 0.012, -0.02]}>
-        <boxGeometry args={[0.2, 0.004, 0.24]} />
-        <meshStandardMaterial color="#e2e8f0" />
-      </mesh>
-      <pointLight position={[0, 0.1, 0]} intensity={1.2} color="#60a5fa" distance={2.5} />
     </group>
   );
 }
@@ -164,31 +153,15 @@ const FirstPersonControls = ({
   controlsEnabled: boolean;
 }) => {
   const { camera, gl } = useThree();
-  const moveState = useRef({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-  });
-
+  const moveState = useRef({ forward: false, backward: false, left: false, right: false });
   const velocity = useRef(new THREE.Vector3());
   const direction = useRef(new THREE.Vector3());
-
-  const boundary = {
-    minX: -1.65,
-    maxX: 1.52,
-    minZ: -1.58,
-    maxZ: 1.97,
-    y: 3.0,
-  };
-
+  const boundary = { minX: -1.65, maxX: 1.52, minZ: -1.58, maxZ: 1.97, y: 3.0 };
   const [isMouseLooking, setIsMouseLooking] = useState(false);
   const previousMousePosition = useRef({ x: 0, y: 0 });
-
   const moveSpeed = 0.028;
   const damping = 0.8;
   const mouseSensitivity = 0.002;
-
   const cameraPosRef = useRef(new THREE.Vector3(0, 3, 0));
 
   const clampPosition = useCallback((position: THREE.Vector3) => {
@@ -202,57 +175,27 @@ const FirstPersonControls = ({
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!controlsEnabled) return;
-      switch (e.code) {
-        case "KeyW":
-        case "ArrowUp":
-          moveState.current.forward = true;
-          break;
-        case "KeyS":
-        case "ArrowDown":
-          moveState.current.backward = true;
-          break;
-        case "KeyA":
-        case "ArrowLeft":
-          moveState.current.left = true;
-          break;
-        case "KeyD":
-        case "ArrowRight":
-          moveState.current.right = true;
-          break;
-      }
+      if (e.code === "KeyW" || e.code === "ArrowUp") moveState.current.forward = true;
+      if (e.code === "KeyS" || e.code === "ArrowDown") moveState.current.backward = true;
+      if (e.code === "KeyA" || e.code === "ArrowLeft") moveState.current.left = true;
+      if (e.code === "KeyD" || e.code === "ArrowRight") moveState.current.right = true;
     },
     [controlsEnabled]
   );
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    switch (e.code) {
-      case "KeyW":
-      case "ArrowUp":
-        moveState.current.forward = false;
-        break;
-      case "KeyS":
-      case "ArrowDown":
-        moveState.current.backward = false;
-        break;
-      case "KeyA":
-      case "ArrowLeft":
-        moveState.current.left = false;
-        break;
-      case "KeyD":
-      case "ArrowRight":
-        moveState.current.right = false;
-        break;
-    }
+    if (e.code === "KeyW" || e.code === "ArrowUp") moveState.current.forward = false;
+    if (e.code === "KeyS" || e.code === "ArrowDown") moveState.current.backward = false;
+    if (e.code === "KeyA" || e.code === "ArrowLeft") moveState.current.left = false;
+    if (e.code === "KeyD" || e.code === "ArrowRight") moveState.current.right = false;
   }, []);
 
   const handleMouseDown = useCallback(
     (e: MouseEvent) => {
-      if (!controlsEnabled) return;
-      if (e.button === 0) {
-        setIsMouseLooking(true);
-        previousMousePosition.current = { x: e.clientX, y: e.clientY };
-        gl.domElement.style.cursor = "none";
-      }
+      if (!controlsEnabled || e.button !== 0) return;
+      setIsMouseLooking(true);
+      previousMousePosition.current = { x: e.clientX, y: e.clientY };
+      gl.domElement.style.cursor = "none";
     },
     [gl, controlsEnabled]
   );
@@ -270,12 +213,9 @@ const FirstPersonControls = ({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isMouseLooking || !controlsEnabled) return;
-
-      const deltaX = e.clientX - previousMousePosition.current.x;
-      camera.rotation.y -= deltaX * mouseSensitivity;
+      camera.rotation.y -= (e.clientX - previousMousePosition.current.x) * mouseSensitivity;
       camera.rotation.x = 0;
       camera.rotation.z = 0;
-
       previousMousePosition.current = { x: e.clientX, y: e.clientY };
     },
     [camera, isMouseLooking, controlsEnabled]
@@ -293,7 +233,6 @@ const FirstPersonControls = ({
     gl.domElement.addEventListener("mouseup", handleMouseUp);
     gl.domElement.addEventListener("mousemove", handleMouseMove);
     gl.domElement.addEventListener("mouseleave", handleMouseLeave);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -314,35 +253,20 @@ const FirstPersonControls = ({
 
   useFrame(() => {
     if (!controlsEnabled) return;
-
     velocity.current.set(0, 0, 0);
     direction.current.set(0, 0, 0);
-
     if (moveState.current.forward) direction.current.z -= 0.5;
     if (moveState.current.backward) direction.current.z += 0.5;
     if (moveState.current.left) direction.current.x -= 0.5;
     if (moveState.current.right) direction.current.x += 0.5;
-
-    if (direction.current.length() > 0) {
-      direction.current.normalize();
-    }
-
-    const cameraEuler = new THREE.Euler(0, camera.rotation.y, 0, "XYZ");
-    direction.current.applyEuler(cameraEuler);
-
+    if (direction.current.length() > 0) direction.current.normalize();
+    direction.current.applyEuler(new THREE.Euler(0, camera.rotation.y, 0, "XYZ"));
     velocity.current.addScaledVector(direction.current, moveSpeed);
     velocity.current.multiplyScalar(damping);
-
-    const tempPosition = cameraPosRef.current.clone().add(velocity.current);
-    const clampedPosition = clampPosition(tempPosition);
-
+    const clampedPosition = clampPosition(cameraPosRef.current.clone().add(velocity.current));
     cameraPosRef.current.copy(clampedPosition);
     camera.position.copy(clampedPosition);
-
-    const newPosition = [clampedPosition.x, clampedPosition.y, clampedPosition.z];
-    if (onPositionUpdate) {
-      onPositionUpdate(newPosition);
-    }
+    onPositionUpdate?.([clampedPosition.x, clampedPosition.y, clampedPosition.z]);
   });
 
   return null;
@@ -357,46 +281,42 @@ const RoomOne = () => {
     folderOpened: false,
   });
 
-  const handleCameraPositionUpdate = useCallback((newPosition: number[]) => {
-    setCameraPosition(newPosition);
-  }, []);
-
   const statusText = progress.folderOpened
-    ? "Clue logged: Neha Rao appears repeatedly in Verma's investigation notes."
+    ? "Neha looks suspicious. Next: Research Lab — Experiment 17 data is stored there."
     : progress.cipherSolved
-      ? "Decode complete — locate the blue folder in the office."
+      ? "Decoded. Open the blue folder on the desk."
       : progress.laserSolved
-        ? "Drawer unlocked. Retrieve the encrypted note."
-        : "Inspect the optical device on Dr. Verma's desk.";
+        ? "Drawer unlocked. Read Verma's encrypted note."
+        : "Inspect the optical device on Verma's desk.";
 
   return (
     <div className="h-screen w-screen bg-black relative">
       <CameraCoordinates position={cameraPosition} />
 
-      <div className="absolute top-4 right-4 z-20 max-w-sm rounded-lg border-2 border-cyan-400/60 bg-black/85 px-4 py-3 text-sm text-slate-200 shadow-[0_0_30px_rgba(34,211,238,0.35)]">
-        <p className="text-[11px] uppercase tracking-wider text-cyan-300 mb-1">Room 1 · Puzzle Finder</p>
+      <div className="absolute top-4 right-4 z-20 max-w-sm rounded-lg border border-cyan-400/40 bg-black/85 px-4 py-3 text-sm text-slate-200">
+        <p className="text-[11px] uppercase tracking-wider text-cyan-300 mb-1">Room 1 · Dr. Verma&apos;s Office</p>
         <p className="mb-3">{statusText}</p>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setOverlay("laser")}
-            className="rounded-md border border-cyan-400 bg-cyan-500/20 px-3 py-2 text-left text-sm font-semibold text-cyan-100 hover:bg-cyan-500/35"
+            className="rounded-md border border-cyan-400/50 bg-cyan-500/15 px-3 py-2 text-left text-sm text-cyan-100 hover:bg-cyan-500/25"
           >
-            ★ Open Laser Puzzle
+            Optical device
           </button>
           {progress.laserSolved && (
             <button
               onClick={() => setOverlay("drawer")}
-              className="rounded-md border border-amber-400 bg-amber-500/20 px-3 py-2 text-left text-sm font-semibold text-amber-100 hover:bg-amber-500/35"
+              className="rounded-md border border-amber-400/50 bg-amber-500/15 px-3 py-2 text-left text-sm text-amber-100 hover:bg-amber-500/25"
             >
-              ★ Open Drawer / Cipher
+              Concealed drawer
             </button>
           )}
           {progress.cipherSolved && (
             <button
               onClick={() => setOverlay("folder")}
-              className="rounded-md border border-blue-400 bg-blue-500/20 px-3 py-2 text-left text-sm font-semibold text-blue-100 hover:bg-blue-500/35"
+              className="rounded-md border border-blue-400/50 bg-blue-500/15 px-3 py-2 text-left text-sm text-blue-100 hover:bg-blue-500/25"
             >
-              ★ Open Blue Folder
+              Blue folder
             </button>
           )}
         </div>
@@ -404,55 +324,48 @@ const RoomOne = () => {
 
       <Canvas gl={{ antialias: true, alpha: true }} camera={{ position: [0, 3, 0], fov: 75 }}>
         <PerspectiveCamera makeDefault position={[0, 3, 0]} fov={75} near={0.1} far={1000} />
-
         <ambientLight intensity={0.09} />
         <directionalLight position={[2, 5, 1]} intensity={0.1} color="#8da6ce" castShadow />
         <pointLight position={[0, 3, 0]} intensity={0.2} color="#ffecd6" distance={10} decay={2} />
         <spotLight color="#ff00a6ff" intensity={5} position={[1, -1, 0]} distance={3} decay={2} castShadow />
-
         <fog attach="fog" args={["#1a2332", 5, 15]} />
 
         <Suspense fallback={null}>
-          <LoadModel position={[0, 2, 0]} rotation={[0, 0, 0]} />
+          <LoadModel />
           <LoadPaper />
           <DeskNote visible={!progress.laserSolved} />
           <LaserDevice solved={progress.laserSolved} />
           <ConcealedDrawer unlocked={progress.laserSolved} />
-          <BlueFolderProp visible={progress.cipherSolved} opened={progress.folderOpened} />
+          <BlueFolderProp visible={progress.cipherSolved} />
 
           <PuzzleHighlight
-            position={[DESK_DEVICE_POS[0], 2.4, DESK_DEVICE_POS[2]]}
-            label={progress.laserSolved ? "Laser Device (done)" : "PUZZLE: Laser Device"}
+            position={[DESK_DEVICE_POS[0], DESK_DEVICE_POS[1], DESK_DEVICE_POS[2]]}
+            label="Optical device"
             color="#22d3ee"
             visible={overlay === null}
             onClick={() => setOverlay("laser")}
           />
           <PuzzleHighlight
-            position={[DRAWER_POS[0], 2.2, DRAWER_POS[2]]}
-            label="PUZZLE: Concealed Drawer"
+            position={[DRAWER_POS[0], DRAWER_POS[1] + 0.08, DRAWER_POS[2]]}
+            label="Concealed drawer"
             color="#f59e0b"
             visible={overlay === null && progress.laserSolved}
             onClick={() => setOverlay("drawer")}
           />
           <PuzzleHighlight
-            position={[FOLDER_POS[0], 2.5, FOLDER_POS[2]]}
-            label="PUZZLE: Blue Folder"
+            position={[FOLDER_POS[0], FOLDER_POS[1], FOLDER_POS[2]]}
+            label="Blue folder"
             color="#3b82f6"
             visible={overlay === null && progress.cipherSolved}
             onClick={() => setOverlay("folder")}
           />
 
-          <FirstPersonControls
-            onPositionUpdate={handleCameraPositionUpdate}
-            controlsEnabled={overlay === null}
-          />
+          <FirstPersonControls onPositionUpdate={setCameraPosition} controlsEnabled={overlay === null} />
         </Suspense>
       </Canvas>
 
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-6 py-3 rounded-lg border border-cyan-400/40">
-        <p className="text-cyan-100 text-sm font-mono">
-          Look for glowing beacons · Or use the ★ buttons (top-right)
-        </p>
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-6 py-3 rounded-lg border border-white/20">
+        <p className="text-white text-sm font-mono">WASD move · Click-drag look · Inspect highlighted objects</p>
       </div>
 
       {overlay === "laser" && (
@@ -477,7 +390,7 @@ const RoomOne = () => {
           onClose={() => setOverlay(null)}
           onSolved={() => {
             setProgress((p) => ({ ...p, cipherSolved: true }));
-            setOverlay(null);
+            setOverlay("folder");
           }}
         />
       )}
@@ -489,7 +402,8 @@ const RoomOne = () => {
             setProgress((p) => ({ ...p, folderOpened: true }));
             setOverlay(null);
             if (typeof window !== "undefined") {
-              sessionStorage.setItem("room1_neha_clue", "true");
+              sessionStorage.setItem("room1_neha_suspect", "true");
+              sessionStorage.setItem("room1_to_lab", "true");
             }
           }}
         />

@@ -10,7 +10,7 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold text-lime-200">Research Terminal</h2>
-            <p className="text-xs text-slate-400 mt-1">Restored access · Experiment integrity audit</p>
+            <p className="text-xs text-slate-400 mt-1">Restored access · Experiment 17 integrity audit</p>
           </div>
           <button
             onClick={onClose}
@@ -37,16 +37,26 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
             </div>
 
             <p className="text-sm leading-relaxed text-slate-300">
-              Original experiment results do <strong className="text-white">not</strong> match the
-              current results. Someone changed the research records after the trial closed.
+              <strong className="text-white">ORIGINAL EXPERIMENT RESULTS ≠ CURRENT EXPERIMENT RESULTS</strong>
             </p>
+            <p className="mt-2 text-sm text-slate-300">Someone changed the research.</p>
 
             <p className="mt-4 text-sm text-amber-100/90 border-t border-white/10 pt-4">
-              Section owner for the altered block:{" "}
-              <strong className="text-rose-300">NEHA RAO</strong>
+              Altered section associated with: <strong className="text-rose-300">NEHA RAO</strong>
             </p>
-            <p className="mt-2 text-sm text-slate-400">
-              Motive begins to form — she had access, and her section is where the data was rewritten.
+
+            <div className="mt-3 rounded border border-amber-400/25 bg-amber-500/5 px-3 py-2 text-xs text-amber-100/90 space-y-1">
+              <p className="font-mono text-amber-200">WARNING · Modification history incomplete.</p>
+              <p className="font-mono text-amber-200/80">Previous version overwritten.</p>
+            </div>
+
+            <p className="mt-3 text-sm text-slate-400">
+              Neha&apos;s section carries the altered values. The incomplete history is a gap in the record — not
+              an alibi.
+            </p>
+            <p className="mt-3 text-sm text-sky-200/90">
+              Secure archive access is still locked on the nearby workstation. That log may show who touched
+              EXP-17 last.
             </p>
           </div>
 
@@ -54,7 +64,7 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
             onClick={onContinue}
             className="w-full rounded-md bg-lime-500/20 border border-lime-400/40 px-4 py-3 text-sm font-medium text-lime-100 hover:bg-lime-500/30"
           >
-            Continue — Check Lab Monitor
+            Open Secure Archive Terminal
           </button>
         </div>
       </div>

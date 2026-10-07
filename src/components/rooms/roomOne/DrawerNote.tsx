@@ -19,20 +19,19 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
 
         <div className="px-5 py-6 space-y-5">
           <p className="text-sm text-slate-400">
-            The laser locks onto the target. A slim drawer beneath the desk slides open,
-            revealing a small encrypted note.
+            The laser finds its target. A slim drawer beneath the desk slides open — Verma left something behind.
           </p>
 
           <div className="rounded-lg border border-amber-700/40 bg-[#1c160f] p-5 shadow-inner">
             <p className="font-serif text-base leading-relaxed text-amber-100/90 italic">
-              "If you're reading this, I didn't have time to finish. The archive contains the
-              proof. But first, find the key I left behind."
+              &quot;If you&apos;re reading this, I didn&apos;t have time to finish. The archive contains the proof. But
+              first, find the key I left behind.&quot;
             </p>
             <p className="mt-4 text-right text-xs tracking-widest text-amber-500/80">— D. VERMA</p>
           </div>
 
           <p className="text-sm text-slate-300">
-            Under the note sits a second scrap — ciphered letters and a faint reference mark.
+            Under the note sits a second scrap — ciphered letters and a faint cipher reference.
           </p>
 
           <button

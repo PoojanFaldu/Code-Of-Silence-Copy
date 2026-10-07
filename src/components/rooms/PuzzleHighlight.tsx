@@ -11,7 +11,7 @@ interface PuzzleHighlightProps {
   onClick?: () => void;
 }
 
-/** Temporary always-on beacon + clickable label so puzzles are easy to find. */
+/** Soft local glow + small label — sits on/near the prop, no floating beacon. */
 export default function PuzzleHighlight({
   position,
   label,
@@ -19,50 +19,33 @@ export default function PuzzleHighlight({
   visible = true,
   onClick,
 }: PuzzleHighlightProps) {
-  const ring = useRef<THREE.Mesh>(null);
-  const beam = useRef<THREE.Mesh>(null);
+  const glow = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    if (ring.current) {
-      ring.current.rotation.z = t * 1.5;
-      const s = 1 + Math.sin(t * 3) * 0.15;
-      ring.current.scale.set(s, s, s);
-    }
-    if (beam.current) {
-      const mat = beam.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = 0.8 + Math.sin(t * 4) * 0.4;
-    }
+    if (!glow.current) return;
+    const mat = glow.current.material as THREE.MeshStandardMaterial;
+    mat.opacity = 0.18 + Math.sin(clock.elapsedTime * 1.6) * 0.06;
+    mat.emissiveIntensity = 0.35 + Math.sin(clock.elapsedTime * 1.6) * 0.12;
   });
 
   if (!visible) return null;
 
   return (
     <group position={position}>
-      <mesh ref={beam} position={[0, 0.9, 0]}>
-        <cylinderGeometry args={[0.04, 0.08, 1.8, 16]} />
+      <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <circleGeometry args={[0.22, 32]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={1.2}
+          emissiveIntensity={0.4}
           transparent
-          opacity={0.55}
+          opacity={0.2}
+          depthWrite={false}
         />
       </mesh>
+      <pointLight position={[0, 0.15, 0]} intensity={0.35} color={color} distance={1.1} decay={2} />
 
-      <mesh ref={ring} position={[0, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.35, 0.035, 12, 32]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2} />
-      </mesh>
-
-      <mesh position={[0, 1.85, 0]}>
-        <sphereGeometry args={[0.1, 16, 16]} />
-        <meshStandardMaterial color="#fff" emissive={color} emissiveIntensity={2.5} />
-      </mesh>
-
-      <pointLight position={[0, 1.2, 0]} intensity={2.2} color={color} distance={4} />
-
-      <Html center distanceFactor={6} position={[0, 2.15, 0]} style={{ pointerEvents: "auto" }}>
+      <Html center distanceFactor={5} position={[0, 0.32, 0]} style={{ pointerEvents: "auto" }}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -70,27 +53,20 @@ export default function PuzzleHighlight({
           }}
           style={{
             whiteSpace: "nowrap",
-            borderRadius: 10,
-            border: `2px solid ${color}`,
-            background: "rgba(0,0,0,0.88)",
-            color: "#fff",
-            padding: "10px 14px",
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            boxShadow: `0 0 24px ${color}`,
+            borderRadius: 6,
+            border: `1px solid ${color}88`,
+            background: "rgba(8,12,18,0.82)",
+            color: "#e2e8f0",
+            padding: "5px 10px",
+            fontSize: 11,
+            fontWeight: 560,
+            letterSpacing: "0.03em",
+            boxShadow: `0 0 10px ${color}33`,
             cursor: "pointer",
-            animation: "puzzlePulse 1.2s ease-in-out infinite",
           }}
         >
-          ★ {label}
+          {label}
         </button>
-        <style>{`
-          @keyframes puzzlePulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.06); opacity: 0.92; }
-          }
-        `}</style>
       </Html>
     </group>
   );

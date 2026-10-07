@@ -36,23 +36,23 @@ const locations: LocationWithTeaser[] = [
   },
   {
     id: "lab",
-    name: "Server Room",
+    name: "Research Lab",
     icon: <Beaker className="w-8 h-8" />,
     position: { x: "70%", y: "25%" },
     color: "hsl(180 100% 50%)",
-    teaser: "Files missing, truths buried deep.",
-  },
-  {
-    id: "archive",
-    name: "Research Lab",
-    icon: <FolderOpen className="w-8 h-8" />,
-    position: { x: "30%", y: "70%" },
-    color: "hsl(120 100% 50%)",
     teaser: "The scent of chemicals and erased logs lingers.",
   },
   {
-    id: "server",
+    id: "archive",
     name: "Archive Room",
+    icon: <FolderOpen className="w-8 h-8" />,
+    position: { x: "30%", y: "70%" },
+    color: "hsl(120 100% 50%)",
+    teaser: "Files missing, truths buried deep.",
+  },
+  {
+    id: "server",
+    name: "Server Room",
     icon: <Server className="w-8 h-8" />,
     position: { x: "75%", y: "65%" },
     color: "hsl(0 100% 50%)",
@@ -80,9 +80,17 @@ export const InvestigationMap = () => {
   const [loadingLocation, setLoadingLocation] = useState<LocationWithTeaser | null>(null);
 
   useEffect(() => {
+    // TEMP: prefill correct answers so rooms unlock without typing
     const shuffled = [...cluesData].sort(() => Math.random() - 0.5);
+    const prefilled: Record<number, string> = {};
+    shuffled.forEach((clue, index) => {
+      prefilled[index] = clue.answer;
+    });
     setClues(shuffled);
-  }, []);
+    setAnswers(prefilled);
+    setRevealedNumbers(new Set(shuffled.map((c) => c.number)));
+    setPuzzleSolved(true);
+  }, [setPuzzleSolved]);
 
   const handleLocationClick = (location: LocationWithTeaser) => {
     if (!puzzleSolved) {
