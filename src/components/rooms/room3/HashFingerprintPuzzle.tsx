@@ -76,20 +76,10 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
           id: "ref",
           label: "Notebook",
           content: (
-            <div className="space-y-2 font-mono text-xs">
-              {[
-                ["EXP17_FINAL", "A91F27"],
-                ["EXP17_BACKUP", "A91F27"],
-                ["EXP17_CURRENT", "A91F27"],
-              ].map(([n, h]) => (
-                <div
-                  key={n}
-                  className="flex justify-between rounded-xl border border-amber-700/30 bg-amber-950/20 px-3 py-2.5 text-amber-100/90"
-                >
-                  <span>{n}</span>
-                  <span>{h}</span>
-                </div>
-              ))}
+            <div className="rounded-xl border border-amber-700/30 bg-amber-950/20 px-4 py-5 space-y-3 font-mono text-xs text-amber-100/90">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-amber-400/80">Hash</p>
+              <p>Same file → same fingerprint</p>
+              <p>Different file → different fingerprint</p>
             </div>
           ),
         },

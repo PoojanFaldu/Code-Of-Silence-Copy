@@ -109,8 +109,8 @@ export const EVIDENCE_LOGS: {
   },
   {
     id: "overlay_stamp",
-    title: "Overlay Stamp",
-    body: "EXP-17 ORIGINAL RECORD\nSession archive recovered",
+    title: "Archive Recovered",
+    body: "21:17  EXP-17 BASELINE MODIFIED\n21:36  UNKNOWN SESSION",
   },
   {
     id: "session_full",
