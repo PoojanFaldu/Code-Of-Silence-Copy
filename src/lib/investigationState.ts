@@ -67,6 +67,30 @@ export function resetInvestigationState() {
   resetProgressHud();
 }
 
+/** Dev/test: unlock the Server Room without replaying earlier sites. */
+export function unlockServerRoomForTesting() {
+  setInvestigationState({
+    room1Complete: true,
+    room2Complete: true,
+    room3Complete: true,
+    nehaSuspect: true,
+    nehaRedHerringRevealed: true,
+    arjunEvidenceFound: false,
+    finalUnlocked: false,
+    caseSolved: false,
+    room4Complete: false,
+  });
+  if (canUseStorage()) {
+    sessionStorage.setItem("room1_neha_suspect", "true");
+    sessionStorage.setItem("room1_to_lab", "true");
+    sessionStorage.setItem("room2_neha_suspect", "true");
+    sessionStorage.setItem("room2_exp17_archive", "true");
+    sessionStorage.setItem("room2_history_missing", "true");
+    sessionStorage.setItem("room3_puzzle5_solved", "true");
+    sessionStorage.setItem("room3_puzzle6_solved", "true");
+  }
+}
+
 /** Room unlock rules for continuous investigation */
 export function isRoomUnlocked(room: RoomKey, state = getInvestigationState()): boolean {
   switch (room) {

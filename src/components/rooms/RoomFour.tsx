@@ -8,19 +8,15 @@ import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
 import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import SessionIdentificationPuzzle from "@/components/rooms/roomFour/SessionIdentificationPuzzle";
+import TangledWiresPuzzle from "@/components/rooms/roomFour/TangledWiresPuzzle";
+import CctvMonitor from "@/components/rooms/roomFour/CctvMonitor";
 import { useGame } from "@/contexts/GameContext";
 import { setInvestigationState } from "@/lib/investigationState";
-import {
-  EVIDENCE_LOGS,
-  completeTask,
-  getUnlockedLogs,
-  unlockLog,
-  type LogId,
-} from "@/lib/investigationProgress";
+import { completeTask, unlockLog } from "@/lib/investigationProgress";
 import { MISSION_DURATION_SECONDS, recordMurderGuess } from "@/lib/eventDb";
 
-/** 0 session → 1 flashlight → 2 UV paper → 3 accusation */
-type Step = 0 | 1 | 2 | 3;
+/** 0 session → 1 flashlight → 2 UV → 3 wires → 4 monitor → accuse */
+type Step = 0 | 1 | 2 | 3 | 4;
 
 const ROOM4_BOUNDARY = {
   minX: -0.401,
@@ -34,6 +30,9 @@ const BOX_POS: [number, number, number] = [0.45, 2.505, 5.05];
 const FLASHLIGHT_POS: [number, number, number] = [-0.2, 2.76, 4.2];
 /** Glass coffee table — small nudge up/in from the rim seat. */
 const PAPER_POS: [number, number, number] = [0.08, 2.820, 4.08];
+/** Wall CCTV monitor — back-right of the server room. */
+const MONITOR_POS: [number, number, number] = [0.52, 3.05, 5.55];
+const WIRES_POS: [number, number, number] = [0.35, 2.7, 5.35];
 
 const LoadModel = () => {
   const { scene } = useGLTF("/model/RoomFourModel.glb");
@@ -58,6 +57,40 @@ function UvPaperSheet({ uvOn }: { uvOn: boolean }) {
       <mesh castShadow receiveShadow>
         <boxGeometry args={[0.18, 0.003, 0.22]} />
         <meshStandardMaterial color={uvOn ? "#e9d5ff" : "#e7e5e4"} />
+      </mesh>
+    </group>
+  );
+}
+
+function RelayPanelMesh() {
+  return (
+    <group position={WIRES_POS} rotation={[0, 0.4, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.14, 0.18, 0.03]} />
+        <meshStandardMaterial color="#22272e" metalness={0.3} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0, 0.017]}>
+        <planeGeometry args={[0.1, 0.14]} />
+        <meshStandardMaterial color="#67e8f9" emissive="#0e7490" emissiveIntensity={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function MonitorMesh({ lit }: { lit: boolean }) {
+  return (
+    <group position={MONITOR_POS} rotation={[0, -0.55, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.22, 0.16, 0.04]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.35} roughness={0.45} />
+      </mesh>
+      <mesh position={[0, 0, 0.022]}>
+        <planeGeometry args={[0.18, 0.12]} />
+        <meshStandardMaterial
+          color={lit ? "#22d3ee" : "#0ea5e9"}
+          emissive={lit ? "#0891b2" : "#164e63"}
+          emissiveIntensity={lit ? 1.4 : 0.35}
+        />
       </mesh>
     </group>
   );
@@ -89,32 +122,49 @@ function isKaranAccusation(raw: string) {
   return s === "karan" || s === "patel" || s === "karan patel" || s === "patel karan";
 }
 
+function isMayaAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "maya" || s === "shah" || s === "maya shah" || s === "shah maya";
+}
+
+function isRohanAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "rohan" || s === "desai" || s === "rohan desai" || s === "desai rohan";
+}
+
 const RoomFour = () => {
   const { penalizeWrongAccusation, timeRemaining } = useGame();
   const [showSession, setShowSession] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const [uvEnabled, setUvEnabled] = useState(false);
   const [showUvClue, setShowUvClue] = useState(false);
-  const [showEvidenceReview, setShowEvidenceReview] = useState(false);
+  const [showWires, setShowWires] = useState(false);
+  const [wiresDone, setWiresDone] = useState(false);
+  const [showMonitor, setShowMonitor] = useState(false);
+  const [cctvUnlocked, setCctvUnlocked] = useState(false);
   const [showFinalQuestion, setShowFinalQuestion] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [accusation, setAccusation] = useState("");
   const [answerError, setAnswerError] = useState("");
-  const [reviewLog, setReviewLog] = useState<LogId | null>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [step, setStep] = useState<Step>(0);
 
-  const unlockedLogs = useMemo(() => {
-    const ids = getUnlockedLogs();
-    return EVIDENCE_LOGS.filter((l) => ids.includes(l.id));
-  }, [showEvidenceReview, showFinalQuestion, gameWon]);
-
   const modalOpen =
-    showSession || showUvClue || showEvidenceReview || showFinalQuestion || gameWon;
+    showSession || showUvClue || showWires || showMonitor || showFinalQuestion || gameWon;
   const controlsEnabled = !modalOpen;
 
   const activePos =
-    step === 0 ? BOX_POS : step === 1 ? FLASHLIGHT_POS : step === 2 ? PAPER_POS : null;
+    step === 0
+      ? BOX_POS
+      : step === 1
+        ? FLASHLIGHT_POS
+        : step === 2
+          ? PAPER_POS
+          : step === 3
+            ? WIRES_POS
+            : step === 4
+              ? MONITOR_POS
+              : null;
 
   const targets: InteractTarget[] = useMemo(
     () => [
@@ -139,8 +189,22 @@ const RoomFour = () => {
         active: step === 2 && uvEnabled,
         maxDistance: 1.8,
       },
+      {
+        id: "wires",
+        label: "Relay circuit",
+        position: WIRES_POS,
+        active: step === 3 && !wiresDone,
+        maxDistance: 1.8,
+      },
+      {
+        id: "monitor",
+        label: cctvUnlocked ? "CCTV feed" : "CCTV monitor",
+        position: MONITOR_POS,
+        active: step === 4 && wiresDone,
+        maxDistance: 1.9,
+      },
     ],
-    [step, sessionDone, uvEnabled]
+    [step, sessionDone, uvEnabled, wiresDone, cctvUnlocked]
   );
 
   const handleInteract = (id: string) => {
@@ -154,6 +218,12 @@ const RoomFour = () => {
     }
     if (id === "paper" && step === 2 && uvEnabled) {
       setShowUvClue(true);
+    }
+    if (id === "wires" && step === 3 && !wiresDone) {
+      setShowWires(true);
+    }
+    if (id === "monitor" && wiresDone) {
+      setShowMonitor(true);
     }
   };
 
@@ -170,11 +240,19 @@ const RoomFour = () => {
     recordMurderGuess(accusation.trim(), false, timeUsed);
     penalizeWrongAccusation();
     if (isNehaAccusation(accusation)) {
-      setAnswerError("The timeline does not match.\nTry again.");
+      setAnswerError("Neha Rao acted after 21:17.\nTry again.");
       return;
     }
     if (isKaranAccusation(accusation)) {
       setAnswerError("Access alone is not enough.\nTry again.");
+      return;
+    }
+    if (isMayaAccusation(accusation)) {
+      setAnswerError("Motive without the 21:17 change.\nTry again.");
+      return;
+    }
+    if (isRohanAccusation(accusation)) {
+      setAnswerError("His admin restart is after 21:41.\nTry again.");
       return;
     }
     setAnswerError("That name does not fit the evidence.\nTry again.");
@@ -202,6 +280,8 @@ const RoomFour = () => {
         <Suspense fallback={null}>
           <LoadModel />
           {(step >= 2 || uvEnabled) && <UvPaperSheet uvOn={uvEnabled} />}
+          {step === 3 && !wiresDone && <RelayPanelMesh />}
+          {(wiresDone || step >= 4) && <MonitorMesh lit={step === 4 || cctvUnlocked} />}
 
           <group position={BOX_POS}>
             <Box scale={[0.15, 0.08, 0.15]}>
@@ -244,6 +324,14 @@ const RoomFour = () => {
         </div>
       )}
 
+      {wiresDone && step === 4 && !showMonitor && !showFinalQuestion && !gameWon && (
+        <div className="absolute top-20 left-1/2 z-20 -translate-x-1/2 pointer-events-none">
+          <div className="rounded-lg border border-cyan-500/40 bg-cyan-950/80 px-4 py-2">
+            <p className="font-mono text-[11px] text-cyan-100">CCTV monitor unlocked</p>
+          </div>
+        </div>
+      )}
+
       {showSession && (
         <SessionIdentificationPuzzle
           onClose={() => setShowSession(false)}
@@ -257,7 +345,7 @@ const RoomFour = () => {
         />
       )}
 
-      {showUvClue && !showEvidenceReview && !showFinalQuestion && !gameWon && (
+      {showUvClue && !showWires && !showMonitor && !showFinalQuestion && !gameWon && (
         <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4 my-4">
             <h2 className="text-lg text-purple-200 font-semibold tracking-widest">UV ARCHIVE</h2>
@@ -268,19 +356,19 @@ const RoomFour = () => {
               </div>
               <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
                 <span className="w-10 shrink-0 text-amber-300">21:03</span>
-                <span className="text-amber-100">Assigned researcher — present</span>
+                <span className="text-amber-100">A. MEHTA — lab access</span>
               </div>
               <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
                 <span className="w-10 shrink-0 text-amber-300">21:17</span>
-                <span className="text-amber-100">EXP-17 BASELINE MODIFIED</span>
+                <span className="text-amber-100">EXP-17 BASELINE MODIFIED · 84.2% → 91.7%</span>
               </div>
               <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
                 <span className="w-10 shrink-0 text-emerald-300">21:29</span>
-                <span className="text-emerald-100">N. RAO — review (after original change)</span>
+                <span className="text-emerald-100">N. RAO — record access</span>
               </div>
               <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
                 <span className="w-10 shrink-0 text-emerald-300">21:36</span>
-                <span className="text-emerald-100">N. RAO — server check (after original change)</span>
+                <span className="text-emerald-100">N. RAO — server access</span>
               </div>
               <div className="flex gap-3 rounded-md bg-rose-500/10 border border-rose-400/25 px-2 py-1 -mx-0.5">
                 <span className="w-10 shrink-0 text-rose-300">21:41</span>
@@ -290,38 +378,29 @@ const RoomFour = () => {
                 <span className="w-10 shrink-0 text-purple-300/80">21:42</span>
                 <span>SESSION CLOSED</span>
               </div>
+              <div className="flex gap-3 opacity-90">
+                <span className="w-10 shrink-0 text-slate-500">21:44</span>
+                <span>ADMIN RESTART — R. DESAI</span>
+              </div>
             </div>
 
-            <div className="rounded-lg border border-emerald-500/25 bg-emerald-950/30 px-3 py-3 text-[11px] text-emerald-50/90 leading-relaxed space-y-1.5">
-              <p className="font-mono text-[10px] tracking-widest text-emerald-300/80 uppercase">
-                Clearance — N. Rao
-              </p>
-              <p>
-                Neha&apos;s review and server session both happen{" "}
-                <span className="text-emerald-200">after</span> the 21:17 rewrite. She was checking
-                a file that was already altered — not authoring the original change.
-              </p>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/25 px-3 py-2.5 font-mono text-[11px] text-slate-200 space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-cyan-300/80">Network · 21:31</p>
+              <p className="text-cyan-100/90">LAB-02 → SERVER · LAB-02 = MEHTA-PC</p>
             </div>
 
             <div className="rounded-lg border border-purple-500/25 bg-black/50 px-3 py-3 font-serif text-xs italic text-purple-50/90 leading-relaxed space-y-2">
               <p className="font-mono not-italic text-[10px] tracking-widest text-purple-300/70">
-                FINAL NOTE — D. VERMA (UV)
+                FINAL NOTE — D. VERMA
               </p>
-              <p>
-                &quot;The baseline was rewritten by the researcher assigned to EXP-17. I told them I
-                would not stay silent. Neha only arrived later — she was trying to understand what
-                had already been done. If anything happens tonight, look at who needed that first
-                change hidden.&quot;
-              </p>
+              <p>&quot;He knows I found it.</p>
+              <p>We need to speak tonight.&quot;</p>
             </div>
 
-            <div className="rounded-lg border border-amber-500/20 bg-amber-950/30 px-3 py-2.5 text-[11px] text-amber-100/90 leading-relaxed font-mono space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-amber-300/80">Correlation</p>
-              <p>21:17 original rewrite → assigned EXP-17 researcher</p>
-              <p>Neha cleared on timing (after 21:17)</p>
-              <p>Verma planned to confront the assigned researcher</p>
-              <p>Verma goes offline at 21:41</p>
-            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              21:17 rewrite ties to the assigned researcher. Restore the relay, then the wall
+              monitor.
+            </p>
 
             <button
               onClick={() => {
@@ -329,81 +408,43 @@ const RoomFour = () => {
                 unlockLog("uv_archive");
                 setInvestigationState({ arjunEvidenceFound: true, finalUnlocked: true });
                 setShowUvClue(false);
-                setShowEvidenceReview(true);
                 setStep(3);
+                setShowWires(true);
               }}
               className="w-full py-3 bg-purple-600/80 hover:bg-purple-600 text-white rounded font-medium"
             >
-              REVIEW EVIDENCE
+              OPEN RELAY CIRCUIT
             </button>
           </div>
         </div>
       )}
 
-      {showEvidenceReview && !showFinalQuestion && !gameWon && (
-        <div className="absolute inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0c] border border-white/15 rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col">
-            <div className="p-5 border-b border-white/10">
-              <h2 className="text-lg text-white font-semibold tracking-widest text-center">
-                EVIDENCE FILE
-              </h2>
-              <p className="text-center text-xs text-slate-500 mt-1">
-                Review collected logs before naming a suspect.
-              </p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              <div className="rounded-lg border border-amber-500/25 bg-amber-950/25 px-3 py-3 text-[11px] text-amber-50/90 leading-relaxed space-y-1.5">
-                <p className="font-mono text-[10px] tracking-widest text-amber-300/90 uppercase">
-                  Case focus
-                </p>
-                <p>
-                  Neha is cleared on timing: her review/server activity is{" "}
-                  <span className="text-amber-200">after</span> the original rewrite.
-                </p>
-                <p>
-                  The <span className="text-amber-200">21:17</span> baseline change required the
-                  assigned EXP-17 researcher (see Blue Folder protocol / Archive recover). Verma
-                  discovered that change and meant to confront them — then went offline at 21:41.
-                </p>
-              </div>
-              {unlockedLogs.length === 0 ? (
-                <p className="text-center text-sm text-slate-500 py-8">No logs unlocked yet.</p>
-              ) : (
-                unlockedLogs.map((log) => (
-                  <button
-                    key={log.id}
-                    type="button"
-                    onClick={() => setReviewLog(reviewLog === log.id ? null : log.id)}
-                    className={`w-full text-left rounded-lg border px-3 py-2.5 transition ${
-                      reviewLog === log.id
-                        ? "border-cyan-400/40 bg-cyan-500/10"
-                        : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    <p className="font-mono text-xs tracking-wider text-cyan-200/90">{log.title}</p>
-                    {reviewLog === log.id && (
-                      <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] text-slate-300 leading-relaxed">
-                        {log.body}
-                      </pre>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-            <div className="p-4 border-t border-white/10 space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowEvidenceReview(false);
-                  setShowFinalQuestion(true);
-                }}
-                className="w-full py-3 border border-red-900/60 bg-red-950/40 hover:bg-red-900/50 text-white rounded font-mono text-sm tracking-wider"
-              >
-                PROCEED TO ACCUSATION
-              </button>
-            </div>
-          </div>
-        </div>
+      {showWires && !showMonitor && !showFinalQuestion && !gameWon && (
+        <TangledWiresPuzzle
+          onClose={() => setShowWires(false)}
+          onSolved={() => {
+            completeTask("wires");
+            unlockLog("wires_signal");
+            setWiresDone(true);
+            setShowWires(false);
+            setStep(4);
+          }}
+        />
+      )}
+
+      {showMonitor && !showFinalQuestion && !gameWon && (
+        <CctvMonitor
+          unlocked={cctvUnlocked}
+          onClose={() => setShowMonitor(false)}
+          onUnlocked={() => {
+            completeTask("cctv");
+            setCctvUnlocked(true);
+          }}
+          onAccuse={() => {
+            setShowMonitor(false);
+            setShowFinalQuestion(true);
+          }}
+        />
       )}
 
       {showFinalQuestion && !gameWon && (
@@ -414,8 +455,6 @@ const RoomFour = () => {
             </h2>
             <p className="text-center text-xs text-slate-500 leading-relaxed">
               Wrong accusation: −10:00.
-              <br />
-              Neha is cleared on timing. Who was assigned to EXP-17 — and who Verma meant to confront?
             </p>
 
             <form
@@ -452,11 +491,11 @@ const RoomFour = () => {
               type="button"
               onClick={() => {
                 setShowFinalQuestion(false);
-                setShowEvidenceReview(true);
+                setShowMonitor(true);
               }}
               className="w-full py-2 text-xs font-mono tracking-wider text-slate-400 hover:text-slate-200"
             >
-              ← BACK TO EVIDENCE
+              ← BACK TO CCTV
             </button>
 
             {answerError && (
@@ -472,13 +511,10 @@ const RoomFour = () => {
             <h1 className="text-4xl text-emerald-400 font-black tracking-widest">CASE CLOSED</h1>
             <div className="text-left text-slate-300 text-sm space-y-3 leading-relaxed">
               <p>
-                Arjun Mehta was connected to the original Experiment 17 manipulation. Verma
-                discovered it and planned to confront him.
+                Arjun Mehta made the original Experiment 17 change. Verma found out and meant to
+                confront him that night.
               </p>
-              <p>
-                Neha&apos;s later access and server session looked damning — but they came after the
-                original change.
-              </p>
+              <p>Later access by others looked guilty — but came after the fact.</p>
             </div>
             <div className="flex flex-col gap-2 items-center">
               <button

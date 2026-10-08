@@ -1,13 +1,16 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Suspense, lazy, useEffect, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import {
   getInvestigationState,
   isRoomUnlocked,
+  unlockServerRoomForTesting,
   type RoomKey,
 } from "@/lib/investigationState";
+import { seedProgressThroughArchives } from "@/lib/investigationProgress";
 import InvestigationHud from "@/components/rooms/InvestigationHud";
+import { useGame } from "@/contexts/GameContext";
 
 const RoomOne = lazy(() => import("@/components/rooms/RoomOne"));
 const RoomTwo = lazy(() => import("@/components/rooms/RoomTwo"));
@@ -25,15 +28,35 @@ function normalizeRoom(raw: string): RoomKey {
 const Game = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { missionStarted, startMission, setPuzzleSolved } = useGame();
   const roomName = normalizeRoom(searchParams.get("room") || "verma");
-  const unlocked = useMemo(() => isRoomUnlocked(roomName, getInvestigationState()), [roomName]);
+  const skipPrior = searchParams.get("skip") === "1";
+  const [skipReady, setSkipReady] = useState(!skipPrior);
 
   useEffect(() => {
+    if (!skipPrior) {
+      setSkipReady(true);
+      return;
+    }
+    unlockServerRoomForTesting();
+    seedProgressThroughArchives();
+    setPuzzleSolved(true);
+    if (!missionStarted) startMission();
+    setSkipReady(true);
+  }, [skipPrior, missionStarted, startMission, setPuzzleSolved]);
+
+  const unlocked = useMemo(
+    () => skipPrior || isRoomUnlocked(roomName, getInvestigationState()),
+    [roomName, skipPrior, skipReady]
+  );
+
+  useEffect(() => {
+    if (!skipReady) return;
     if (!unlocked) {
       // Send locked-room URL attempts back to the investigation map
       navigate("/?skipIntro=true", { replace: true });
     }
-  }, [unlocked, navigate]);
+  }, [unlocked, navigate, skipReady]);
 
   const getRoomComponent = () => {
     switch (roomName) {
@@ -65,14 +88,18 @@ const Game = () => {
     }
   };
 
-  if (!unlocked) {
+  if (!skipReady || !unlocked) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-black text-white gap-4">
         <Lock className="w-10 h-10 text-red-500" />
-        <p className="font-mono text-sm text-slate-300">Location locked — follow the evidence trail.</p>
-        <Link to="/?skipIntro=true">
-          <Button variant="outline">Return to Investigation Map</Button>
-        </Link>
+        <p className="font-mono text-sm text-slate-300">
+          {skipPrior ? "Opening Server Room…" : "Location locked — follow the evidence trail."}
+        </p>
+        {!skipPrior && (
+          <Link to="/?skipIntro=true">
+            <Button variant="outline">Return to Investigation Map</Button>
+          </Link>
+        )}
       </div>
     );
   }

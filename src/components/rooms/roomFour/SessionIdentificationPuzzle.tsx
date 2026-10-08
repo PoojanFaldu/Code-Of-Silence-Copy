@@ -46,17 +46,21 @@ const LOG_ROWS = [
  */
 const ACL_ROWS = [
   { terminal: "LAB-02", badges: ["4412"] },
+  { terminal: "LAB-03", badges: ["5520"] },
   { terminal: "ARC-01", badges: ["8801"] },
   { terminal: "SRV-03", badges: ["2290", "4412"] },
   { terminal: "NET-01", badges: ["3371"] },
+  { terminal: "ADMIN-01", badges: ["9901"] },
 ];
 
 /** Neha holds both archive (8801) and server (2290) badges — match AUTH, not the named log alone. */
 const REGISTRY = [
   { badge: "4412", name: "DR. ARJUN MEHTA", role: "RESEARCH" },
+  { badge: "5520", name: "MAYA SHAH", role: "RESEARCH" },
   { badge: "8801", name: "NEHA RAO", role: "ARCHIVES" },
   { badge: "2290", name: "NEHA RAO", role: "SERVER" },
   { badge: "3371", name: "KARAN PATEL", role: "NETWORK" },
+  { badge: "9901", name: "ROHAN DESAI", role: "IT-ADMIN" },
 ];
 
 const CHOICES: { id: UserId; label: string }[] = [

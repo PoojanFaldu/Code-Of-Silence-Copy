@@ -15,6 +15,8 @@ export type TaskId =
   | "overlay"
   | "session"
   | "uv"
+  | "wires"
+  | "cctv"
   | "accusation";
 
 export type LogId =
@@ -26,7 +28,8 @@ export type LogId =
   | "hash_diff"
   | "overlay_stamp"
   | "session_full"
-  | "uv_archive";
+  | "uv_archive"
+  | "wires_signal";
 
 export type RoomProgressId = "verma" | "research" | "archive" | "server";
 
@@ -69,6 +72,8 @@ export const ROOM_TASKS: {
     tasks: [
       { id: "session", label: "Session" },
       { id: "uv", label: "UV" },
+      { id: "wires", label: "Wires" },
+      { id: "cctv", label: "CCTV" },
       { id: "accusation", label: "Accusation" },
     ],
   },
@@ -87,12 +92,12 @@ export const EVIDENCE_LOGS: {
   {
     id: "folder_log",
     title: "Research File",
-    body: "20:56  VERMA\n21:03  ARJUN\n21:17  FILE CHANGE\n21:29  NEHA\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — A. Mehta.",
+    body: "20:56  VERMA\n21:03  ARJUN\n21:17  FILE CHANGE\n21:29  NEHA\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — A. Mehta.\n\nStaff notes:\nM. Shah — disputed Verma over EXP-17 credit\nR. Desai — IT/security admin\nK. Patel — network technician\nN. Rao — archives",
   },
   {
     id: "exp17_report",
     title: "Experiment 17",
-    body: "20:56 — VERMA\n21:03 — ARJUN\n21:17 — FILE CHANGE\n21:29 — NEHA\n21:36 — UNKNOWN\n21:41 — INTERRUPT\n21:42 — UNAVAILABLE",
+    body: "EXP-17 VERSION HISTORY\n20:56 — VERMA\n21:03 — A. MEHTA\n21:17 — A. MEHTA  (COMMIT 7F3A · MODIFY EXP17_BASELINE · 84.2% → 91.7%)\n21:29 — N. RAO\n21:36 — UNKNOWN\n21:41 — INTERRUPT\n21:42 — UNAVAILABLE",
   },
   {
     id: "timeline_order",
@@ -122,7 +127,12 @@ export const EVIDENCE_LOGS: {
   {
     id: "uv_archive",
     title: "UV Archive",
-    body: "20:56  VERMA\n21:03  Assigned researcher — present\n21:17  EXP-17 BASELINE MODIFIED\n21:29  N. RAO — review (after original change)\n21:36  N. RAO — server check (after original change)\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n\nClearance — N. Rao:\nHer review and server session both happen after the 21:17 rewrite. She was checking a file already altered — not authoring the original change.\n\nFinal note — D. VERMA:\nThe baseline was rewritten by the researcher assigned to EXP-17. I told them I would not stay silent. Neha only arrived later — she was trying to understand what had already been done. If anything happens tonight, look at who needed that first change hidden.\n\nCorrelation:\n21:17 original rewrite → assigned EXP-17 researcher\nNeha cleared on timing (after 21:17)\nVerma planned to confront the assigned researcher\nVerma goes offline at 21:41",
+    body: "20:56  VERMA — online\n21:03  A. MEHTA — lab access\n21:17  EXP-17 BASELINE MODIFIED · 84.2% → 91.7%\n21:29  N. RAO — record access\n21:36  N. RAO — server access\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n21:44  ADMIN RESTART — R. DESAI\n\nNetwork 21:31: LAB-02 → SERVER (MEHTA-PC)\n\nVerma's note:\nHe knows I found it.\nWe need to speak tonight.\n\n21:17 → assigned researcher A. Mehta.\nRelay, then wall monitor.",
+  },
+  {
+    id: "wires_signal",
+    title: "Relay Signal",
+    body: "Server relay circuit restored.\nPath settles on glyph: 7\n\nMonitor lock wants the original baseline figures, then this glyph.",
   },
 ];
 
@@ -191,6 +201,37 @@ export function resetProgressHud() {
   if (!canUseStorage()) return;
   sessionStorage.removeItem(TASK_KEY);
   sessionStorage.removeItem(LOG_KEY);
+  notify();
+}
+
+/** Dev/test: mark rooms 1–3 done so the Server Room HUD looks progressed. */
+export function seedProgressThroughArchives() {
+  const tasks: TaskId[] = [
+    "laser",
+    "drawer",
+    "cipher",
+    "folder",
+    "logic",
+    "report",
+    "timeline",
+    "archive",
+    "hash",
+    "overlay",
+  ];
+  const logs: LogId[] = [
+    "drawer_note",
+    "folder_log",
+    "exp17_report",
+    "timeline_order",
+    "archive_access",
+    "hash_diff",
+    "overlay_stamp",
+  ];
+  if (canUseStorage()) {
+    sessionStorage.setItem(TASK_KEY, JSON.stringify(tasks));
+    sessionStorage.setItem(LOG_KEY, JSON.stringify(logs));
+  }
+  syncPlayerTasks(tasks);
   notify();
 }
 

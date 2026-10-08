@@ -15,6 +15,18 @@ const LINES = [
   ["21:42", "RECORD UNAVAILABLE"],
 ];
 
+const STAFF = [
+  { name: "DR. ARJUN MEHTA", role: "Researcher", note: "Assigned to Experiment 17" },
+  { name: "NEHA RAO", role: "Archives", note: "Record access & review" },
+  { name: "KARAN PATEL", role: "Network tech", note: "Infrastructure access" },
+  {
+    name: "MAYA SHAH",
+    role: "Researcher",
+    note: "Disputed Verma over EXP-17 credit / methods",
+  },
+  { name: "ROHAN DESAI", role: "IT / Security admin", note: "System logs & services" },
+];
+
 export default function BlueFolderReveal({ onClose, onComplete }: BlueFolderRevealProps) {
   return (
     <PuzzleShell
@@ -56,6 +68,29 @@ export default function BlueFolderReveal({ onClose, onComplete }: BlueFolderReve
               <p className="text-[10px] text-slate-500 leading-relaxed">
                 Protocol note only. Does not record who performed any specific write.
               </p>
+            </div>
+          ),
+        },
+        {
+          id: "staff",
+          label: "Staff",
+          content: (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-sky-400/70 mb-1">
+                Lab personnel — night of the incident
+              </p>
+              {STAFF.map((s) => (
+                <div
+                  key={s.name}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 font-mono text-[11px] sm:text-xs"
+                >
+                  <div className="flex justify-between gap-2 text-slate-200">
+                    <span>{s.name}</span>
+                    <span className="text-slate-500 shrink-0">{s.role}</span>
+                  </div>
+                  <p className="text-slate-400 mt-0.5">{s.note}</p>
+                </div>
+              ))}
             </div>
           ),
         },
