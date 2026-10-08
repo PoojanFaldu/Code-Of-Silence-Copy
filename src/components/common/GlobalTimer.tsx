@@ -16,8 +16,10 @@ export function formatMissionTime(seconds: number): string {
 }
 
 export default function GlobalTimer() {
-  const { timeRemaining } = useGame();
+  const { timeRemaining, missionStarted } = useGame();
   const isCritical = timeRemaining < 300; // less than 5 minutes
+
+  if (!missionStarted) return null;
 
   return (
     <div

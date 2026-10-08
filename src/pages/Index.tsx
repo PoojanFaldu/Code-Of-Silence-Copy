@@ -10,14 +10,15 @@ type Phase = "title" | "logo" | "team" | "investigation";
 const Index = () => {
   const [searchParams] = useSearchParams();
   const skipToMap = searchParams.get("skipIntro") === "true";
-  
-  const [phase, setPhase] = useState<Phase>(skipToMap ? "investigation" : "title");
-  const [analystName, setAnalystName] = useState("");
-  const [operatorName, setOperatorName] = useState("");
+  const newPlayer = searchParams.get("newPlayer") === "1";
 
-  const handleTeamComplete = (analyst: string, operator: string) => {
-    setAnalystName(analyst);
-    setOperatorName(operator);
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (newPlayer) return "team";
+    if (skipToMap) return "investigation";
+    return "title";
+  });
+
+  const handleTeamComplete = (_name: string) => {
     setPhase("investigation");
   };
 

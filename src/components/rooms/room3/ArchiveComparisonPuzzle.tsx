@@ -11,7 +11,7 @@ interface ArchiveComparisonPuzzleProps {
   initialSolved?: boolean;
 }
 
-type RowId = "2058" | "2107" | "2117" | "2129" | "2136" | "2142";
+type RowId = "2056" | "2103" | "2117" | "2129" | "2136" | "2142";
 
 const ROWS: {
   id: RowId;
@@ -20,8 +20,8 @@ const ROWS: {
   current: string;
   changed: boolean;
 }[] = [
-  { id: "2058", time: "20:58", archive: "VERMA", current: "VERMA", changed: false },
-  { id: "2107", time: "21:07", archive: "ARJUN", current: "ARJUN", changed: false },
+  { id: "2056", time: "20:56", archive: "VERMA", current: "VERMA", changed: false },
+  { id: "2103", time: "21:03", archive: "ARJUN", current: "ARJUN", changed: false },
   { id: "2117", time: "21:17", archive: "EXP-17 BASELINE", current: "[REDACTED]", changed: true },
   { id: "2129", time: "21:29", archive: "NEHA", current: "NEHA", changed: false },
   { id: "2136", time: "21:36", archive: "UNKNOWN SESSION", current: "[REDACTED]", changed: true },
@@ -108,9 +108,24 @@ export const ArchiveComparisonPuzzle: React.FC<ArchiveComparisonPuzzleProps> = (
               <span>UNKNOWN SESSION</span>
             </div>
           </div>
-          <p className="text-center font-mono text-[10px] tracking-[0.25em] text-slate-500">
-            SESSION ARCHIVE
-          </p>
+          <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/[0.06] px-4 py-3 font-mono text-[11px] text-slate-200 space-y-1.5">
+            <p className="text-[10px] uppercase tracking-widest text-indigo-300/80">Original change</p>
+            <div className="flex justify-between gap-2">
+              <span className="text-slate-500">Time</span>
+              <span>21:17</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-slate-500">Entry</span>
+              <span>EXP-17 BASELINE</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-slate-500">Authorized researcher</span>
+              <span className="text-indigo-200">A. MEHTA</span>
+            </div>
+            <p className="pt-1 text-[10px] text-slate-500 leading-relaxed">
+              Baseline changes normally require the assigned researcher.
+            </p>
+          </div>
         </div>
       </PuzzleShell>
     );

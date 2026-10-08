@@ -1,0 +1,116 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  EVENT_DB_EVENT,
+  formatFinishTime,
+  loadEventDb,
+  type PlayerRecord,
+} from "@/lib/eventDb";
+
+function guessLabel(p: PlayerRecord) {
+  if (p.murderGuess === "none") return "—";
+  const name = p.murderGuessName ?? "?";
+  if (p.murderGuess === "correct") return `${name} · correct`;
+  return `${name} · incorrect`;
+}
+
+export default function Leaderboard() {
+  const [players, setPlayers] = useState<PlayerRecord[]>([]);
+
+  useEffect(() => {
+    const refresh = () => setPlayers(loadEventDb().players);
+    refresh();
+    window.addEventListener(EVENT_DB_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    const id = window.setInterval(refresh, 2000);
+    return () => {
+      window.removeEventListener(EVENT_DB_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+      window.clearInterval(id);
+    };
+  }, []);
+
+  const sorted = [...players].sort((a, b) => {
+    const rank = (p: PlayerRecord) => {
+      if (p.murderGuess === "correct") return 0;
+      if (p.status === "finished") return 1;
+      if (p.status === "playing") return 2;
+      return 3;
+    };
+    const d = rank(a) - rank(b);
+    if (d !== 0) return d;
+    return b.puzzlesPassed - a.puzzlesPassed;
+  });
+
+  return (
+    <div className="min-h-screen bg-black text-white p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em]">LEADERBOARD</h1>
+            <p className="text-xs text-slate-500 mt-1 font-mono">CODE OF SILENCE · LIVE RESULTS</p>
+          </div>
+          <div className="flex gap-3 text-xs font-mono">
+            <Link to="/?newPlayer=1" className="text-slate-400 hover:text-white">
+              New player
+            </Link>
+            <Link to="/" className="text-cyan-400 hover:text-cyan-300">
+              Play
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-cyan-500/20 overflow-hidden bg-gradient-to-b from-cyan-950/20 to-black">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-black/60 text-[10px] uppercase tracking-wider text-cyan-400/80">
+              <tr>
+                <th className="px-4 py-3">Player</th>
+                <th className="px-4 py-3">Puzzles</th>
+                <th className="px-4 py-3">Murderer guess</th>
+                <th className="px-4 py-3">Time out</th>
+                <th className="px-4 py-3">Finished at</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                    No players yet. Start a game with admin password + name.
+                  </td>
+                </tr>
+              ) : (
+                sorted.map((p) => (
+                  <tr key={p.id} className="border-t border-white/10">
+                    <td className="px-4 py-3 font-semibold">{p.name}</td>
+                    <td className="px-4 py-3 font-mono text-cyan-200">{p.puzzlesPassed}</td>
+                    <td
+                      className={`px-4 py-3 font-mono text-xs ${
+                        p.murderGuess === "correct"
+                          ? "text-emerald-400"
+                          : p.murderGuess === "incorrect"
+                            ? "text-rose-400"
+                            : "text-slate-500"
+                      }`}
+                    >
+                      {guessLabel(p)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {p.timedOut ? (
+                        <span className="text-amber-400">YES</span>
+                      ) : (
+                        <span className="text-slate-600">no</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-slate-400">
+                      {formatFinishTime(p.finishedAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

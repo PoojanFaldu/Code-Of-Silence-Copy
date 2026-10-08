@@ -1,140 +1,139 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { getAdminPassword, startGameAsPlayer } from "@/lib/eventDb";
+import { useGame } from "@/contexts/GameContext";
+import { resetProgressHud } from "@/lib/investigationProgress";
+import { resetInvestigationState } from "@/lib/investigationState";
 
 interface TeamIdentificationProps {
-  onComplete: (analystName: string, operatorName: string) => void;
+  onComplete: (playerName: string) => void;
 }
 
 export const TeamIdentification = ({ onComplete }: TeamIdentificationProps) => {
-  const [analystName, setAnalystName] = useState("");
-  const [operatorName, setOperatorName] = useState("");
+  const { resetGame, startMission } = useGame();
+  const [adminPassword, setAdminPassword] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = () => {
-    if (analystName.trim() && operatorName.trim()) {
-      onComplete(analystName.trim(), operatorName.trim());
+  const begin = () => {
+    setError("");
+    if (adminPassword !== getAdminPassword()) {
+      setError("Incorrect admin password.");
+      return;
     }
+    const name = playerName.trim();
+    if (!name) {
+      setError("Enter a player name.");
+      return;
+    }
+    resetGame();
+    resetProgressHud();
+    resetInvestigationState();
+    startGameAsPlayer(name);
+    startMission();
+    onComplete(name);
+  };
+
+  const startAgainDifferentUser = () => {
+    setAdminPassword("");
+    setPlayerName("");
+    setError("");
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black flex items-center justify-center animate-fade-in">
-      {/* Corner Glows - Red & Blue */}
-      <div 
+      <div
         className="absolute top-0 left-0 w-96 h-96 bg-red-500/20 rounded-full blur-[120px] animate-pulse"
-        style={{ animationDuration: '3s' }}
+        style={{ animationDuration: "3s" }}
       />
-      <div 
+      <div
         className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] animate-pulse"
-        style={{ animationDuration: '3s', animationDelay: '1.5s' }}
-      />
-      <div 
-        className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/15 rounded-full blur-[100px] animate-pulse"
-        style={{ animationDuration: '4s', animationDelay: '0.5s' }}
+        style={{ animationDuration: "3s", animationDelay: "1.5s" }}
       />
 
-      {/* Subtle Background Pulse */}
-      <div className="absolute inset-0 bg-gradient-to-b from-red-950/10 via-transparent to-blue-950/10 animate-pulse"
-        style={{ animationDuration: '2s' }}
-      />
-
-      {/* Faint Grid Overlay */}
-      <div className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(0, 200, 255, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 200, 255, 0.3) 1px, transparent 1px)',
-          backgroundSize: '50px 50px',
-        }}
-      />
-
-      {/* Main Content */}
       <div className="relative z-10 w-full max-w-md px-6 animate-scale-in">
-        {/* Heading */}
-        <h1 
-          className="font-display text-4xl md:text-5xl font-black text-center mb-3 tracking-tight animate-fade-in"
+        <h1
+          className="font-display text-4xl md:text-5xl font-black text-center mb-3 tracking-tight text-white"
           style={{
-            color: 'white',
-            textShadow: '0 0 20px rgba(0, 200, 255, 0.8), 0 0 40px rgba(0, 200, 255, 0.4)',
+            textShadow: "0 0 20px rgba(0, 200, 255, 0.8), 0 0 40px rgba(0, 200, 255, 0.4)",
           }}
         >
-          Enter Your Investigation Details
+          Start Investigation
         </h1>
 
-        <p className="text-center text-white/60 font-body text-sm mb-12 animate-fade-in"
-          style={{ animationDelay: '0.2s' }}>
-          Identify your team before proceeding
+        <p className="text-center text-white/60 font-body text-sm mb-10">
+          Admin password required to begin a run.
         </p>
 
-        {/* Input Fields */}
-        <div className="space-y-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          {/* Analyst Name */}
+        <div className="space-y-6">
           <div className="space-y-2">
-            <Label 
-              htmlFor="analyst" 
-              className="font-body text-white/80 text-sm tracking-wide flex items-center gap-2"
-            >
-              <span className="text-cyan-400">🧑‍💻</span> Analyst Name
+            <Label htmlFor="admin-pw" className="font-body text-white/80 text-sm tracking-wide">
+              Admin password
             </Label>
             <Input
-              id="analyst"
-              type="text"
-              value={analystName}
-              onChange={(e) => setAnalystName(e.target.value)}
-              placeholder="Enter analyst name"
-              className="h-12 bg-black/50 border-2 border-cyan-500/30 text-white placeholder:text-white/30 font-body
-                focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
-              style={{
-                boxShadow: '0 0 20px rgba(0, 200, 255, 0.1)',
+              id="admin-pw"
+              type="password"
+              value={adminPassword}
+              onChange={(e) => {
+                setAdminPassword(e.target.value);
+                setError("");
               }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="Admin password"
+              className="h-12 bg-black/50 border-2 border-amber-500/30 text-white placeholder:text-white/30
+                focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+              onKeyDown={(e) => e.key === "Enter" && begin()}
             />
           </div>
 
-          {/* Operator Name */}
           <div className="space-y-2">
-            <Label 
-              htmlFor="operator" 
-              className="font-body text-white/80 text-sm tracking-wide flex items-center gap-2"
-            >
-              <span className="text-blue-400">👩‍💻</span> Operator Name
+            <Label htmlFor="player" className="font-body text-white/80 text-sm tracking-wide">
+              Player name
             </Label>
             <Input
-              id="operator"
+              id="player"
               type="text"
-              value={operatorName}
-              onChange={(e) => setOperatorName(e.target.value)}
-              placeholder="Enter operator name"
-              className="h-12 bg-black/50 border-2 border-blue-500/30 text-white placeholder:text-white/30 font-body
-                focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
-              style={{
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)',
+              value={playerName}
+              onChange={(e) => {
+                setPlayerName(e.target.value);
+                setError("");
               }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="Enter player name"
+              className="h-12 bg-black/50 border-2 border-cyan-500/30 text-white placeholder:text-white/30
+                focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+              onKeyDown={(e) => e.key === "Enter" && begin()}
             />
           </div>
         </div>
 
-        {/* Start Investigation Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={!analystName.trim() || !operatorName.trim()}
-          className="w-full h-14 mt-10 font-display font-bold text-lg tracking-wide
-            bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400
-            text-white border-2 border-red-500/50 disabled:opacity-40 disabled:cursor-not-allowed
-            transition-all duration-300 animate-fade-in hover:animate-pulse"
-          style={{
-            animationDelay: '0.6s',
-            boxShadow: '0 0 30px rgba(220, 38, 38, 0.4), 0 4px 20px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          Start Investigation
-        </Button>
-      </div>
+        {error && <p className="mt-4 text-center text-sm text-rose-400">{error}</p>}
 
-      {/* Corner Grid Accents */}
-      <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-cyan-500/30" />
-      <div className="absolute top-0 right-0 w-32 h-32 border-t-2 border-r-2 border-blue-500/30" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 border-b-2 border-l-2 border-red-500/30" />
-      <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-red-500/30" />
+        <Button
+          onClick={begin}
+          disabled={!adminPassword.trim() || !playerName.trim()}
+          className="w-full h-14 mt-8 font-display font-bold text-lg tracking-wide
+            bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400
+            text-white border-2 border-red-500/50 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Start Game
+        </Button>
+
+        <button
+          type="button"
+          onClick={startAgainDifferentUser}
+          className="w-full mt-3 py-3 text-xs font-mono tracking-wider text-slate-400 hover:text-cyan-300 border border-white/10 rounded-lg hover:border-cyan-500/30 transition"
+        >
+          Start again with a different username
+        </button>
+
+        <div className="mt-6 text-center">
+          <Link to="/leaderboard" className="text-[10px] font-mono text-slate-500 hover:text-slate-300">
+            Leaderboard →
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

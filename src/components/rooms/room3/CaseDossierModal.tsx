@@ -84,9 +84,10 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isHashSolved ? (
                 <span>
-                  AEGIS_FINAL digest differs from Verma&apos;s notebook. Last write: account{" "}
-                  <strong className="font-mono">N. RAO</strong>. Embedded EXP-17 stamp lists reviewer{" "}
-                  <strong className="font-mono">DR. ARJUN MEHTA</strong> on an earlier date.
+                  AEGIS_FINAL digest differs from Verma&apos;s notebook. Later access logged to{" "}
+                  <strong className="font-mono">N. RAO</strong> after the baseline change. Embedded
+                  EXP-17 control stamp lists assigned researcher{" "}
+                  <strong className="font-mono">DR. ARJUN MEHTA</strong>.
                 </span>
               ) : (
                 "Hash verification on the archive terminal not yet complete."
@@ -121,8 +122,9 @@ export const CaseDossierModal: React.FC<CaseDossierModalProps> = ({
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
               {isOverlaySolved ? (
                 <span>
-                  Overlay recovered stamp: <strong>EXP-17 ORIGINAL RECORD</strong> — initial reviewer{" "}
-                  <strong className="font-mono">DR. ARJUN MEHTA</strong>.
+                  Recovered archive: <strong>21:17 EXP-17 BASELINE</strong> tied to authorized
+                  researcher <strong className="font-mono">A. MEHTA</strong>; later{" "}
+                  <strong>21:36 UNKNOWN SESSION</strong> still unresolved.
                 </span>
               ) : (
                 "Overlay mask alignment on archive documents not yet complete."

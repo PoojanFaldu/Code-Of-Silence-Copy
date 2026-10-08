@@ -6,11 +6,11 @@ interface ResearchReportProps {
 }
 
 const LINES = [
-  ["20:58", "VERMA"],
-  ["21:07", "ARJUN"],
-  ["21:18", "UNKNOWN"],
-  ["21:26", "NEHA"],
-  ["21:34", "UNKNOWN"],
+  ["20:56", "VERMA"],
+  ["21:03", "ARJUN"],
+  ["21:17", "FILE CHANGE"],
+  ["21:29", "NEHA"],
+  ["21:36", "UNKNOWN"],
   ["21:41", "INTERRUPT"],
   ["21:42", "UNAVAILABLE"],
 ];

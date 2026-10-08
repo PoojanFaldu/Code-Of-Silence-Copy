@@ -16,11 +16,19 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
           id: "note",
           label: "Note",
           content: (
-            <div className="rounded-xl border border-amber-700/30 bg-[#1a140e] p-5">
+            <div className="rounded-xl border border-amber-700/30 bg-[#1a140e] p-5 space-y-4">
+              <p className="font-mono text-[10px] tracking-widest text-amber-500/80">20:41 — D. VERMA</p>
               <p className="font-serif text-base leading-relaxed text-amber-50/90 italic">
-                &quot;The record ends before the night does.
+                EXP-17 was altered before the later record changes.
                 <br />
-                If someone asks, I never finished reviewing Experiment 17.&quot;
+                <br />
+                I finally know where the original discrepancy came from.
+                <br />
+                <br />
+                Mehta knows I found it.
+                <br />
+                <br />
+                Need to speak with him tonight.
               </p>
             </div>
           ),
@@ -29,9 +37,16 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
           id: "scrap",
           label: "Scrap",
           content: (
-            <div className="rounded-xl border border-dashed border-amber-500/30 bg-black/30 p-6 text-center space-y-2">
-              <p className="font-mono text-xs tracking-widest text-amber-200/70">ENCRYPTED SCRAP</p>
-              <p className="font-mono text-sm text-slate-400">FKHFN WKH …</p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-dashed border-amber-500/30 bg-black/30 p-6 text-center space-y-2">
+                <p className="font-mono text-xs tracking-widest text-amber-200/70">ENCRYPTED SCRAP</p>
+                <p className="font-mono text-sm text-slate-400">FKHFN WKH …</p>
+              </div>
+              <p className="font-serif text-sm text-amber-50/70 italic text-center px-2">
+                &quot;The record ends before the night does.
+                <br />
+                If someone asks, I never finished reviewing Experiment 17.&quot;
+              </p>
             </div>
           ),
         },

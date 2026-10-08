@@ -19,8 +19,9 @@ export default function ArchiveReveal({ onClose, onComplete }: ArchiveRevealProp
             <div className="space-y-2 font-mono text-sm">
               {[
                 ["File", "EXP-17_RESULTS"],
-                ["Write", "21:17"],
+                ["Access", "21:29"],
                 ["Account", "N. RAO"],
+                ["Action", "REVIEW"],
               ].map(([k, v]) => (
                 <div
                   key={k}
@@ -30,8 +31,10 @@ export default function ArchiveReveal({ onClose, onComplete }: ArchiveRevealProp
                   <span className="text-slate-200">{v}</span>
                 </div>
               ))}
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-amber-200/90 text-xs">
-                Previous version unavailable
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-amber-200/90 text-xs leading-relaxed">
+                Review occurred after the 21:17 baseline change.
+                <br />
+                Original write account not shown on this access record.
               </div>
             </div>
           ),

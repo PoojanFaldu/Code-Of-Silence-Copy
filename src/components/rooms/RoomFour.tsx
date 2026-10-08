@@ -10,7 +10,14 @@ import type { FocusedInteractable, InteractTarget } from "@/components/rooms/int
 import SessionIdentificationPuzzle from "@/components/rooms/roomFour/SessionIdentificationPuzzle";
 import { useGame } from "@/contexts/GameContext";
 import { setInvestigationState } from "@/lib/investigationState";
-import { completeTask, unlockLog } from "@/lib/investigationProgress";
+import {
+  EVIDENCE_LOGS,
+  completeTask,
+  getUnlockedLogs,
+  unlockLog,
+  type LogId,
+} from "@/lib/investigationProgress";
+import { recordMurderGuess } from "@/lib/eventDb";
 
 /** 0 session → 1 flashlight → 2 UV paper → 3 accusation */
 type Step = 0 | 1 | 2 | 3;
@@ -83,19 +90,27 @@ function isKaranAccusation(raw: string) {
 }
 
 const RoomFour = () => {
-  const { penalizeWrongAnswer } = useGame();
+  const { penalizeWrongAccusation } = useGame();
   const [showSession, setShowSession] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const [uvEnabled, setUvEnabled] = useState(false);
   const [showUvClue, setShowUvClue] = useState(false);
+  const [showEvidenceReview, setShowEvidenceReview] = useState(false);
   const [showFinalQuestion, setShowFinalQuestion] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [accusation, setAccusation] = useState("");
   const [answerError, setAnswerError] = useState("");
+  const [reviewLog, setReviewLog] = useState<LogId | null>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [step, setStep] = useState<Step>(0);
 
-  const modalOpen = showSession || showUvClue || showFinalQuestion || gameWon;
+  const unlockedLogs = useMemo(() => {
+    const ids = getUnlockedLogs();
+    return EVIDENCE_LOGS.filter((l) => ids.includes(l.id));
+  }, [showEvidenceReview, showFinalQuestion, gameWon]);
+
+  const modalOpen =
+    showSession || showUvClue || showEvidenceReview || showFinalQuestion || gameWon;
   const controlsEnabled = !modalOpen;
 
   const activePos =
@@ -145,12 +160,14 @@ const RoomFour = () => {
   const accuse = () => {
     if (isArjunAccusation(accusation)) {
       completeTask("accusation");
+      recordMurderGuess(accusation.trim(), true);
       setInvestigationState({ room4Complete: true, caseSolved: true });
       setGameWon(true);
       setShowFinalQuestion(false);
       return;
     }
-    penalizeWrongAnswer();
+    recordMurderGuess(accusation.trim(), false);
+    penalizeWrongAccusation();
     if (isNehaAccusation(accusation)) {
       setAnswerError("The timeline does not match.\nTry again.");
       return;
@@ -239,7 +256,7 @@ const RoomFour = () => {
         />
       )}
 
-      {showUvClue && !showFinalQuestion && !gameWon && (
+      {showUvClue && !showEvidenceReview && !showFinalQuestion && !gameWon && (
         <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
           <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4">
             <h2 className="text-lg text-purple-200 font-semibold tracking-widest">SESSION ARCHIVE</h2>
@@ -262,19 +279,76 @@ const RoomFour = () => {
               <br />
               Later copy modified.
             </p>
+            <div className="rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2.5 font-serif text-xs italic text-purple-100/80 leading-relaxed">
+              Margin note — Verma:
+              <br />
+              &quot;He already knows I saw the 21:17 change.&quot;
+            </div>
             <button
               onClick={() => {
                 completeTask("uv");
                 unlockLog("uv_archive");
                 setInvestigationState({ arjunEvidenceFound: true, finalUnlocked: true });
                 setShowUvClue(false);
-                setShowFinalQuestion(true);
+                setShowEvidenceReview(true);
                 setStep(3);
               }}
               className="w-full py-3 bg-purple-600/80 hover:bg-purple-600 text-white rounded font-medium"
             >
-              CONTINUE
+              REVIEW EVIDENCE
             </button>
+          </div>
+        </div>
+      )}
+
+      {showEvidenceReview && !showFinalQuestion && !gameWon && (
+        <div className="absolute inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0a0a0c] border border-white/15 rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-white/10">
+              <h2 className="text-lg text-white font-semibold tracking-widest text-center">
+                EVIDENCE FILE
+              </h2>
+              <p className="text-center text-xs text-slate-500 mt-1">
+                Review collected logs before naming a suspect.
+              </p>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {unlockedLogs.length === 0 ? (
+                <p className="text-center text-sm text-slate-500 py-8">No logs unlocked yet.</p>
+              ) : (
+                unlockedLogs.map((log) => (
+                  <button
+                    key={log.id}
+                    type="button"
+                    onClick={() => setReviewLog(reviewLog === log.id ? null : log.id)}
+                    className={`w-full text-left rounded-lg border px-3 py-2.5 transition ${
+                      reviewLog === log.id
+                        ? "border-cyan-400/40 bg-cyan-500/10"
+                        : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <p className="font-mono text-xs tracking-wider text-cyan-200/90">{log.title}</p>
+                    {reviewLog === log.id && (
+                      <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] text-slate-300 leading-relaxed">
+                        {log.body}
+                      </pre>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="p-4 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEvidenceReview(false);
+                  setShowFinalQuestion(true);
+                }}
+                className="w-full py-3 border border-red-900/60 bg-red-950/40 hover:bg-red-900/50 text-white rounded font-mono text-sm tracking-wider"
+              >
+                PROCEED TO ACCUSATION
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -285,6 +359,9 @@ const RoomFour = () => {
             <h2 className="text-xl text-white font-bold text-center tracking-wide">
               WHO KILLED PROFESSOR DEV VERMA?
             </h2>
+            <p className="text-center text-xs text-slate-500">
+              Wrong accusation: −10:00. Review evidence if needed.
+            </p>
 
             <form
               className="space-y-3"
@@ -316,6 +393,17 @@ const RoomFour = () => {
               </button>
             </form>
 
+            <button
+              type="button"
+              onClick={() => {
+                setShowFinalQuestion(false);
+                setShowEvidenceReview(true);
+              }}
+              className="w-full py-2 text-xs font-mono tracking-wider text-slate-400 hover:text-slate-200"
+            >
+              ← BACK TO EVIDENCE
+            </button>
+
             {answerError && (
               <p className="text-rose-400 text-center text-sm whitespace-pre-line">{answerError}</p>
             )}
@@ -329,17 +417,28 @@ const RoomFour = () => {
             <h1 className="text-4xl text-emerald-400 font-black tracking-widest">CASE CLOSED</h1>
             <div className="text-left text-slate-300 text-sm space-y-3 leading-relaxed">
               <p>
-                Arjun Mehta&apos;s access and activity place him at the center of the original alteration.
+                Arjun Mehta was connected to the original Experiment 17 manipulation. Verma
+                discovered it and planned to confront him.
               </p>
-              <p>Professor Verma had discovered the manipulation.</p>
-              <p>The missing hour concealed the final connection.</p>
+              <p>
+                Neha&apos;s later access and server session looked damning — but they came after the
+                original change.
+              </p>
             </div>
-            <button
-              onClick={() => (window.location.href = "/?skipIntro=true")}
-              className="px-8 py-3 bg-white text-black rounded font-bold text-sm tracking-widest"
-            >
-              CONTINUE
-            </button>
+            <div className="flex flex-col gap-2 items-center">
+              <button
+                onClick={() => (window.location.href = "/leaderboard")}
+                className="px-8 py-3 bg-white text-black rounded font-bold text-sm tracking-widest"
+              >
+                LEADERBOARD
+              </button>
+              <button
+                onClick={() => (window.location.href = "/?newPlayer=1")}
+                className="px-6 py-2 text-xs font-mono tracking-wider text-slate-400 hover:text-white border border-white/10 rounded"
+              >
+                Start again with a different username
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,7 @@
 /** Task IDs and evidence logs for the investigation HUD */
 
+import { syncPlayerTasks } from "@/lib/eventDb";
+
 export type TaskId =
   | "laser"
   | "drawer"
@@ -80,17 +82,17 @@ export const EVIDENCE_LOGS: {
   {
     id: "drawer_note",
     title: "Verma's Note",
-    body: "The record ends before the night does.\nIf someone asks, I never finished reviewing Experiment 17.",
+    body: "20:41 — D. VERMA\nEXP-17 was altered before the later record changes.\nI finally know where the original discrepancy came from.\nMehta knows I found it.\nNeed to speak with him tonight.",
   },
   {
     id: "folder_log",
     title: "Research File",
-    body: "20:58  VERMA\n21:07  ARJUN\n21:18  UNKNOWN\n21:26  NEHA\n21:34  UNKNOWN\n21:42  RECORD UNAVAILABLE",
+    body: "20:56  VERMA\n21:03  ARJUN\n21:17  FILE CHANGE\n21:29  NEHA\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — A. Mehta.",
   },
   {
     id: "exp17_report",
     title: "Experiment 17",
-    body: "20:58 — VERMA\n21:07 — ARJUN\n21:18 — UNKNOWN\n21:26 — NEHA\n21:34 — UNKNOWN\n21:41 — INTERRUPT\n21:42 — UNAVAILABLE",
+    body: "20:56 — VERMA\n21:03 — ARJUN\n21:17 — FILE CHANGE\n21:29 — NEHA\n21:36 — UNKNOWN\n21:41 — INTERRUPT\n21:42 — UNAVAILABLE",
   },
   {
     id: "timeline_order",
@@ -100,7 +102,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "archive_access",
     title: "Archive Access",
-    body: "File: EXP-17_RESULTS\nWrite: 21:17\nAccount: N. RAO\nPrevious version unavailable",
+    body: "File: EXP-17_RESULTS\nAccess: 21:29\nAccount: N. RAO\nAction: REVIEW\n\nReview occurred after the 21:17 baseline change.",
   },
   {
     id: "hash_diff",
@@ -110,7 +112,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "overlay_stamp",
     title: "Archive Recovered",
-    body: "21:17  EXP-17 BASELINE MODIFIED\n21:36  UNKNOWN SESSION",
+    body: "21:17  EXP-17 BASELINE MODIFIED\n21:36  UNKNOWN SESSION\n\nOriginal change 21:17 — Authorized researcher: A. MEHTA\nBaseline changes normally require the assigned researcher.",
   },
   {
     id: "session_full",
@@ -120,7 +122,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "uv_archive",
     title: "UV Archive",
-    body: "20:56  VERMA\n21:03  A. MEHTA\n21:17  EXP-17 BASELINE MODIFIED\n21:29  N. RAO\n21:36  UNKNOWN SESSION\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n\nOriginal retained. Later copy modified.",
+    body: "20:56  VERMA\n21:03  A. MEHTA\n21:17  EXP-17 BASELINE MODIFIED\n21:29  N. RAO\n21:36  UNKNOWN SESSION\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n\nOriginal retained. Later copy modified.\n\nMargin note (Verma):\nHe already knows I saw the 21:17 change.",
   },
 ];
 
@@ -161,12 +163,15 @@ export function getUnlockedLogs(): LogId[] {
 export function completeTask(id: TaskId) {
   const list = getCompletedTasks();
   if (list.includes(id)) {
+    syncPlayerTasks(list);
     notify();
     return;
   }
+  const next = [...list, id];
   if (canUseStorage()) {
-    sessionStorage.setItem(TASK_KEY, JSON.stringify([...list, id]));
+    sessionStorage.setItem(TASK_KEY, JSON.stringify(next));
   }
+  syncPlayerTasks(next);
   notify();
 }
 
