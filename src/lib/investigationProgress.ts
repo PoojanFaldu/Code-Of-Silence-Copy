@@ -115,7 +115,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "session_full",
     title: "Session Verified",
-    body: "21:36  UNKNOWN SESSION 7F2A\nTerminal: SRV-03\nAUTH 2290 → K. PATEL",
+    body: "21:36  UNKNOWN SESSION 7F2A\nTerminal: SRV-03\nAUTH 2290 → N. RAO",
   },
   {
     id: "uv_archive",

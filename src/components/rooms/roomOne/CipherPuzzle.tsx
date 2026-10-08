@@ -24,7 +24,7 @@ function decodeLetter(ch: string): string {
 }
 
 export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
-  const { deductTime, timeRemaining } = useGame();
+  const { deductTime, timeRemaining, penalizeWrongAnswer } = useGame();
   const [activeTab, setActiveTab] = useState("decode");
   const [mapUnlocked, setMapUnlocked] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -46,6 +46,7 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
       return;
     }
     setError(true);
+    penalizeWrongAnswer();
   };
 
   const handleTabChange = (targetTab: string) => {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 
 interface SessionIdentificationPuzzleProps {
   onSolved: () => void;
@@ -38,19 +39,24 @@ const LOG_ROWS = [
   },
 ];
 
-/** Badge numbers only — names intentionally omitted. Arjun is a distractor on SRV-03. */
+/**
+ * Badge IDs only — names omitted.
+ * 2290 owns SRV-03; 4412 is a distractor with secondary server access.
+ * Karan is on NET-01 only.
+ */
 const ACL_ROWS = [
   { terminal: "LAB-02", badges: ["4412"] },
   { terminal: "ARC-01", badges: ["8801"] },
   { terminal: "SRV-03", badges: ["2290", "4412"] },
-  { terminal: "SRV-01", badges: ["4412"] },
+  { terminal: "NET-01", badges: ["3371"] },
 ];
 
+/** Neha holds both archive (8801) and server (2290) badges — match AUTH, not the named log alone. */
 const REGISTRY = [
   { badge: "4412", name: "DR. ARJUN MEHTA", role: "RESEARCH" },
   { badge: "8801", name: "NEHA RAO", role: "ARCHIVES" },
-  { badge: "2290", name: "KARAN PATEL", role: "INFRA" },
-  { badge: "1104", name: "R. VERMA", role: "DIRECTOR" },
+  { badge: "2290", name: "NEHA RAO", role: "SERVER" },
+  { badge: "3371", name: "KARAN PATEL", role: "NETWORK" },
 ];
 
 const CHOICES: { id: UserId; label: string }[] = [
@@ -63,23 +69,21 @@ export default function SessionIdentificationPuzzle({
   onSolved,
   onClose,
 }: SessionIdentificationPuzzleProps) {
+  const { penalizeWrongAnswer } = useGame();
   const [selected, setSelected] = useState<UserId | null>(null);
   const [badgeInput, setBadgeInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [done, setDone] = useState(false);
 
   const verify = () => {
     const badge = badgeInput.replace(/\D/g, "");
-    if (badge !== TARGET_BADGE) {
-      setError("Auth ID does not match the unknown session.");
+    if (badge === TARGET_BADGE && selected === "neha") {
+      setError(false);
+      setDone(true);
       return;
     }
-    if (selected !== "karan") {
-      setError("Badge owner mismatch.");
-      return;
-    }
-    setError(null);
-    setDone(true);
+    setError(true);
+    penalizeWrongAnswer();
   };
 
   if (done) {
@@ -97,8 +101,8 @@ export default function SessionIdentificationPuzzle({
         <div className="space-y-3 py-2 text-center">
           <p className="text-sm font-semibold tracking-[0.2em] text-emerald-300">SESSION VERIFIED</p>
           <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-4 font-mono text-xs text-slate-200 space-y-1.5">
-            <p>AUTH {TARGET_BADGE} → K. PATEL</p>
-            <p className="text-slate-400">SRV-03 · SESSION 7F2A</p>
+            <p>N. RAO</p>
+            <p className="text-slate-400">SRV-03</p>
             <p className="text-cyan-300">21:36</p>
           </div>
         </div>
@@ -212,7 +216,7 @@ export default function SessionIdentificationPuzzle({
               value={badgeInput}
               onChange={(e) => {
                 setBadgeInput(e.target.value.replace(/\D/g, "").slice(0, 4));
-                setError(null);
+                setError(false);
               }}
               placeholder="····"
               className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 font-mono text-sm tracking-[0.35em] text-cyan-100 placeholder:text-slate-600 focus:border-cyan-400/40 focus:outline-none"
@@ -225,7 +229,7 @@ export default function SessionIdentificationPuzzle({
                 type="button"
                 onClick={() => {
                   setSelected(c.id);
-                  setError(null);
+                  setError(false);
                 }}
                 className={`w-full rounded-xl border px-3 py-2.5 font-mono text-xs tracking-wider transition ${
                   selected === c.id
@@ -237,7 +241,9 @@ export default function SessionIdentificationPuzzle({
               </button>
             ))}
           </div>
-          {error && <p className="text-center text-xs text-rose-400">{error}</p>}
+          {error && (
+            <p className="text-center text-xs tracking-widest text-rose-400">SESSION MISMATCH</p>
+          )}
           <PuzzlePrimaryButton
             accent="slate"
             onClick={verify}

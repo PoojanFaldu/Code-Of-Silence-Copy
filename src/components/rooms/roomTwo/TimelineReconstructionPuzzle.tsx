@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 
 interface TimelineReconstructionPuzzleProps {
   onSolved: () => void;
@@ -40,6 +41,7 @@ export default function TimelineReconstructionPuzzle({
   onSolved,
   onClose,
 }: TimelineReconstructionPuzzleProps) {
+  const { penalizeWrongAnswer } = useGame();
   const [order, setOrder] = useState<EventId[]>(() => shuffle(EVENTS.map((e) => e.id)));
   const [error, setError] = useState(false);
   const [done, setDone] = useState(false);
@@ -141,7 +143,10 @@ export default function TimelineReconstructionPuzzle({
           accent="sky"
           onClick={() => {
             if (order.every((id, i) => id === SOLUTION[i])) setDone(true);
-            else setError(true);
+            else {
+              setError(true);
+              penalizeWrongAnswer();
+            }
           }}
         >
           SUBMIT

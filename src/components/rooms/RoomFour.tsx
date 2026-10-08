@@ -8,6 +8,7 @@ import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
 import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import SessionIdentificationPuzzle from "@/components/rooms/roomFour/SessionIdentificationPuzzle";
+import { useGame } from "@/contexts/GameContext";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
@@ -82,6 +83,7 @@ function isKaranAccusation(raw: string) {
 }
 
 const RoomFour = () => {
+  const { penalizeWrongAnswer } = useGame();
   const [showSession, setShowSession] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const [uvEnabled, setUvEnabled] = useState(false);
@@ -148,6 +150,7 @@ const RoomFour = () => {
       setShowFinalQuestion(false);
       return;
     }
+    penalizeWrongAnswer();
     if (isNehaAccusation(accusation)) {
       setAnswerError("The timeline does not match.\nTry again.");
       return;

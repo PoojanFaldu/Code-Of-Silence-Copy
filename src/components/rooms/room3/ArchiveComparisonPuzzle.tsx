@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 import { playKeyClick, playMaskAlignSnap } from "./audio";
 
 interface ArchiveComparisonPuzzleProps {
@@ -36,6 +37,7 @@ export const ArchiveComparisonPuzzle: React.FC<ArchiveComparisonPuzzleProps> = (
   onProceedToServerRoom,
   initialSolved = false,
 }) => {
+  const { penalizeWrongAnswer } = useGame();
   const [selected, setSelected] = useState<Set<RowId>>(
     () => (initialSolved ? new Set(CORRECT) : new Set())
   );
@@ -60,6 +62,7 @@ export const ArchiveComparisonPuzzle: React.FC<ArchiveComparisonPuzzleProps> = (
       selected.size === CORRECT.size && [...CORRECT].every((id) => selected.has(id));
     if (!ok) {
       setError(true);
+      penalizeWrongAnswer();
       return;
     }
     playMaskAlignSnap();

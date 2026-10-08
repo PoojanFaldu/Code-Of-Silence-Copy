@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 import { RotateCw, RotateCcw, Zap, CheckCircle2, ShieldAlert, Sparkles } from "lucide-react";
 
 interface LaserDeflectionPuzzleProps {
@@ -267,6 +268,7 @@ function traceBeam(mirrors: MirrorCell[]) {
 }
 
 export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflectionPuzzleProps) {
+  const { penalizeWrongAnswer } = useGame();
   // Target angles (logical state set by user interaction)
   const targetAnglesRef = useRef<Record<string, number>>({ ...INITIAL_ANGLES_MAP });
   // Current smoothly interpolated angles (frame-by-frame)
@@ -376,6 +378,7 @@ export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflec
       setTimeout(onSolved, 950);
     } else {
       playAudioFeedback("rotate");
+      penalizeWrongAnswer();
       if (result.usedMirrors.includes("M5")) {
         setFeedback("Decoy prism M5 intercepted the beam! Reroute path.");
       } else if (!result.hitSensors.includes("1")) {

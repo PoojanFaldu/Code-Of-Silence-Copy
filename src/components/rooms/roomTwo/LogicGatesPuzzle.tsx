@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 
 interface LogicGatesPuzzleProps {
   onSolved: () => void;
@@ -203,6 +204,7 @@ function CircuitDiagram({
 }
 
 export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzleProps) {
+  const { penalizeWrongAnswer } = useGame();
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
   const [c, setC] = useState(true);
@@ -231,6 +233,7 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
   const handleUnlock = () => {
     if (!matches) {
       setMessage("Not matched.");
+      penalizeWrongAnswer();
       return;
     }
     setSolved(true);

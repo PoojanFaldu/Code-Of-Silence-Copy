@@ -1,5 +1,9 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, useEffect, ReactNode } from "react";
+import { toast } from "sonner";
 import { resetInvestigationState } from "@/lib/investigationState";
+
+/** Deducted from the mission timer on each wrong puzzle / accusation guess. */
+export const WRONG_ANSWER_PENALTY_SECONDS = 120;
 
 interface GameContextType {
   timeRemaining: number;
@@ -9,6 +13,7 @@ interface GameContextType {
   setWebsiteUrl: (url: string) => void;
   resetGame: () => void;
   deductTime: (seconds: number) => void;
+  penalizeWrongAnswer: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -51,10 +56,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setWebsiteUrlState(url);
   };
 
-  const deductTime = (seconds: number) => {
+  const deductTime = useCallback((seconds: number) => {
     setGameStartTime((prev) => prev - seconds * 1000);
     setTimeRemaining((prev) => Math.max(0, prev - seconds));
-  };
+  }, []);
+
+  const penalizeWrongAnswer = useCallback(() => {
+    deductTime(WRONG_ANSWER_PENALTY_SECONDS);
+    toast.error("−2:00 deducted from mission timer.");
+  }, [deductTime]);
 
   const resetGame = () => {
     const newStartTime = Date.now();
@@ -71,7 +81,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <GameContext.Provider value={{ timeRemaining, puzzleSolved, setPuzzleSolved, websiteUrl, setWebsiteUrl, resetGame, deductTime }}>
+    <GameContext.Provider
+      value={{
+        timeRemaining,
+        puzzleSolved,
+        setPuzzleSolved,
+        websiteUrl,
+        setWebsiteUrl,
+        resetGame,
+        deductTime,
+        penalizeWrongAnswer,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );

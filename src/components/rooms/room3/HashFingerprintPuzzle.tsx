@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+import { useGame } from "@/contexts/GameContext";
 
 interface HashFingerprintPuzzleProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
   onProceedToOverlay,
   initialSolved = false,
 }) => {
+  const { penalizeWrongAnswer } = useGame();
   const proceed = onProceedToArchive ?? onProceedToOverlay;
   const [selected, setSelected] = useState<string | null>(initialSolved ? "current" : null);
   const [error, setError] = useState(false);
@@ -40,6 +42,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
       return;
     }
     setError(true);
+    penalizeWrongAnswer();
   };
 
   return (
