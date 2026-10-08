@@ -9,6 +9,11 @@ import {
   AlertTriangle,
   ExternalLink,
   ShieldCheck,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -120,10 +125,37 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
 
   // Second popup state: Dr. Verma's Letter
   const [isVermaLetterOpen, setIsVermaLetterOpen] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleCloseLetter = () => {
+    setIsVermaLetterOpen(false);
+    setIsMaximized(false);
+    setZoomLevel(1);
+  };
+
+  const handleZoomIn = () => {
+    playTone(550, 0.04);
+    setZoomLevel((z) => Math.min(2.5, Number((z + 0.25).toFixed(2))));
+  };
+
+  const handleZoomOut = () => {
+    playTone(450, 0.04);
+    setZoomLevel((z) => Math.max(0.75, Number((z - 0.25).toFixed(2))));
+  };
+
+  const handleResetZoom = () => {
+    playTone(500, 0.04);
+    setZoomLevel(1);
+  };
+
+  const handleToggleMaximize = () => {
+    playTone(620, 0.05);
+    setIsMaximized((prev) => !prev);
+  };
 
   const handleCopyHash = (text: string, id: string) => {
     playTone(740, 0.05);
@@ -352,73 +384,168 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
       {isVermaLetterOpen && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in overflow-y-auto"
-          onClick={() => {
-            setIsVermaLetterOpen(false);
-            setIsZoomed(false);
-          }}
+          onClick={handleCloseLetter}
         >
           <div
-            className="relative w-full max-w-4xl my-auto rounded-2xl border border-amber-600/50 bg-[#0d0a06] p-4 sm:p-5 shadow-2xl shadow-amber-950/80 text-amber-50 overflow-hidden"
+            className={`relative flex flex-col rounded-2xl border border-amber-600/50 bg-[#0d0a06] shadow-2xl shadow-amber-950/80 text-amber-50 overflow-hidden transition-all duration-300 ${
+              isMaximized
+                ? "w-[98vw] h-[96vh] max-w-none p-3 sm:p-5 m-auto"
+                : "w-full max-w-4xl my-auto p-4 sm:p-5"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-amber-700/40">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-700/40 shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 <div className="p-2 rounded-lg bg-amber-900/40 border border-amber-600/50 text-amber-400">
-                  <BookOpen className="w-5 h-5" />
+                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900/60 text-amber-300 font-mono font-bold tracking-wider border border-amber-600/40">
                       EXHIBIT #03 • HANDWRITTEN
                     </span>
-                    <span className="text-[10px] text-amber-400/80 font-mono">
+                    <span className="text-[10px] text-amber-400/80 font-mono hidden sm:inline">
                       REF: VRM-ARCHIVE-MEMO
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white font-serif mt-0.5">
+                  <h3 className="text-base sm:text-xl font-bold tracking-tight text-white font-serif mt-0.5">
                     Dr. Verma's Archival Letter
                   </h3>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Window & Zoom Controls */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Zoom Toolbar */}
+                <div className="flex items-center rounded-lg border border-amber-600/40 bg-amber-950/50 p-0.5 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel <= 0.75}
+                    className="p-1 sm:p-1.5 rounded hover:bg-amber-900/60 text-amber-300 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Zoom Out (-)"
+                    aria-label="Zoom Out"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResetZoom}
+                    className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs text-amber-200 font-bold hover:text-white transition"
+                    title="Reset to 100%"
+                  >
+                    {Math.round(zoomLevel * 100)}%
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel >= 2.5}
+                    className="p-1 sm:p-1.5 rounded hover:bg-amber-900/60 text-amber-300 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Zoom In (+)"
+                    aria-label="Zoom In"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResetZoom}
+                    className="p-1 sm:p-1.5 rounded hover:bg-amber-900/60 text-amber-400 hover:text-amber-200 transition border-l border-amber-700/40 ml-0.5 hidden xs:flex items-center"
+                    title="Reset view (100%)"
+                    aria-label="Reset zoom"
+                  >
+                    <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </button>
+                </div>
+
+                {/* Proper Maximize / Minimize Button */}
                 <button
                   type="button"
-                  onClick={() => setIsZoomed((prev) => !prev)}
-                  className="px-2.5 py-1.5 rounded-lg border border-amber-600/40 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 text-xs font-mono font-semibold transition hidden sm:flex items-center gap-1.5"
+                  onClick={handleToggleMaximize}
+                  className="p-1.5 sm:p-2 rounded-lg border border-amber-600/50 bg-amber-950/50 hover:bg-amber-900/60 text-amber-300 hover:text-white transition flex items-center justify-center shadow-sm"
+                  title={isMaximized ? "Restore window size" : "Maximize window to fullscreen"}
+                  aria-label={isMaximized ? "Restore window size" : "Maximize window to fullscreen"}
                 >
-                  <span>{isZoomed ? "Reset Zoom" : "Click / Tap to Zoom"}</span>
+                  {isMaximized ? (
+                    <Minimize2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300" />
+                  )}
                 </button>
 
+                {/* Close Button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsVermaLetterOpen(false);
-                    setIsZoomed(false);
-                  }}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
+                  onClick={handleCloseLetter}
+                  className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
                   aria-label="Close letter"
+                  title="Close"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Letter Image Display */}
-            <div className="mt-3 relative rounded-xl overflow-hidden border border-amber-700/40 bg-black/70 flex justify-center items-center shadow-inner max-h-[68vh] overflow-y-auto overflow-x-hidden">
-              <img
-                src="/evidence/verma_letter.jpg"
-                alt="Dr. Verma's Handwritten Archival Letter"
-                className={`w-full max-w-3xl object-contain rounded-lg transition-transform duration-300 cursor-pointer ${
-                  isZoomed ? "scale-125 sm:scale-135 my-8 sm:my-16" : "scale-100"
-                }`}
-                onClick={() => setIsZoomed((prev) => !prev)}
-              />
+            {/* Letter Image Display Container */}
+            <div
+              className={`mt-3 relative rounded-xl border border-amber-700/40 bg-black/85 flex flex-col shadow-inner overflow-hidden transition-all ${
+                isMaximized ? "flex-1 min-h-0" : "h-[60vh] sm:h-[66vh]"
+              }`}
+            >
+              {/* Secondary Status & Hint Bar */}
+              <div className="px-3 py-1.5 bg-black/60 border-b border-amber-900/30 flex items-center justify-between text-[11px] font-mono text-amber-300/70 shrink-0 select-none">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span>PARCHMENT VIEWER • {Math.round(zoomLevel * 100)}% SCALE</span>
+                  {isMaximized && (
+                    <span className="hidden md:inline px-1.5 py-0.2 rounded bg-amber-900/40 text-amber-300 text-[10px] border border-amber-700/30 font-bold uppercase">
+                      Fullscreen Mode
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-amber-400/60">
+                  <span className="hidden sm:inline">
+                    Click image to toggle zoom • Scroll horizontally/vertically to examine hashes
+                  </span>
+                  {!isMaximized && (
+                    <button
+                      type="button"
+                      onClick={handleToggleMaximize}
+                      className="text-[10px] text-amber-300 hover:text-amber-100 underline decoration-amber-500/50"
+                    >
+                      Maximize
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Scrollable image viewport */}
+              <div className="flex-1 min-h-0 overflow-auto p-2 sm:p-4 flex items-center justify-center">
+                <img
+                  src="/evidence/verma_letter.jpg"
+                  alt="Dr. Verma's Handwritten Archival Letter"
+                  style={{
+                    width: isMaximized
+                      ? `${Math.round(1100 * zoomLevel)}px`
+                      : `${Math.round(780 * zoomLevel)}px`,
+                    maxWidth: zoomLevel <= 1 && !isMaximized ? "100%" : "none",
+                    transition: "width 200ms ease-out",
+                  }}
+                  className="h-auto object-contain rounded-lg cursor-pointer select-none shadow-2xl drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] hover:brightness-105 transition"
+                  onClick={() => {
+                    playTone(550, 0.04);
+                    setZoomLevel((prev) => (prev > 1.1 ? 1 : 1.6));
+                  }}
+                  title="Click to toggle 160% zoom"
+                />
+              </div>
             </div>
 
             {/* Bottom Controls & Quick Hash Copy Reference */}
-            <div className="mt-3.5 pt-3 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="mt-3.5 pt-3 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               {/* Quick Copy Hash Buttons for Convenience */}
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <span className="text-[11px] font-mono text-amber-400/70 mr-1 hidden md:inline">
@@ -444,10 +571,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
               {/* Return to Terminal Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsVermaLetterOpen(false);
-                  setIsZoomed(false);
-                }}
+                onClick={handleCloseLetter}
                 className="w-full sm:w-auto px-5 py-2 rounded-xl border border-amber-500/60 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold uppercase tracking-wider transition shadow-md shadow-amber-950/50"
               >
                 Return to Terminal
