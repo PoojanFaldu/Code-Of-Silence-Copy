@@ -104,8 +104,8 @@ export const EVIDENCE_LOGS: {
   },
   {
     id: "hash_diff",
-    title: "Hash Diff",
-    body: "EXP17_FINAL   A91F27\nEXP17_BACKUP  A91F27\nEXP17_CURRENT C82B14  ← differs",
+    title: "Hash Discrepancy",
+    body: "TAMPERING IDENTIFIED in EXP17_FINAL_REPORT.enc:\nTerminal Hash:  D26A-8B1E-F407-3C9A-5E82-71B4-9A3B-E605\nVerma's Letter: D26A-8B1E-F407-3C9A-5E82-71D4-9A3B-E605\nBlock 6 alteration (71B4 ≠ 71D4) proves the anomaly report was rewritten.",
   },
   {
     id: "overlay_stamp",
