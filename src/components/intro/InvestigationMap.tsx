@@ -71,7 +71,7 @@ const cluesData: Clue[] = [
   { text: "Files missing. Secrets exposed.", answer: "Archive Room", number: 3 },
   { text: "Chemicals. Logs erased.", answer: "Research Lab", number: 2 },
   { text: "Books scattered. Desk forced open.", answer: "Dr. Verma's Office", number: 1 },
-  { text: "Data stolen. Trail vanished.", answer: "Server Room", number: 4 },
+  { text: "Logs wiped. Hour missing.", answer: "Server Room", number: 4 },
 ];
 
 export const InvestigationMap = () => {
@@ -203,7 +203,7 @@ export const InvestigationMap = () => {
             {/* Title */}
             <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 text-center w-full">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-cyan-400 mb-2 animate-fade-in whitespace-nowrap drop-shadow-[0_0_20px_rgba(0,200,255,0.8)]">
-                THE LAST SESSION
+                CODE OF SILENCE
               </h2>
               <p className="font-body text-white/60 tracking-wider animate-fade-in"
                 style={{ animationDelay: '0.3s' }}>

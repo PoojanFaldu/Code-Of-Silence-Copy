@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
 
 interface LogicGatesPuzzleProps {
   onSolved: () => void;
@@ -229,11 +230,11 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
 
   const handleUnlock = () => {
     if (!matches) {
-      setMessage("Not matched yet — work one row at a time from top to bottom.");
+      setMessage("Not matched.");
       return;
     }
     setSolved(true);
-    setMessage("Circuit accepted. Research terminal restored.");
+    setMessage("Accepted.");
     setTimeout(onSolved, 900);
   };
 
@@ -263,79 +264,65 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-3xl rounded-xl border border-emerald-500/30 bg-[#07140f] shadow-2xl overflow-hidden my-4">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-emerald-200">Logic Gate Terminal</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Only the correct combination will restore the research terminal.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md border border-white/20 px-3 py-1 text-sm text-slate-300 hover:bg-white/10"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="px-5 py-4 space-y-4">
-          <div className="rounded-lg border border-white/10 bg-black/30 p-3 text-sm text-slate-300 space-y-1.5">
-            <p className="text-[11px] uppercase tracking-wider text-emerald-300/80">Reference Card</p>
-            <p>
-              <strong className="text-emerald-300">AND</strong> → both inputs must be ON
-            </p>
-            <p>
-              <strong className="text-emerald-300">OR</strong> → at least one input must be ON
-            </p>
-            <p>
-              <strong className="text-emerald-300">NOT</strong> → reverses the input
-            </p>
-          </div>
-
-          <div className="rounded-md border border-emerald-400/20 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-100 font-mono">
-            Goal: OUT1=1 · OUT2=1 · OUT3=1 · OUT4=1
-          </div>
-
-          <CircuitDiagram a={a} b={b} c={c} d={d} e={e} {...circuit} />
-
-          <div className="grid grid-cols-5 gap-2">
-            <Toggle label="A" value={a} onToggle={() => !solved && setA((v) => !v)} />
-            <Toggle label="B" value={b} onToggle={() => !solved && setB((v) => !v)} />
-            <Toggle label="C" value={c} onToggle={() => !solved && setC((v) => !v)} />
-            <Toggle label="D" value={d} onToggle={() => !solved && setD((v) => !v)} />
-            <Toggle label="E" value={e} onToggle={() => !solved && setE((v) => !v)} />
-          </div>
-
-          <div
-            className={`rounded-md border px-3 py-2 text-sm ${
-              matches
-                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                : "border-white/10 bg-white/5 text-slate-400"
-            }`}
-          >
-            {matches
-              ? "All outputs match — unlock when ready."
-              : "Shared signals run on the left rails only, so rows stay readable."}
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 px-5 py-4 flex items-center justify-between gap-3">
-          {message ? (
-            <p className={`text-sm ${solved ? "text-emerald-300" : "text-amber-300"}`}>{message}</p>
-          ) : (
-            <p className="text-sm text-slate-500">Trace each gate from left to right until every OUT is 1.</p>
+    <PuzzleShell
+      title="Logic"
+      accent="emerald"
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+      tabs={[
+        {
+          id: "circuit",
+          label: "Circuit",
+          content: (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 px-3 py-2 text-center font-mono text-xs text-emerald-100">
+                Target · all OUT = 1
+              </div>
+              <div className="overflow-x-auto">
+                <CircuitDiagram a={a} b={b} c={c} d={d} e={e} {...circuit} />
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                <Toggle label="A" value={a} onToggle={() => !solved && setA((v) => !v)} />
+                <Toggle label="B" value={b} onToggle={() => !solved && setB((v) => !v)} />
+                <Toggle label="C" value={c} onToggle={() => !solved && setC((v) => !v)} />
+                <Toggle label="D" value={d} onToggle={() => !solved && setD((v) => !v)} />
+                <Toggle label="E" value={e} onToggle={() => !solved && setE((v) => !v)} />
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "gates",
+          label: "Gates",
+          content: (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ["AND", "both 1"],
+                ["OR", "any 1"],
+                ["NOT", "flip"],
+              ].map(([g, d]) => (
+                <div
+                  key={g}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-center"
+                >
+                  <div className="font-mono text-emerald-300 font-bold">{g}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">{d}</div>
+                </div>
+              ))}
+            </div>
+          ),
+        },
+      ]}
+      footer={
+        <div className="space-y-2">
+          {message && (
+            <p className={`text-center text-xs ${solved ? "text-emerald-300" : "text-rose-400"}`}>{message}</p>
           )}
-          <button
-            onClick={handleUnlock}
-            disabled={solved}
-            className="shrink-0 rounded-md bg-emerald-500/20 border border-emerald-400/40 px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/30 disabled:opacity-50"
-          >
-            {solved ? "Unlocked" : "Restore Terminal"}
-          </button>
+          <PuzzlePrimaryButton accent="emerald" onClick={handleUnlock} disabled={solved}>
+            SUBMIT
+          </PuzzlePrimaryButton>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }

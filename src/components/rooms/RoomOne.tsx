@@ -14,6 +14,7 @@ import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
 import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
+import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
 type Overlay = null | "laser" | "drawer" | "cipher" | "folder";
 
@@ -184,10 +185,6 @@ const RoomOne = () => {
 
   return (
     <div className="h-screen w-screen bg-black relative">
-      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-cyan-400/25 bg-black/75 px-4 py-3 text-sm text-slate-300 pointer-events-none">
-        <p className="text-[11px] uppercase tracking-wider text-cyan-300/90 mb-1">Dr. Verma&apos;s Office</p>
-        <p className="text-xs text-slate-400">Search the desk. Aim · Press E</p>
-      </div>
 
       <Canvas gl={{ antialias: true, alpha: true }} camera={{ position: [0, 3, 0], fov: 75 }}>
         <PerspectiveCamera makeDefault position={[0, 3, 0]} fov={75} near={0.1} far={1000} />
@@ -221,6 +218,7 @@ const RoomOne = () => {
         <LaserDeflectionPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
+            completeTask("laser");
             setStep(1);
             setOverlay(null);
           }}
@@ -231,6 +229,8 @@ const RoomOne = () => {
         <DrawerNote
           onClose={() => setOverlay(null)}
           onContinue={() => {
+            completeTask("drawer");
+            unlockLog("drawer_note");
             setStep(2);
             setOverlay(null);
           }}
@@ -241,6 +241,7 @@ const RoomOne = () => {
         <CipherPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
+            completeTask("cipher");
             setStep(3);
             setOverlay(null);
           }}
@@ -251,6 +252,8 @@ const RoomOne = () => {
         <BlueFolderReveal
           onClose={() => setOverlay(null)}
           onComplete={() => {
+            completeTask("folder");
+            unlockLog("folder_log");
             setStep(4);
             setOverlay(null);
             setInvestigationState({
@@ -267,9 +270,9 @@ const RoomOne = () => {
       {showTrail && (
         <EvidenceTrailModal
           findings={[
-            "Verma was auditing research-data inconsistencies.",
-            "One name appears often in his notes: Neha Rao.",
-            "Experiment 17 records are kept in the Research Laboratory.",
+            "Something is missing from the Experiment 17 record.",
+            "The file ends before the night does.",
+            "Lab terminals may hold the incomplete hour.",
           ]}
           nextRoomLabel="Research Lab"
           onStay={() => setShowTrail(false)}

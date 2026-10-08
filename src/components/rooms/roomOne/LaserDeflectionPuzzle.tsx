@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
 
 type Dir = "N" | "E" | "S" | "W";
 type MirrorKind = "/" | "\\";
@@ -130,20 +131,11 @@ export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflec
     setTested(true);
     if (result.success) {
       setSolved(true);
-      setFeedback("Path accepted. A concealed drawer unlocks beneath the desk.");
-      setTimeout(onSolved, 1200);
+      setFeedback("Path valid.");
+      setTimeout(onSolved, 800);
       return;
     }
-
-    const parts: string[] = [];
-    if (result.hitSensors.length === 0) parts.push("No sensors registered a hit.");
-    else parts.push(`Sensors contacted: ${result.hitSensors.join(", ")}`);
-    if (result.hitSensors.join("") !== SENSORS.map((s) => s.id).join("")) {
-      parts.push("Sequence rejected — check the order of contacts.");
-    }
-    if (result.usedMirrors.includes("M5")) parts.push("A decoy mirror interrupted the beam.");
-    if (!result.hitTarget) parts.push("The lock never received the beam.");
-    setFeedback(parts.join(" "));
+    setFeedback("Invalid path.");
   };
 
   const width = COLS * CELL;
@@ -152,197 +144,145 @@ export default function LaserDeflectionPuzzle({ onSolved, onClose }: LaserDeflec
     .map((p) => `${p.x * CELL + CELL / 2},${p.y * CELL + CELL / 2}`)
     .join(" ");
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-4xl rounded-xl border border-cyan-500/30 bg-[#0b1220] shadow-2xl overflow-hidden my-4">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-wide text-cyan-300">Laser Deflection</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              &quot;The answer isn&apos;t where you are looking. It&apos;s where the light points.&quot;
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md border border-white/20 px-3 py-1 text-sm text-slate-300 hover:bg-white/10"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="grid gap-4 px-5 py-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-3">
-            <div className="rounded-lg border border-cyan-400/25 bg-cyan-500/5 p-3 text-sm text-slate-200 space-y-2">
-              <p className="text-[11px] uppercase tracking-wider text-cyan-300">Field notes</p>
-              <ul className="list-disc list-inside space-y-1.5 text-slate-300">
-                <li>The lock will not open until every numbered sensor has been struck.</li>
-                <li>Sensor numbers must increase as the beam progresses — never skip or reverse.</li>
-                <li>Exactly four mirrors may redirect the beam. One mirror on the board is a decoy.</li>
-                <li>The decoy sits near the center of the grid. Keep the beam clear of it.</li>
-              </ul>
-              <div className="pt-2 border-t border-white/10 text-xs text-slate-400 space-y-1">
-                <p className="text-[11px] uppercase tracking-wider text-cyan-300/80 mb-1">Reference</p>
-                <p>
-                  <span className="text-cyan-200 font-mono">/</span> reflects: E↔N · W↔S
-                </p>
-                <p>
-                  <span className="text-cyan-200 font-mono">\</span> reflects: E↔S · W↔N
-                </p>
-                <p>Click a mirror to flip its orientation. Test only when ready.</p>
-              </div>
-            </div>
-
-            {feedback && (
-              <p className={`text-sm ${solved ? "text-emerald-400" : "text-amber-300"}`}>{feedback}</p>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setMirrors(INITIAL_MIRRORS);
-                  setTested(false);
-                  setSolved(false);
-                  setFeedback("");
-                }}
-                className="rounded-md border border-white/15 px-4 py-2 text-sm text-slate-300 hover:bg-white/5"
-              >
-                Reset
-              </button>
-              <button
-                onClick={handleTest}
-                disabled={solved}
-                className="ml-auto rounded-md bg-cyan-500/20 border border-cyan-400/40 px-4 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-500/30 disabled:opacity-50"
-              >
-                {solved ? "Compartment Open" : "Test Beam"}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-center items-start">
-            <svg width={width} height={height} className="rounded-lg border border-white/10 bg-[#071018]">
-              {Array.from({ length: ROWS * COLS }).map((_, i) => {
-                const x = i % COLS;
-                const y = Math.floor(i / COLS);
-                return (
-                  <rect
-                    key={`c-${x}-${y}`}
-                    x={x * CELL}
-                    y={y * CELL}
-                    width={CELL}
-                    height={CELL}
-                    fill="transparent"
-                    stroke="rgba(148,163,184,0.12)"
-                  />
-                );
-              })}
-
-              {tested && pathPoints && (
-                <polyline
-                  points={pathPoints}
-                  fill="none"
-                  stroke={result.success ? "#34d399" : "#f87171"}
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  opacity={0.9}
-                />
-              )}
-
-              <circle cx={SOURCE.x * CELL + CELL / 2} cy={SOURCE.y * CELL + CELL / 2} r={9} fill="#fbbf24" />
-              <text
-                x={SOURCE.x * CELL + CELL / 2}
-                y={SOURCE.y * CELL + CELL / 2 + 20}
-                textAnchor="middle"
-                fill="#fde68a"
-                fontSize="9"
-              >
-                SRC
-              </text>
-
-              {SENSORS.map((s) => (
-                <g key={s.id}>
-                  <circle
-                    cx={s.x * CELL + CELL / 2}
-                    cy={s.y * CELL + CELL / 2}
-                    r={11}
-                    fill="#0f172a"
-                    stroke="#38bdf8"
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={s.x * CELL + CELL / 2}
-                    y={s.y * CELL + CELL / 2 + 4}
-                    textAnchor="middle"
-                    fill="#7dd3fc"
-                    fontSize="11"
-                    fontWeight="700"
-                  >
-                    {s.id}
-                  </text>
-                </g>
-              ))}
-
-              <rect
-                x={TARGET.x * CELL + 10}
-                y={TARGET.y * CELL + 10}
-                width={CELL - 20}
-                height={CELL - 20}
-                rx={4}
-                fill={solved ? "#34d399" : "#1e293b"}
-                stroke={solved ? "#6ee7b7" : "#94a3b8"}
-                strokeWidth={2}
-              />
-              <text
-                x={TARGET.x * CELL + CELL / 2}
-                y={TARGET.y * CELL + CELL / 2 + 4}
-                textAnchor="middle"
-                fill={solved ? "#052e1b" : "#cbd5e1"}
-                fontSize="9"
-                fontWeight="700"
-              >
-                LOCK
-              </text>
-
-              {mirrors.map((m, index) => (
-                <g
-                  key={m.id}
-                  onClick={() => rotateMirror(index)}
-                  style={{ cursor: solved ? "default" : "pointer" }}
-                >
-                  <rect
-                    x={m.x * CELL + 6}
-                    y={m.y * CELL + 6}
-                    width={CELL - 12}
-                    height={CELL - 12}
-                    rx={5}
-                    fill={m.id === "M5" ? "rgba(251,191,36,0.12)" : "rgba(56,189,248,0.12)"}
-                    stroke={m.id === "M5" ? "#fbbf24" : "#38bdf8"}
-                    strokeWidth={1.5}
-                  />
-                  <line
-                    x1={m.kind === "/" ? m.x * CELL + 14 : m.x * CELL + CELL - 14}
-                    y1={m.y * CELL + CELL - 14}
-                    x2={m.kind === "/" ? m.x * CELL + CELL - 14 : m.x * CELL + 14}
-                    y2={m.y * CELL + 14}
-                    stroke="#e2e8f0"
-                    strokeWidth={3.5}
-                    strokeLinecap="round"
-                  />
-                  <text
-                    x={m.x * CELL + CELL / 2}
-                    y={m.y * CELL + CELL - 4}
-                    textAnchor="middle"
-                    fill={m.id === "M5" ? "#fcd34d" : "#94a3b8"}
-                    fontSize="9"
-                  >
-                    {m.id}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-        </div>
-      </div>
+  const grid = (
+    <div className="flex justify-center overflow-x-auto">
+      <svg width={width} height={height} className="rounded-xl border border-white/10 bg-[#071018] max-w-full">
+        {Array.from({ length: ROWS * COLS }).map((_, i) => {
+          const x = i % COLS;
+          const y = Math.floor(i / COLS);
+          return (
+            <rect
+              key={`c-${x}-${y}`}
+              x={x * CELL}
+              y={y * CELL}
+              width={CELL}
+              height={CELL}
+              fill="transparent"
+              stroke="rgba(148,163,184,0.12)"
+            />
+          );
+        })}
+        {tested && pathPoints && (
+          <polyline
+            points={pathPoints}
+            fill="none"
+            stroke={result.success ? "#34d399" : "#f87171"}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.9}
+          />
+        )}
+        <circle cx={SOURCE.x * CELL + CELL / 2} cy={SOURCE.y * CELL + CELL / 2} r={9} fill="#fbbf24" />
+        <text x={SOURCE.x * CELL + CELL / 2} y={SOURCE.y * CELL + CELL / 2 + 20} textAnchor="middle" fill="#fde68a" fontSize="9">
+          SRC
+        </text>
+        {SENSORS.map((s) => (
+          <g key={s.id}>
+            <circle cx={s.x * CELL + CELL / 2} cy={s.y * CELL + CELL / 2} r={11} fill="#0f172a" stroke="#38bdf8" strokeWidth={2} />
+            <text x={s.x * CELL + CELL / 2} y={s.y * CELL + CELL / 2 + 4} textAnchor="middle" fill="#7dd3fc" fontSize="11" fontWeight="700">
+              {s.id}
+            </text>
+          </g>
+        ))}
+        <rect
+          x={TARGET.x * CELL + 10}
+          y={TARGET.y * CELL + 10}
+          width={CELL - 20}
+          height={CELL - 20}
+          rx={4}
+          fill={solved ? "#34d399" : "#1e293b"}
+          stroke={solved ? "#6ee7b7" : "#94a3b8"}
+          strokeWidth={2}
+        />
+        <text x={TARGET.x * CELL + CELL / 2} y={TARGET.y * CELL + CELL / 2 + 4} textAnchor="middle" fill={solved ? "#052e1b" : "#cbd5e1"} fontSize="9" fontWeight="700">
+          LOCK
+        </text>
+        {mirrors.map((m, index) => (
+          <g key={m.id} onClick={() => rotateMirror(index)} style={{ cursor: solved ? "default" : "pointer" }}>
+            <rect
+              x={m.x * CELL + 6}
+              y={m.y * CELL + 6}
+              width={CELL - 12}
+              height={CELL - 12}
+              rx={5}
+              fill={m.id === "M5" ? "rgba(251,191,36,0.12)" : "rgba(56,189,248,0.12)"}
+              stroke={m.id === "M5" ? "#fbbf24" : "#38bdf8"}
+              strokeWidth={1.5}
+            />
+            <line
+              x1={m.kind === "/" ? m.x * CELL + 14 : m.x * CELL + CELL - 14}
+              y1={m.y * CELL + CELL - 14}
+              x2={m.kind === "/" ? m.x * CELL + CELL - 14 : m.x * CELL + 14}
+              y2={m.y * CELL + 14}
+              stroke="#e2e8f0"
+              strokeWidth={3.5}
+              strokeLinecap="round"
+            />
+          </g>
+        ))}
+      </svg>
     </div>
+  );
+
+  return (
+    <PuzzleShell
+      title="Laser"
+      accent="cyan"
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+      tabs={[
+        { id: "grid", label: "Grid", content: grid },
+        {
+          id: "ref",
+          label: "Ref",
+          content: (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-center hover:border-cyan-400/40 transition"
+              >
+                <div className="font-mono text-3xl text-cyan-200 mb-2">/</div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-500">Reflect</div>
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-center hover:border-cyan-400/40 transition"
+              >
+                <div className="font-mono text-3xl text-cyan-200 mb-2">\</div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-500">Reflect</div>
+              </button>
+              <p className="col-span-2 text-center text-xs text-slate-500">Tap mirrors on the grid to flip</p>
+            </div>
+          ),
+        },
+      ]}
+      footer={
+        <div className="space-y-2">
+          {feedback && (
+            <p className={`text-center text-xs ${solved ? "text-emerald-400" : "text-rose-400"}`}>{feedback}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMirrors(INITIAL_MIRRORS);
+                setTested(false);
+                setSolved(false);
+                setFeedback("");
+              }}
+              className="rounded-lg border border-white/15 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+            >
+              Reset
+            </button>
+            <div className="flex-1">
+              <PuzzlePrimaryButton accent="cyan" onClick={handleTest} disabled={solved}>
+                SUBMIT
+              </PuzzlePrimaryButton>
+            </div>
+          </div>
+        </div>
+      }
+    />
   );
 }

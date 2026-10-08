@@ -7,6 +7,7 @@ import {
   isRoomUnlocked,
   type RoomKey,
 } from "@/lib/investigationState";
+import InvestigationHud from "@/components/rooms/InvestigationHud";
 
 const RoomOne = lazy(() => import("@/components/rooms/RoomOne"));
 const RoomTwo = lazy(() => import("@/components/rooms/RoomTwo"));
@@ -78,15 +79,18 @@ const Game = () => {
 
   return (
     <div className="min-h-screen bg-black relative">
-      <Link to="/?skipIntro=true" className="fixed top-8 left-8 z-50">
+      <Link to="/?skipIntro=true" className="fixed top-4 left-4 z-50">
         <Button
           variant="outline"
-          className="h-12 px-6 font-display font-bold bg-black/80 border-red-900/70 text-white hover:bg-red-900/20 hover:border-red-600"
+          size="sm"
+          className="font-display font-bold bg-black/80 border-red-900/70 text-white hover:bg-red-900/20 hover:border-red-600"
         >
-          <ArrowLeft className="w-5 h-5 mr-2" />
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
           Map
         </Button>
       </Link>
+
+      <InvestigationHud currentRoom={roomName} />
 
       <Suspense
         fallback={

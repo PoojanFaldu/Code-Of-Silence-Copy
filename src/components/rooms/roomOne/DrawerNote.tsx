@@ -1,3 +1,5 @@
+import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
+
 interface DrawerNoteProps {
   onContinue: () => void;
   onClose: () => void;
@@ -5,43 +7,40 @@ interface DrawerNoteProps {
 
 export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-xl border border-amber-500/30 bg-[#14100b] shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-amber-200">Concealed Drawer</h2>
-          <button
-            onClick={onClose}
-            className="rounded-md border border-white/20 px-3 py-1 text-sm text-slate-300 hover:bg-white/10"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="px-5 py-6 space-y-5">
-          <p className="text-sm text-slate-400">
-            A slim drawer slides open beneath the desk. Verma left a folded note — and something underneath it.
-          </p>
-
-          <div className="rounded-lg border border-amber-700/40 bg-[#1c160f] p-5 shadow-inner">
-            <p className="font-serif text-base leading-relaxed text-amber-100/90 italic">
-              &quot;If you&apos;re reading this, I didn&apos;t have time to finish. The archive contains the proof. But
-              first, find the key I left behind.&quot;
-            </p>
-            <p className="mt-4 text-right text-xs tracking-widest text-amber-500/80">— D. VERMA</p>
-          </div>
-
-          <p className="text-sm text-slate-400">
-            Beneath the note: a second scrap covered in scrambled letters. It looks important.
-          </p>
-
-          <button
-            onClick={onContinue}
-            className="w-full rounded-md bg-amber-500/20 border border-amber-400/40 px-4 py-3 text-sm font-medium text-amber-100 hover:bg-amber-500/30"
-          >
-            Take the Encrypted Scrap
-          </button>
-        </div>
-      </div>
-    </div>
+    <PuzzleShell
+      title="Note"
+      accent="amber"
+      onClose={onClose}
+      tabs={[
+        {
+          id: "note",
+          label: "Note",
+          content: (
+            <div className="rounded-xl border border-amber-700/30 bg-[#1a140e] p-5">
+              <p className="font-serif text-base leading-relaxed text-amber-50/90 italic">
+                &quot;The record ends before the night does.
+                <br />
+                If someone asks, I never finished reviewing Experiment 17.&quot;
+              </p>
+            </div>
+          ),
+        },
+        {
+          id: "scrap",
+          label: "Scrap",
+          content: (
+            <div className="rounded-xl border border-dashed border-amber-500/30 bg-black/30 p-6 text-center space-y-2">
+              <p className="font-mono text-xs tracking-widest text-amber-200/70">ENCRYPTED SCRAP</p>
+              <p className="font-mono text-sm text-slate-400">FKHFN WKH …</p>
+            </div>
+          ),
+        },
+      ]}
+      footer={
+        <PuzzlePrimaryButton accent="amber" onClick={onContinue}>
+          TAKE SCRAP
+        </PuzzlePrimaryButton>
+      }
+    />
   );
 }

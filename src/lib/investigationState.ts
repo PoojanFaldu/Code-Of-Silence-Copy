@@ -1,4 +1,6 @@
-/** Lightweight persistent investigation state for The Last Session */
+/** Lightweight persistent investigation state for Code of Silence */
+
+import { resetProgressHud } from "@/lib/investigationProgress";
 
 export type RoomKey = "verma" | "research" | "archive" | "server";
 
@@ -62,6 +64,7 @@ export function resetInvestigationState() {
     sessionStorage.removeItem("room3_puzzle5_solved");
     sessionStorage.removeItem("room3_puzzle6_solved");
   }
+  resetProgressHud();
 }
 
 /** Room unlock rules for continuous investigation */

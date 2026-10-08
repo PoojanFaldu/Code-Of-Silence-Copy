@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import LogicGatesPuzzle from "@/components/rooms/roomTwo/LogicGatesPuzzle";
 import ResearchReport from "@/components/rooms/roomTwo/ResearchReport";
-import NetworkPortPuzzle from "@/components/rooms/roomTwo/NetworkPortPuzzle";
+import TimelineReconstructionPuzzle from "@/components/rooms/roomTwo/TimelineReconstructionPuzzle";
 import ArchiveReveal from "@/components/rooms/roomTwo/ArchiveReveal";
 import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
@@ -14,13 +14,13 @@ import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
 import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
+import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
-type Overlay = null | "logic" | "report" | "network" | "archive";
+type Overlay = null | "logic" | "report" | "timeline" | "archive";
 
-/** 0 logic → 1 report → 2 network → 3 archive → 4 complete */
+/** 0 logic → 1 report → 2 timeline → 3 archive → 4 complete */
 type Step = 0 | 1 | 2 | 3 | 4;
 
-// Resting on the white workstation desk (left console)
 const LOGIC_POS: [number, number, number] = [-0.55, 3.02, 4.35];
 const MONITOR_POS: [number, number, number] = [0.55, 2.85, 5.35];
 
@@ -49,7 +49,6 @@ const LoadModel = () => {
 
 function LogicTerminal({ solved }: { solved: boolean }) {
   return (
-    // Flat on the desk, screen facing up toward the player
     <group position={LOGIC_POS} rotation={[-Math.PI / 2 + 0.18, 0.35, 0]}>
       <mesh castShadow>
         <boxGeometry args={[0.42, 0.28, 0.04]} />
@@ -110,15 +109,15 @@ const RoomTwo = () => {
         maxDistance: 2.8,
       },
       {
-        id: "network",
-        label: "Archive gateway",
+        id: "timeline",
+        label: "Activity log",
         position: MONITOR_POS,
         active: step === 2,
         maxDistance: 2.8,
       },
       {
         id: "archive",
-        label: "Access log",
+        label: "Archive access",
         position: MONITOR_POS,
         active: step === 3,
         maxDistance: 2.8,
@@ -130,7 +129,7 @@ const RoomTwo = () => {
   const handleInteract = (id: string) => {
     if (id === "logic" && step === 0) setOverlay("logic");
     if (id === "report" && step === 1) setOverlay("report");
-    if (id === "network" && step === 2) setOverlay("network");
+    if (id === "timeline" && step === 2) setOverlay("timeline");
     if (id === "archive" && step === 3) setOverlay("archive");
   };
 
@@ -138,10 +137,6 @@ const RoomTwo = () => {
 
   return (
     <div className="h-screen w-screen bg-black relative">
-      <div className="absolute top-4 right-4 z-20 max-w-xs rounded-lg border border-emerald-400/25 bg-black/75 px-4 py-3 text-sm text-slate-300 pointer-events-none">
-        <p className="text-[11px] uppercase tracking-wider text-emerald-300/90 mb-1">Research Lab</p>
-        <p className="text-xs text-slate-400">Search the lab. Aim · Press E</p>
-      </div>
 
       <Canvas camera={{ position: [0, 4, 8], fov: 75 }}>
         <PerspectiveCamera makeDefault position={[0, 4, 8]} fov={75} />
@@ -174,6 +169,7 @@ const RoomTwo = () => {
         <LogicGatesPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
+            completeTask("logic");
             setStep(1);
             setOverlay(null);
           }}
@@ -182,21 +178,22 @@ const RoomTwo = () => {
 
       {overlay === "report" && (
         <ResearchReport
-          onClose={() => {
-            setStep(2);
-            setOverlay(null);
-          }}
+          onClose={() => setOverlay(null)}
           onContinue={() => {
+            completeTask("report");
+            unlockLog("exp17_report");
             setStep(2);
             setOverlay(null);
           }}
         />
       )}
 
-      {overlay === "network" && (
-        <NetworkPortPuzzle
+      {overlay === "timeline" && (
+        <TimelineReconstructionPuzzle
           onClose={() => setOverlay(null)}
           onSolved={() => {
+            completeTask("timeline");
+            unlockLog("timeline_order");
             setStep(3);
             setOverlay(null);
           }}
@@ -207,15 +204,14 @@ const RoomTwo = () => {
         <ArchiveReveal
           onClose={() => setOverlay(null)}
           onComplete={() => {
+            completeTask("archive");
+            unlockLog("archive_access");
             setStep(4);
             setOverlay(null);
             setInvestigationState({
               room2Complete: true,
               nehaSuspect: true,
             });
-            sessionStorage.setItem("room2_neha_suspect", "true");
-            sessionStorage.setItem("room2_exp17_archive", "true");
-            sessionStorage.setItem("room2_history_missing", "true");
             setShowTrail(true);
           }}
         />
@@ -224,9 +220,9 @@ const RoomTwo = () => {
       {showTrail && (
         <EvidenceTrailModal
           findings={[
-            "EXP-17 current values do not match the baseline.",
-            "Neha Rao is linked to the latest archive access.",
-            "Physical archived copies of EXP-17 may explain the missing history.",
+            "Activity during the missing period is incomplete.",
+            "Someone was active after Verma's session opened.",
+            "Offline copies may exist in the archives.",
           ]}
           nextRoomLabel="Archives"
           onStay={() => setShowTrail(false)}

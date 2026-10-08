@@ -18,7 +18,7 @@ export default function EvidenceTrailModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
       <div className="w-full max-w-lg rounded-xl border border-cyan-500/35 bg-[#070d14] shadow-2xl overflow-hidden">
         <div className="border-b border-cyan-500/20 px-5 py-4">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-cyan-400/80">The Last Session</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-cyan-400/80">Code of Silence</p>
           <h2 className="mt-1 text-lg font-semibold text-cyan-100">{title}</h2>
         </div>
 
