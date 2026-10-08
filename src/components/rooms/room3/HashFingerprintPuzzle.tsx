@@ -4,7 +4,6 @@ import { useGame } from "@/contexts/GameContext";
 import {
   BookOpen,
   Check,
-  Copy,
   X,
   AlertTriangle,
   ExternalLink,
@@ -127,7 +126,6 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
   const [isVermaLetterOpen, setIsVermaLetterOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -155,14 +153,6 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
   const handleToggleMaximize = () => {
     playTone(620, 0.05);
     setIsMaximized((prev) => !prev);
-  };
-
-  const handleCopyHash = (text: string, id: string) => {
-    playTone(740, 0.05);
-    navigator.clipboard?.writeText(text);
-    setCopiedHashId(id);
-    toast.success("Cryptographic hash copied to clipboard!");
-    setTimeout(() => setCopiedHashId(null), 2000);
   };
 
   const handleSelectFile = (id: string) => {
@@ -302,7 +292,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                         </div>
 
                         {/* Live Terminal Computed Hash */}
-                        <div className="rounded-lg border border-cyan-500/20 bg-black/75 px-3 py-2 flex items-center justify-between gap-2">
+                        <div className="rounded-lg border border-cyan-500/20 bg-black/75 px-3 py-2">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400/70 shrink-0">
                               LIVE HASH:
@@ -311,22 +301,6 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                               {file.terminalHash}
                             </span>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopyHash(file.terminalHash, `terminal-${file.id}`);
-                            }}
-                            className="shrink-0 p-1 rounded hover:bg-white/10 text-slate-400 hover:text-cyan-300 transition"
-                            title="Copy hash to clipboard"
-                          >
-                            {copiedHashId === `terminal-${file.id}` ? (
-                              <Check className="h-3.5 w-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5" />
-                            )}
-                          </button>
                         </div>
                       </div>
                     );
@@ -544,37 +518,13 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
               </div>
             </div>
 
-            {/* Bottom Controls & Quick Hash Copy Reference */}
-            <div className="mt-3.5 pt-3 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-              {/* Quick Copy Hash Buttons for Convenience */}
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                <span className="text-[11px] font-mono text-amber-400/70 mr-1 hidden md:inline">
-                  Copy Recorded Hashes:
-                </span>
-                {HASH_PUZZLE_FILES.map((f, i) => (
-                  <button
-                    key={`quick-${f.id}`}
-                    type="button"
-                    onClick={() => handleCopyHash(f.vermaHash, `verma-${f.id}`)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-700/40 bg-amber-950/30 hover:bg-amber-900/40 text-amber-200 text-xs font-mono transition"
-                  >
-                    {copiedHashId === `verma-${f.id}` ? (
-                      <Check className="h-3 w-3 text-emerald-400" />
-                    ) : (
-                      <Copy className="h-3 w-3 text-amber-400" />
-                    )}
-                    <span>[{i + 1}] {f.id}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Return to Terminal Button */}
+            <div className="mt-3.5 pt-3 border-t border-amber-800/30 shrink-0">
               <button
                 type="button"
                 onClick={handleCloseLetter}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl border border-amber-500/60 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold uppercase tracking-wider transition shadow-md shadow-amber-950/50"
+                className="w-full px-5 py-2.5 rounded-xl border border-amber-500/60 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold uppercase tracking-wider transition shadow-md shadow-amber-950/50"
               >
-                Return to Terminal
+                Back to Terminal
               </button>
             </div>
           </div>

@@ -82,7 +82,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "drawer_note",
     title: "Verma's Note",
-    body: "20:41 — D. VERMA\nEXP-17 was altered before the later record changes.\nI finally know where the original discrepancy came from.\nMehta knows I found it.\nNeed to speak with him tonight.",
+    body: "20:41 — D. VERMA\nEXP-17 was altered before the later record changes.\nI finally know where the original discrepancy came from.\nI did not expect it would be one of my own colleagues.\nI have to settle this tonight — before the file is rewritten again.",
   },
   {
     id: "folder_log",
@@ -122,7 +122,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "uv_archive",
     title: "UV Archive",
-    body: "20:56  VERMA\n21:03  A. MEHTA\n21:17  EXP-17 BASELINE MODIFIED\n21:29  N. RAO\n21:36  UNKNOWN SESSION\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n\nOriginal retained. Later copy modified.\n\nMargin note (Verma):\nHe already knows I saw the 21:17 change.",
+    body: "20:56  VERMA\n21:03  Assigned researcher — present\n21:17  EXP-17 BASELINE MODIFIED\n21:29  N. RAO — review (after original change)\n21:36  N. RAO — server check (after original change)\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n\nClearance — N. Rao:\nHer review and server session both happen after the 21:17 rewrite. She was checking a file already altered — not authoring the original change.\n\nFinal note — D. VERMA:\nThe baseline was rewritten by the researcher assigned to EXP-17. I told them I would not stay silent. Neha only arrived later — she was trying to understand what had already been done. If anything happens tonight, look at who needed that first change hidden.\n\nCorrelation:\n21:17 original rewrite → assigned EXP-17 researcher\nNeha cleared on timing (after 21:17)\nVerma planned to confront the assigned researcher\nVerma goes offline at 21:41",
   },
 ];
 

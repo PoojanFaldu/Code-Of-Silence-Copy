@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useState, useEffect, ReactNode 
 import { toast } from "sonner";
 import { resetInvestigationState } from "@/lib/investigationState";
 import { resetProgressHud } from "@/lib/investigationProgress";
-import { recordTimeout } from "@/lib/eventDb";
+import { MISSION_DURATION_SECONDS, recordTimeout } from "@/lib/eventDb";
 
 /** Deducted from the mission timer on each wrong puzzle guess. */
 export const WRONG_ANSWER_PENALTY_SECONDS = 120;
@@ -29,7 +29,7 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-const GAME_DURATION = 3600; // 60 minutes in seconds
+const GAME_DURATION = MISSION_DURATION_SECONDS;
 const DEFAULT_WEBSITE_URL = "https://code-of-silence-unlocked-53719-03265-76-14967.lovable.app/";
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
@@ -50,7 +50,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       if (remaining <= 0) {
         setTimedOut(true);
-        recordTimeout();
+        // Full mission budget consumed (includes prior penalties baked into start time).
+        recordTimeout(GAME_DURATION);
       }
     };
 
@@ -82,7 +83,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const next = Math.max(0, prev - seconds);
         if (next <= 0) {
           setTimedOut(true);
-          recordTimeout();
+          recordTimeout(GAME_DURATION);
         }
         return next;
       });

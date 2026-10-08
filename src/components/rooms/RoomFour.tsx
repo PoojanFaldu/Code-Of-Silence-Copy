@@ -17,7 +17,7 @@ import {
   unlockLog,
   type LogId,
 } from "@/lib/investigationProgress";
-import { recordMurderGuess } from "@/lib/eventDb";
+import { MISSION_DURATION_SECONDS, recordMurderGuess } from "@/lib/eventDb";
 
 /** 0 session → 1 flashlight → 2 UV paper → 3 accusation */
 type Step = 0 | 1 | 2 | 3;
@@ -90,7 +90,7 @@ function isKaranAccusation(raw: string) {
 }
 
 const RoomFour = () => {
-  const { penalizeWrongAccusation } = useGame();
+  const { penalizeWrongAccusation, timeRemaining } = useGame();
   const [showSession, setShowSession] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
   const [uvEnabled, setUvEnabled] = useState(false);
@@ -158,15 +158,16 @@ const RoomFour = () => {
   };
 
   const accuse = () => {
+    const timeUsed = Math.max(0, MISSION_DURATION_SECONDS - timeRemaining);
     if (isArjunAccusation(accusation)) {
       completeTask("accusation");
-      recordMurderGuess(accusation.trim(), true);
+      recordMurderGuess(accusation.trim(), true, timeUsed);
       setInvestigationState({ room4Complete: true, caseSolved: true });
       setGameWon(true);
       setShowFinalQuestion(false);
       return;
     }
-    recordMurderGuess(accusation.trim(), false);
+    recordMurderGuess(accusation.trim(), false, timeUsed);
     penalizeWrongAccusation();
     if (isNehaAccusation(accusation)) {
       setAnswerError("The timeline does not match.\nTry again.");
@@ -257,33 +258,71 @@ const RoomFour = () => {
       )}
 
       {showUvClue && !showEvidenceReview && !showFinalQuestion && !gameWon && (
-        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4">
-            <h2 className="text-lg text-purple-200 font-semibold tracking-widest">SESSION ARCHIVE</h2>
-            <div className="font-mono text-sm text-slate-300 space-y-1 whitespace-pre-line">
-              {`20:56  VERMA
-21:03  A. MEHTA
-21:17  EXP-17 BASELINE
-       MODIFIED
-
-21:29  N. RAO
-21:36  UNKNOWN SESSION
-
-21:41  VERMA TERMINAL
-       DISCONNECTED
-
-21:42  SESSION CLOSED`}
+        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4 my-4">
+            <h2 className="text-lg text-purple-200 font-semibold tracking-widest">UV ARCHIVE</h2>
+            <div className="font-mono text-[11px] sm:text-xs text-slate-300 space-y-1.5">
+              <div className="flex gap-3">
+                <span className="w-10 shrink-0 text-purple-300/80">20:56</span>
+                <span>VERMA — online</span>
+              </div>
+              <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
+                <span className="w-10 shrink-0 text-amber-300">21:03</span>
+                <span className="text-amber-100">Assigned researcher — present</span>
+              </div>
+              <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
+                <span className="w-10 shrink-0 text-amber-300">21:17</span>
+                <span className="text-amber-100">EXP-17 BASELINE MODIFIED</span>
+              </div>
+              <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
+                <span className="w-10 shrink-0 text-emerald-300">21:29</span>
+                <span className="text-emerald-100">N. RAO — review (after original change)</span>
+              </div>
+              <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
+                <span className="w-10 shrink-0 text-emerald-300">21:36</span>
+                <span className="text-emerald-100">N. RAO — server check (after original change)</span>
+              </div>
+              <div className="flex gap-3 rounded-md bg-rose-500/10 border border-rose-400/25 px-2 py-1 -mx-0.5">
+                <span className="w-10 shrink-0 text-rose-300">21:41</span>
+                <span className="text-rose-100">VERMA TERMINAL DISCONNECTED</span>
+              </div>
+              <div className="flex gap-3">
+                <span className="w-10 shrink-0 text-purple-300/80">21:42</span>
+                <span>SESSION CLOSED</span>
+              </div>
             </div>
-            <p className="text-xs text-purple-300/80 italic">
-              Original record retained.
-              <br />
-              Later copy modified.
-            </p>
-            <div className="rounded-lg border border-purple-500/20 bg-black/40 px-3 py-2.5 font-serif text-xs italic text-purple-100/80 leading-relaxed">
-              Margin note — Verma:
-              <br />
-              &quot;He already knows I saw the 21:17 change.&quot;
+
+            <div className="rounded-lg border border-emerald-500/25 bg-emerald-950/30 px-3 py-3 text-[11px] text-emerald-50/90 leading-relaxed space-y-1.5">
+              <p className="font-mono text-[10px] tracking-widest text-emerald-300/80 uppercase">
+                Clearance — N. Rao
+              </p>
+              <p>
+                Neha&apos;s review and server session both happen{" "}
+                <span className="text-emerald-200">after</span> the 21:17 rewrite. She was checking
+                a file that was already altered — not authoring the original change.
+              </p>
             </div>
+
+            <div className="rounded-lg border border-purple-500/25 bg-black/50 px-3 py-3 font-serif text-xs italic text-purple-50/90 leading-relaxed space-y-2">
+              <p className="font-mono not-italic text-[10px] tracking-widest text-purple-300/70">
+                FINAL NOTE — D. VERMA (UV)
+              </p>
+              <p>
+                &quot;The baseline was rewritten by the researcher assigned to EXP-17. I told them I
+                would not stay silent. Neha only arrived later — she was trying to understand what
+                had already been done. If anything happens tonight, look at who needed that first
+                change hidden.&quot;
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-amber-500/20 bg-amber-950/30 px-3 py-2.5 text-[11px] text-amber-100/90 leading-relaxed font-mono space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-amber-300/80">Correlation</p>
+              <p>21:17 original rewrite → assigned EXP-17 researcher</p>
+              <p>Neha cleared on timing (after 21:17)</p>
+              <p>Verma planned to confront the assigned researcher</p>
+              <p>Verma goes offline at 21:41</p>
+            </div>
+
             <button
               onClick={() => {
                 completeTask("uv");
@@ -312,7 +351,21 @@ const RoomFour = () => {
                 Review collected logs before naming a suspect.
               </p>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="rounded-lg border border-amber-500/25 bg-amber-950/25 px-3 py-3 text-[11px] text-amber-50/90 leading-relaxed space-y-1.5">
+                <p className="font-mono text-[10px] tracking-widest text-amber-300/90 uppercase">
+                  Case focus
+                </p>
+                <p>
+                  Neha is cleared on timing: her review/server activity is{" "}
+                  <span className="text-amber-200">after</span> the original rewrite.
+                </p>
+                <p>
+                  The <span className="text-amber-200">21:17</span> baseline change required the
+                  assigned EXP-17 researcher (see Blue Folder protocol / Archive recover). Verma
+                  discovered that change and meant to confront them — then went offline at 21:41.
+                </p>
+              </div>
               {unlockedLogs.length === 0 ? (
                 <p className="text-center text-sm text-slate-500 py-8">No logs unlocked yet.</p>
               ) : (
@@ -359,8 +412,10 @@ const RoomFour = () => {
             <h2 className="text-xl text-white font-bold text-center tracking-wide">
               WHO KILLED PROFESSOR DEV VERMA?
             </h2>
-            <p className="text-center text-xs text-slate-500">
-              Wrong accusation: −10:00. Review evidence if needed.
+            <p className="text-center text-xs text-slate-500 leading-relaxed">
+              Wrong accusation: −10:00.
+              <br />
+              Neha is cleared on timing. Who was assigned to EXP-17 — and who Verma meant to confront?
             </p>
 
             <form

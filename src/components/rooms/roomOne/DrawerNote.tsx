@@ -25,10 +25,10 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
                 I finally know where the original discrepancy came from.
                 <br />
                 <br />
-                Mehta knows I found it.
+                I did not expect it would be one of my own colleagues.
                 <br />
                 <br />
-                Need to speak with him tonight.
+                I have to settle this tonight — before the file is rewritten again.
               </p>
             </div>
           ),

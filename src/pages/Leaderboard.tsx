@@ -3,13 +3,15 @@ import { Link } from "react-router-dom";
 import {
   EVENT_DB_EVENT,
   formatFinishTime,
+  formatTimeUsed,
   loadEventDb,
+  normalizeSuspectFullName,
   type PlayerRecord,
 } from "@/lib/eventDb";
 
 function guessLabel(p: PlayerRecord) {
-  if (p.murderGuess === "none") return "—";
-  const name = p.murderGuessName ?? "?";
+  if (p.murderGuess === "none" || !p.murderGuessName) return "—";
+  const name = normalizeSuspectFullName(p.murderGuessName);
   if (p.murderGuess === "correct") return `${name} · correct`;
   return `${name} · incorrect`;
 }
@@ -39,12 +41,16 @@ export default function Leaderboard() {
     };
     const d = rank(a) - rank(b);
     if (d !== 0) return d;
+    // Faster finish (less mission time used, including penalties) ranks higher among winners
+    if (a.murderGuess === "correct" && b.murderGuess === "correct") {
+      return (a.timeUsedSeconds ?? 99999) - (b.timeUsedSeconds ?? 99999);
+    }
     return b.puzzlesPassed - a.puzzlesPassed;
   });
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em]">LEADERBOARD</h1>
@@ -60,13 +66,14 @@ export default function Leaderboard() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-cyan-500/20 overflow-hidden bg-gradient-to-b from-cyan-950/20 to-black">
-          <table className="w-full text-left text-sm">
+        <div className="rounded-xl border border-cyan-500/20 overflow-x-auto bg-gradient-to-b from-cyan-950/20 to-black">
+          <table className="w-full text-left text-sm min-w-[720px]">
             <thead className="bg-black/60 text-[10px] uppercase tracking-wider text-cyan-400/80">
               <tr>
                 <th className="px-4 py-3">Player</th>
                 <th className="px-4 py-3">Puzzles</th>
                 <th className="px-4 py-3">Murderer guess</th>
+                <th className="px-4 py-3">Time used</th>
                 <th className="px-4 py-3">Time out</th>
                 <th className="px-4 py-3">Finished at</th>
               </tr>
@@ -74,7 +81,7 @@ export default function Leaderboard() {
             <tbody>
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                     No players yet. Start a game with admin password + name.
                   </td>
                 </tr>
@@ -94,6 +101,9 @@ export default function Leaderboard() {
                     >
                       {guessLabel(p)}
                     </td>
+                    <td className="px-4 py-3 font-mono text-cyan-100/90">
+                      {formatTimeUsed(p.timeUsedSeconds)}
+                    </td>
                     <td className="px-4 py-3 font-mono text-xs">
                       {p.timedOut ? (
                         <span className="text-amber-400">YES</span>
@@ -110,6 +120,9 @@ export default function Leaderboard() {
             </tbody>
           </table>
         </div>
+        <p className="text-[10px] text-slate-600 font-mono">
+          Time used = mission time consumed (includes −2:00 puzzle and −10:00 accusation penalties).
+        </p>
       </div>
     </div>
   );

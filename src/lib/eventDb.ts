@@ -9,6 +9,8 @@ export type PlayerRecord = {
   completedTaskIds: string[];
   murderGuess: MurderGuessResult;
   murderGuessName: string | null;
+  /** Mission seconds consumed (includes wrong-answer / accusation penalties). */
+  timeUsedSeconds: number | null;
   timedOut: boolean;
   startedAt: string | null;
   finishedAt: string | null;
@@ -22,6 +24,7 @@ export type EventDb = {
 const DB_KEY = "cos_event_db";
 const ACTIVE_PLAYER_KEY = "cos_active_player_id";
 export const EVENT_DB_EVENT = "cos-event-db";
+export const MISSION_DURATION_SECONDS = 3600;
 
 const DEFAULT_ADMIN_PASSWORD = "csi-admin-2026";
 
@@ -61,6 +64,42 @@ function uid() {
   return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Normalize typed/partial suspect names to consistent full display names. */
+export function normalizeSuspectFullName(raw: string): string {
+  const s = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^dr\s+/, "")
+    .trim();
+
+  if (s === "arjun" || s === "mehta" || s === "arjun mehta" || s === "mehta arjun") {
+    return "Arjun Mehta";
+  }
+  if (s === "neha" || s === "rao" || s === "neha rao" || s === "rao neha") {
+    return "Neha Rao";
+  }
+  if (s === "karan" || s === "patel" || s === "karan patel" || s === "patel karan") {
+    return "Karan Patel";
+  }
+  if (!s || s === "(timed out)") return "(timed out)";
+  // Preserve unknown free-text with basic title case
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+export function formatTimeUsed(seconds: number | null | undefined): string {
+  if (seconds == null || Number.isNaN(seconds)) return "—";
+  const clamped = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(clamped / 60);
+  const secs = clamped % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
 /** Create a new run entry for this name (always a fresh leaderboard row). */
 export function startGameAsPlayer(name: string): PlayerRecord {
   const trimmed = name.trim();
@@ -72,6 +111,7 @@ export function startGameAsPlayer(name: string): PlayerRecord {
     completedTaskIds: [],
     murderGuess: "none",
     murderGuessName: null,
+    timeUsedSeconds: null,
     timedOut: false,
     startedAt: new Date().toISOString(),
     finishedAt: null,
@@ -116,14 +156,15 @@ export function syncPlayerTasks(taskIds: string[]) {
   saveEventDb(db);
 }
 
-export function recordMurderGuess(guessName: string, correct: boolean) {
+export function recordMurderGuess(guessName: string, correct: boolean, timeUsedSeconds: number) {
   const id = getActivePlayerId();
   if (!id) return;
   const db = loadEventDb();
   const p = db.players.find((x) => x.id === id);
   if (!p) return;
-  p.murderGuessName = guessName.trim();
+  p.murderGuessName = normalizeSuspectFullName(guessName);
   p.murderGuess = correct ? "correct" : "incorrect";
+  p.timeUsedSeconds = Math.max(0, Math.floor(timeUsedSeconds));
   if (correct) {
     p.status = "finished";
     p.finishedAt = new Date().toISOString();
@@ -132,7 +173,7 @@ export function recordMurderGuess(guessName: string, correct: boolean) {
   saveEventDb(db);
 }
 
-export function recordTimeout() {
+export function recordTimeout(timeUsedSeconds: number = MISSION_DURATION_SECONDS) {
   const id = getActivePlayerId();
   if (!id) return;
   const db = loadEventDb();
@@ -141,9 +182,12 @@ export function recordTimeout() {
   p.timedOut = true;
   p.status = "finished";
   p.finishedAt = new Date().toISOString();
+  p.timeUsedSeconds = Math.max(0, Math.floor(timeUsedSeconds));
   if (p.murderGuess === "none") {
     p.murderGuess = "incorrect";
-    p.murderGuessName = p.murderGuessName ?? "(timed out)";
+    p.murderGuessName = p.murderGuessName
+      ? normalizeSuspectFullName(p.murderGuessName)
+      : "(timed out)";
   }
   saveEventDb(db);
 }
