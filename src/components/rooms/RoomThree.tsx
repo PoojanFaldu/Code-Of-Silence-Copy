@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { RoomThree3DObjects, ROOM3_TARGET_POSITIONS } from "./room3/RoomThree3DObjects";
 import { HashFingerprintPuzzle } from "./room3/HashFingerprintPuzzle";
-import { ArchiveComparisonPuzzle } from "./room3/ArchiveComparisonPuzzle";
+import { ArchiveTerminalPuzzle } from "./room3/ArchiveTerminalPuzzle";
 import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import { playKeyClick, playPaperSlide } from "./room3/audio";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
@@ -16,7 +16,7 @@ import type { FocusedInteractable, InteractTarget } from "@/components/rooms/int
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
-/** 0 hash → 1 archive comparison → 2 complete */
+/** 0 hash → 1 archive terminal → 2 complete */
 type Step = 0 | 1 | 2;
 
 const ROOM3_BOUNDARY = {
@@ -92,7 +92,7 @@ const RoomThree = () => {
       },
       {
         id: "archive",
-        label: "Archive comparison station",
+        label: "Archive terminal",
         position: ROOM3_TARGET_POSITIONS.archive,
         active: step === 1,
         maxDistance: 2.8,
@@ -166,7 +166,7 @@ const RoomThree = () => {
         initialSolved={isHashSolved}
       />
 
-      <ArchiveComparisonPuzzle
+      <ArchiveTerminalPuzzle
         isOpen={isArchiveOpen}
         onClose={() => setIsArchiveOpen(false)}
         onSolved={() => {

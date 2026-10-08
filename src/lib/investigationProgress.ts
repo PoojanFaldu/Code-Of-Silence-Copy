@@ -92,7 +92,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "folder_log",
     title: "Research File",
-    body: "20:56  VERMA\n21:03  ARJUN\n21:17  FILE CHANGE\n21:29  NEHA\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — A. Mehta.\n\nStaff notes:\nM. Shah — disputed Verma over EXP-17 credit\nR. Desai — IT/security admin\nK. Patel — network technician\nN. Rao — archives",
+    body: "20:56  Professor Dev Verma\n21:03  Dr. Arjun Mehta\n21:17  FILE CHANGE\n21:29  Neha Rao\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — Dr. Arjun Mehta.\n\nStaff notes:\nRohan Desai — IT/security admin\nKaran Patel — network technician\nNeha Rao — archives",
   },
   {
     id: "exp17_report",
@@ -117,12 +117,12 @@ export const EVIDENCE_LOGS: {
   {
     id: "overlay_stamp",
     title: "Archive Recovered",
-    body: "21:17  EXP-17 BASELINE MODIFIED\n21:36  UNKNOWN SESSION\n\nOriginal change 21:17 — Authorized researcher: A. MEHTA\nBaseline changes normally require the assigned researcher.",
+    body: "ARCHIVE TERMINAL\n\nresults.txt — Expected 84.2%, Found 91.7% (DOES NOT MATCH ORIGINAL)\nbackup.txt — STATUS: ORIGINAL\n\nAssigned researcher: Dr. Arjun Mehta\nBaseline updates required the assigned researcher.",
   },
   {
     id: "session_full",
     title: "Session Verified",
-    body: "21:36  UNKNOWN SESSION 7F2A\nTerminal: SRV-03\nAUTH 2290 → N. RAO",
+    body: "SYSTEM ACCESS\nUSER IDENTIFICATION COMPLETE\n\nACCOUNT: Neha Rao\nAccess granted via binary username decode.",
   },
   {
     id: "uv_archive",

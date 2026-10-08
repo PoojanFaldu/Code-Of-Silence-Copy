@@ -83,9 +83,6 @@ export function normalizeSuspectFullName(raw: string): string {
   if (s === "karan" || s === "patel" || s === "karan patel" || s === "patel karan") {
     return "Karan Patel";
   }
-  if (s === "maya" || s === "shah" || s === "maya shah" || s === "shah maya") {
-    return "Maya Shah";
-  }
   if (s === "rohan" || s === "desai" || s === "rohan desai" || s === "desai rohan") {
     return "Rohan Desai";
   }

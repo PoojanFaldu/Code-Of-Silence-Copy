@@ -122,11 +122,6 @@ function isKaranAccusation(raw: string) {
   return s === "karan" || s === "patel" || s === "karan patel" || s === "patel karan";
 }
 
-function isMayaAccusation(raw: string) {
-  const s = normalizeAccusation(raw);
-  return s === "maya" || s === "shah" || s === "maya shah" || s === "shah maya";
-}
-
 function isRohanAccusation(raw: string) {
   const s = normalizeAccusation(raw);
   return s === "rohan" || s === "desai" || s === "rohan desai" || s === "desai rohan";
@@ -245,10 +240,6 @@ const RoomFour = () => {
     }
     if (isKaranAccusation(accusation)) {
       setAnswerError("Access alone is not enough.\nTry again.");
-      return;
-    }
-    if (isMayaAccusation(accusation)) {
-      setAnswerError("Motive without the 21:17 change.\nTry again.");
       return;
     }
     if (isRohanAccusation(accusation)) {
