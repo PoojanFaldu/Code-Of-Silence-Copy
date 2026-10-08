@@ -120,6 +120,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
 
   // Second popup state: Dr. Verma's Letter
   const [isVermaLetterOpen, setIsVermaLetterOpen] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -346,19 +347,22 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
       />
 
       {/* =========================================================================
-          SECOND POPUP: Dr. Verma's Confidential Letter & Recorded Hashes
+          SECOND POPUP: Dr. Verma's Handwritten Parchment Letter (Authentic Exhibit)
           ========================================================================= */}
       {isVermaLetterOpen && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
-          onClick={() => setIsVermaLetterOpen(false)}
+          className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in overflow-y-auto"
+          onClick={() => {
+            setIsVermaLetterOpen(false);
+            setIsZoomed(false);
+          }}
         >
           <div
-            className="relative w-full max-w-2xl my-auto rounded-2xl border border-amber-600/50 bg-gradient-to-b from-[#140e07] via-[#0b0805] to-black p-5 sm:p-6 shadow-2xl shadow-amber-950/70 text-amber-50 overflow-hidden"
+            className="relative w-full max-w-4xl my-auto rounded-2xl border border-amber-600/50 bg-[#0d0a06] p-4 sm:p-5 shadow-2xl shadow-amber-950/80 text-amber-50 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-amber-700/40">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-700/40">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-amber-900/40 border border-amber-600/50 text-amber-400">
                   <BookOpen className="w-5 h-5" />
@@ -366,7 +370,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900/60 text-amber-300 font-mono font-bold tracking-wider border border-amber-600/40">
-                      CONFIDENTIAL RECORD
+                      EXHIBIT #03 • HANDWRITTEN
                     </span>
                     <span className="text-[10px] text-amber-400/80 font-mono">
                       REF: VRM-ARCHIVE-MEMO
@@ -378,85 +382,73 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsVermaLetterOpen(false)}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
-                aria-label="Close letter"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Letter Body & Directive */}
-            <div className="mt-3.5 p-3.5 rounded-xl bg-amber-950/30 border border-amber-800/40 font-serif text-xs sm:text-sm text-amber-200/90 leading-relaxed italic space-y-2">
-              <p>
-                "To whoever accesses this archive after me:
-              </p>
-              <p>
-                I have compiled the authentic cryptographic checksums of the three master Project AEGIS
-                files and stored them here. Do not trust whatever state is currently active on the
-                primary terminal. If anyone has tampered with or rewritten the trial logs, even by a
-                single byte, its hash will diverge from the numbers I have recorded below.
-              </p>
-              <p className="not-italic font-mono text-[11px] text-amber-400 font-bold">
-                Compare each digest character-by-character against the terminal to locate the altered file."
-              </p>
-              <p className="text-right text-xs not-italic font-sans text-amber-300 font-semibold">
-                — Dr. Ananya Verma, Lead Research Director
-              </p>
-            </div>
-
-            {/* The 3 Files in Verma's Letter */}
-            <div className="mt-4 space-y-2.5 max-h-[42vh] overflow-y-auto pr-1">
-              {HASH_PUZZLE_FILES.map((file, idx) => (
-                <div
-                  key={`letter-${file.id}`}
-                  className="rounded-xl border border-amber-800/40 bg-black/60 p-3 space-y-1.5"
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsZoomed((prev) => !prev)}
+                  className="px-2.5 py-1.5 rounded-lg border border-amber-600/40 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 text-xs font-mono font-semibold transition hidden sm:flex items-center gap-1.5"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-amber-400">
-                        [{idx + 1}] {file.name}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">({file.size})</span>
-                    </div>
+                  <span>{isZoomed ? "Reset Zoom" : "Click / Tap to Zoom"}</span>
+                </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleCopyHash(file.vermaHash, `verma-${file.id}`)}
-                      className="flex items-center gap-1 text-[11px] font-mono text-amber-400 hover:text-amber-200 transition"
-                    >
-                      {copiedHashId === `verma-${file.id}` ? (
-                        <Check className="h-3 w-3 text-emerald-400" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                      <span>Copy</span>
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-slate-300 leading-snug font-sans">
-                    {file.info}
-                  </p>
-
-                  {/* Verma's Recorded Hash */}
-                  <div className="rounded-lg border border-amber-700/30 bg-amber-950/20 px-2.5 py-1.5 font-mono text-xs sm:text-sm font-semibold tracking-wider text-amber-100 flex items-center justify-between select-all">
-                    <span>{file.vermaHash}</span>
-                  </div>
-                </div>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsVermaLetterOpen(false);
+                    setIsZoomed(false);
+                  }}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
+                  aria-label="Close letter"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Close Button / Return to Terminal */}
-            <div className="mt-4 pt-3 border-t border-amber-800/30 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-amber-400/70 font-mono hidden sm:inline">
-                Cross-reference each block against the live terminal.
-              </span>
+            {/* Letter Image Display */}
+            <div className="mt-3 relative rounded-xl overflow-hidden border border-amber-700/40 bg-black/70 flex justify-center items-center shadow-inner max-h-[68vh] overflow-y-auto overflow-x-hidden">
+              <img
+                src="/evidence/verma_letter.jpg"
+                alt="Dr. Verma's Handwritten Archival Letter"
+                className={`w-full max-w-3xl object-contain rounded-lg transition-transform duration-300 cursor-pointer ${
+                  isZoomed ? "scale-125 sm:scale-135 my-8 sm:my-16" : "scale-100"
+                }`}
+                onClick={() => setIsZoomed((prev) => !prev)}
+              />
+            </div>
+
+            {/* Bottom Controls & Quick Hash Copy Reference */}
+            <div className="mt-3.5 pt-3 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Quick Copy Hash Buttons for Convenience */}
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <span className="text-[11px] font-mono text-amber-400/70 mr-1 hidden md:inline">
+                  Copy Recorded Hashes:
+                </span>
+                {HASH_PUZZLE_FILES.map((f, i) => (
+                  <button
+                    key={`quick-${f.id}`}
+                    type="button"
+                    onClick={() => handleCopyHash(f.vermaHash, `verma-${f.id}`)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-700/40 bg-amber-950/30 hover:bg-amber-900/40 text-amber-200 text-xs font-mono transition"
+                  >
+                    {copiedHashId === `verma-${f.id}` ? (
+                      <Check className="h-3 w-3 text-emerald-400" />
+                    ) : (
+                      <Copy className="h-3 w-3 text-amber-400" />
+                    )}
+                    <span>[{i + 1}] {f.id}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Return to Terminal Button */}
               <button
                 type="button"
-                onClick={() => setIsVermaLetterOpen(false)}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-amber-500/60 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold uppercase tracking-wider transition"
+                onClick={() => {
+                  setIsVermaLetterOpen(false);
+                  setIsZoomed(false);
+                }}
+                className="w-full sm:w-auto px-5 py-2 rounded-xl border border-amber-500/60 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold uppercase tracking-wider transition shadow-md shadow-amber-950/50"
               >
                 Return to Terminal
               </button>
