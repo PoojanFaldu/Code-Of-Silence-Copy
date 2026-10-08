@@ -9,6 +9,7 @@ import Game from "./pages/Game";
 import NotFound from "./pages/NotFound";
 import CodeOfSilence from "./pages/CodeOfSilence";
 import { useGame } from "./contexts/GameContext";
+import GlobalTimer from "./components/common/GlobalTimer";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <TimerRedirect />
+        <GlobalTimer />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/game" element={<Game />} />

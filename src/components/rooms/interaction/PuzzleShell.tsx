@@ -96,6 +96,8 @@ type PuzzleShellProps = {
   footer?: ReactNode;
   maxWidth?: string;
   defaultTab?: string;
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
 };
 
 export function PuzzlePrimaryButton({
@@ -123,10 +125,21 @@ export default function PuzzleShell({
   footer,
   maxWidth = "max-w-lg",
   defaultTab,
+  activeTab,
+  onTabChange,
 }: PuzzleShellProps) {
   const a = ACCENT[accent];
-  const [tab, setTab] = useState(defaultTab ?? tabs?.[0]?.id ?? "");
-  const active = tabs?.find((t) => t.id === tab) ?? tabs?.[0];
+  const [internalTab, setInternalTab] = useState(defaultTab ?? tabs?.[0]?.id ?? "");
+  const currentTab = activeTab !== undefined ? activeTab : internalTab;
+  const active = tabs?.find((t) => t.id === currentTab) ?? tabs?.[0];
+
+  const handleTabClick = (tabId: string) => {
+    if (onTabChange) {
+      onTabChange(tabId);
+    } else {
+      setInternalTab(tabId);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
@@ -155,9 +168,9 @@ export default function PuzzleShell({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setTab(t.id)}
+                  onClick={() => handleTabClick(t.id)}
                   className={`flex-1 rounded-lg border px-2 py-2 text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition ${
-                    (active?.id ?? tab) === t.id ? a.tabOn : a.tabOff
+                    currentTab === t.id ? a.tabOn : a.tabOff
                   }`}
                 >
                   {t.label}

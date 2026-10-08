@@ -8,6 +8,7 @@ interface GameContextType {
   websiteUrl: string;
   setWebsiteUrl: (url: string) => void;
   resetGame: () => void;
+  deductTime: (seconds: number) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -50,6 +51,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setWebsiteUrlState(url);
   };
 
+  const deductTime = (seconds: number) => {
+    setGameStartTime((prev) => prev - seconds * 1000);
+    setTimeRemaining((prev) => Math.max(0, prev - seconds));
+  };
+
   const resetGame = () => {
     const newStartTime = Date.now();
     setGameStartTime(newStartTime);
@@ -65,7 +71,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <GameContext.Provider value={{ timeRemaining, puzzleSolved, setPuzzleSolved, websiteUrl, setWebsiteUrl, resetGame }}>
+    <GameContext.Provider value={{ timeRemaining, puzzleSolved, setPuzzleSolved, websiteUrl, setWebsiteUrl, resetGame, deductTime }}>
       {children}
     </GameContext.Provider>
   );

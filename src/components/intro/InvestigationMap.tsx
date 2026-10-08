@@ -159,22 +159,6 @@ export const InvestigationMap = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black animate-fade-in">
-      {/* Timer - Top Right */}
-      <div className="fixed top-6 right-6 z-50 animate-fade-in">
-        <div 
-          className="px-6 py-3 rounded-lg font-mono text-2xl font-bold border-2"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            color: timeRemaining < 300 ? 'hsl(0 100% 50%)' : 'hsl(0 100% 60%)',
-            borderColor: timeRemaining < 300 ? 'hsl(0 100% 50%)' : 'hsl(0 100% 50% / 0.5)',
-            boxShadow: `0 0 30px ${timeRemaining < 300 ? 'rgba(255, 0, 0, 0.6)' : 'rgba(255, 0, 0, 0.3)'}`,
-            animation: timeRemaining < 300 ? 'pulse 1s infinite' : 'none',
-          }}
-        >
-          {formatTime(timeRemaining)}
-        </div>
-      </div>
-
       {/* Blueprint Background Grid */}
       <div className="absolute inset-0 opacity-20"
         style={{
