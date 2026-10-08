@@ -31,13 +31,29 @@ const DEFAULT_STATE: InvestigationState = {
 };
 
 function canUseStorage() {
-  return typeof window !== "undefined" && typeof sessionStorage !== "undefined";
+  return typeof window !== "undefined" && typeof localStorage !== "undefined";
+}
+
+function readRaw(): string | null {
+  if (!canUseStorage()) return null;
+  const local = localStorage.getItem(STORAGE_KEY);
+  if (local != null) return local;
+  try {
+    const session = sessionStorage.getItem(STORAGE_KEY);
+    if (session != null) {
+      localStorage.setItem(STORAGE_KEY, session);
+      return session;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 export function getInvestigationState(): InvestigationState {
   if (!canUseStorage()) return { ...DEFAULT_STATE };
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = readRaw();
     if (!raw) return { ...DEFAULT_STATE };
     return { ...DEFAULT_STATE, ...JSON.parse(raw) };
   } catch {
@@ -48,21 +64,41 @@ export function getInvestigationState(): InvestigationState {
 export function setInvestigationState(patch: Partial<InvestigationState>): InvestigationState {
   const next = { ...getInvestigationState(), ...patch };
   if (canUseStorage()) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   }
   return next;
 }
 
 export function resetInvestigationState() {
   if (canUseStorage()) {
-    sessionStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem("room1_neha_suspect");
-    sessionStorage.removeItem("room1_to_lab");
-    sessionStorage.removeItem("room2_neha_suspect");
-    sessionStorage.removeItem("room2_exp17_archive");
-    sessionStorage.removeItem("room2_history_missing");
-    sessionStorage.removeItem("room3_puzzle5_solved");
-    sessionStorage.removeItem("room3_puzzle6_solved");
+    localStorage.removeItem(STORAGE_KEY);
+    const keys = [
+      "room1_neha_suspect",
+      "room1_to_lab",
+      "room2_neha_suspect",
+      "room2_exp17_archive",
+      "room2_history_missing",
+      "room3_puzzle5_solved",
+      "room3_puzzle6_solved",
+    ];
+    keys.forEach((k) => {
+      localStorage.removeItem(k);
+      try {
+        sessionStorage.removeItem(k);
+      } catch {
+        /* ignore */
+      }
+    });
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   }
   resetProgressHud();
 }
@@ -81,13 +117,15 @@ export function unlockServerRoomForTesting() {
     room4Complete: false,
   });
   if (canUseStorage()) {
-    sessionStorage.setItem("room1_neha_suspect", "true");
-    sessionStorage.setItem("room1_to_lab", "true");
-    sessionStorage.setItem("room2_neha_suspect", "true");
-    sessionStorage.setItem("room2_exp17_archive", "true");
-    sessionStorage.setItem("room2_history_missing", "true");
-    sessionStorage.setItem("room3_puzzle5_solved", "true");
-    sessionStorage.setItem("room3_puzzle6_solved", "true");
+    [
+      "room1_neha_suspect",
+      "room1_to_lab",
+      "room2_neha_suspect",
+      "room2_exp17_archive",
+      "room2_history_missing",
+      "room3_puzzle5_solved",
+      "room3_puzzle6_solved",
+    ].forEach((k) => localStorage.setItem(k, "true"));
   }
 }
 

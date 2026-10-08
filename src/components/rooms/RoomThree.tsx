@@ -15,6 +15,7 @@ import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
+import { loadRunSession, setArchiveRoomProgress } from "@/lib/runSession";
 
 /** 0 hash → 1 archive terminal → 2 complete */
 type Step = 0 | 1 | 2;
@@ -51,15 +52,27 @@ const RoomThree = () => {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
-  const [step, setStep] = useState<Step>(0);
-  const [isHashSolved, setIsHashSolved] = useState(false);
-  const [isArchiveSolved, setIsArchiveSolved] = useState(false);
+  const [step, setStepState] = useState<Step>(() => {
+    return Math.min(2, Math.max(0, loadRunSession().rooms.archive.step)) as Step;
+  });
+  const [isHashSolved, setIsHashSolved] = useState(
+    () => loadRunSession().rooms.archive.hashSolved
+  );
+  const [isArchiveSolved, setIsArchiveSolved] = useState(
+    () => loadRunSession().rooms.archive.archiveSolved
+  );
+
+  const setStep = (next: Step) => {
+    setStepState(next);
+    setArchiveRoomProgress({ step: next });
+  };
 
   const handleProceedToServerRoom = () => {
     playKeyClick();
     completeTask("overlay");
     unlockLog("overlay_stamp");
     setStep(2);
+    setArchiveRoomProgress({ step: 2, archiveSolved: true });
     setInvestigationState({
       room3Complete: true,
       arjunEvidenceFound: true,
@@ -158,6 +171,7 @@ const RoomThree = () => {
           unlockLog("hash_diff");
           setIsHashSolved(true);
           setStep(1);
+          setArchiveRoomProgress({ step: 1, hashSolved: true });
         }}
         onProceedToArchive={() => {
           setIsHashPuzzleOpen(false);
@@ -173,6 +187,7 @@ const RoomThree = () => {
           completeTask("overlay");
           unlockLog("overlay_stamp");
           setIsArchiveSolved(true);
+          setArchiveRoomProgress({ archiveSolved: true });
         }}
         onProceedToServerRoom={handleProceedToServerRoom}
         initialSolved={isArchiveSolved}

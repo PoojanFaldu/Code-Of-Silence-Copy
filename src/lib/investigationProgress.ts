@@ -45,7 +45,7 @@ export const ROOM_TASKS: {
       { id: "laser", label: "Laser" },
       { id: "drawer", label: "Drawer" },
       { id: "cipher", label: "Cipher" },
-      { id: "folder", label: "Folder" },
+      { id: "folder", label: "Badges" },
     ],
   },
   {
@@ -87,17 +87,17 @@ export const EVIDENCE_LOGS: {
   {
     id: "drawer_note",
     title: "Verma's Note",
-    body: "20:41 — D. VERMA\nEXP-17 was altered before the later record changes.\nI finally know where the original discrepancy came from.\nI did not expect it would be one of my own colleagues.\nI have to settle this tonight — before the file is rewritten again.",
+    body: "NOTE — Professor Dev Verma\n\nExperiment 17 was altered before the later record changes.\nI finally know where the original discrepancy came from.\nI did not expect it would be one of my own colleagues.\nI have to settle this tonight — before the file is rewritten again.\n\nPERSONAL SCRAP\nDr. Sameer Shah came by again today.\nWe argued about the publication.\nI will not let him pressure me into changing the results.",
   },
   {
     id: "folder_log",
-    title: "Research File",
-    body: "20:56  Professor Dev Verma\n21:03  Dr. Arjun Mehta\n21:17  FILE CHANGE\n21:29  Neha Rao\n21:36  UNKNOWN\n21:42  RECORD UNAVAILABLE\n\nProtocol: EXP-17 baseline revisions require the assigned researcher — Dr. Arjun Mehta.\n\nStaff notes:\nRohan Desai — IT/security admin\nKaran Patel — network technician\nNeha Rao — archives",
+    title: "Security Cabinet",
+    body: "BADGE ASSIGNMENT VERIFIED\n\nDr. Arjun Mehta → A-17\nNeha Rao → B-04\nKaran Patel → C-22\nRohan Desai → D-09\n\nBADGE C-22\nOWNER: Karan Patel\nACCESS: Technical\nAUTHORIZED AREA: Network Room\n\nBadge C-22 was recovered near the Network Room.\n\nAlso on file:\nDr. Sameer Shah — research partner of Professor Dev Verma.\nRecent disagreement over publication ownership.",
   },
   {
     id: "exp17_report",
     title: "Experiment 17",
-    body: "EXP-17 VERSION HISTORY\n20:56 — VERMA\n21:03 — A. MEHTA\n21:17 — A. MEHTA  (COMMIT 7F3A · MODIFY EXP17_BASELINE · 84.2% → 91.7%)\n21:29 — N. RAO\n21:36 — UNKNOWN\n21:41 — INTERRUPT\n21:42 — UNAVAILABLE",
+    body: "EXP-17 RESEARCH NOTE\n\nThe recorded result for Experiment 17 does not match\nthe original research notes.\n\nExpected result: 84.2%\nRecorded result: 91.7%\n\nAssigned researcher: Dr. Arjun Mehta\n\nProfessor Dev Verma flagged the mismatch and planned\nto speak with the person responsible.",
   },
   {
     id: "timeline_order",
@@ -107,27 +107,27 @@ export const EVIDENCE_LOGS: {
   {
     id: "archive_access",
     title: "Archive Access",
-    body: "File: EXP-17_RESULTS\nAccess: 21:29\nAccount: N. RAO\nAction: REVIEW\n\nReview occurred after the 21:17 baseline change.",
+    body: "ARCHIVE ACCESS NOTE\n\nAccount: Neha Rao\nAction: REVIEW\n\nNeha Rao opened Professor Dev Verma's research records on her own.\nThat activity looks secretive at first.\n\nRESEARCH COLLABORATION NOTE\n\nProfessor Dev Verma and Dr. Sameer Shah\nwere collaborating on related research.\n\nRecent disagreement:\nPublication ownership / research credit.\n\nStatus: Unresolved.\n\nVerma was preparing a publication that would undermine\npart of Dr. Sameer Shah's research.",
   },
   {
     id: "hash_diff",
     title: "Hash Discrepancy",
-    body: "TAMPERING IDENTIFIED in EXP17_FINAL_REPORT.enc:\nTerminal Hash:  D26A-8B1E-F407-3C9A-5E82-71B4-9A3B-E605\nVerma's Letter: D26A-8B1E-F407-3C9A-5E82-71D4-9A3B-E605\nBlock 6 alteration (71B4 ≠ 71D4) proves the anomaly report was rewritten.",
+    body: "TAMPERING IDENTIFIED in EXP17_FINAL_REPORT.enc:\nTerminal Hash:  D26A-8B1E-F407-3C9A-5E82-71B4-9A3B-E605\nVerma's Letter: D26A-8B1E-F407-3C9A-5E82-71D4-9A3B-E605\nBlock 6 alteration (71B4 ≠ 71D4) proves the anomaly report was rewritten.\n\nSECURITY NOTE\nKaran Patel has access to restricted technical areas and equipment.\nThat knowledge could theoretically let someone interfere with systems.\nThis proves a file was rewritten — not who committed the murder.\n\nPARTNERSHIP NOTE\nA recovered memo mentions Dr. Sameer Shah:\n\"Sameer threatened to make sure this research would never be published\nwithout his name attached.\"\nThe conflict was serious — but it is about publication credit, not the murder.",
   },
   {
     id: "overlay_stamp",
     title: "Archive Recovered",
-    body: "ARCHIVE TERMINAL\n\nresults.txt — Expected 84.2%, Found 91.7% (DOES NOT MATCH ORIGINAL)\nbackup.txt — STATUS: ORIGINAL\n\nAssigned researcher: Dr. Arjun Mehta\nBaseline updates required the assigned researcher.",
+    body: "ARCHIVE TERMINAL\n\nresults.txt — Expected 84.2%, Found 91.7% (DOES NOT MATCH ORIGINAL)\nbackup.txt — STATUS: ORIGINAL\n\nAssigned researcher: Dr. Arjun Mehta\nBaseline updates required the assigned researcher.\n\nProfessor Dev Verma had already marked this discrepancy.\nThe person responsible for Experiment 17 had a strong reason\nto silence that discovery.",
   },
   {
     id: "session_full",
     title: "Session Verified",
-    body: "SYSTEM ACCESS\nUSER IDENTIFICATION COMPLETE\n\nACCOUNT: Neha Rao\nAccess granted via binary username decode.",
+    body: "SYSTEM ACCESS\nUSER IDENTIFICATION COMPLETE\n\nACCOUNT: Neha Rao\n\nNeha Rao's credentials open a protected research console.\nShe had been looking into Professor Dev Verma's records.\nAt first glance, this makes her look like she was hiding something.",
   },
   {
     id: "uv_archive",
     title: "UV Archive",
-    body: "20:56  VERMA — online\n21:03  A. MEHTA — lab access\n21:17  EXP-17 BASELINE MODIFIED · 84.2% → 91.7%\n21:29  N. RAO — record access\n21:36  N. RAO — server access\n21:41  VERMA TERMINAL DISCONNECTED\n21:42  SESSION CLOSED\n21:44  ADMIN RESTART — R. DESAI\n\nNetwork 21:31: LAB-02 → SERVER (MEHTA-PC)\n\nVerma's note:\nHe knows I found it.\nWe need to speak tonight.\n\n21:17 → assigned researcher A. Mehta.\nRelay, then wall monitor.",
+    body: "FINAL NOTE — Professor Dev Verma\n\n\"Someone has been changing the research records.\nI know where the discrepancy began.\nI need to speak with them before this goes any further.\"\n\nFIVE THREADS — REVIEW\n\nDr. Arjun Mehta — Research\nAssigned to Experiment 17.\nThe recorded result does not match the original research notes.\nVerma had been reviewing the discrepancy.\nHis name appears repeatedly in the research records surrounding the discrepancy.\n\nNeha Rao — Investigation\nNeha accessed Verma's research records while looking into the discrepancy.\nHer activity suggests she was investigating the records rather than creating them.\n\nKaran Patel — Security / Access\nKaran had restricted technical access to the laboratory's network equipment.\nHis badge was recovered near the Network Room.\n\nRohan Desai — Surveillance\nRohan was responsible for the laboratory's security systems and CCTV.\nHis administrative access gave him the ability to interact with security infrastructure.\n\nDr. Sameer Shah — Conflict\nSameer had a serious professional dispute with Professor Dev Verma over publication credit.\nVerma's notes indicate that the disagreement had become increasingly difficult.\nA recovered message from Sameer refers to the research being published without his name.\n\nRestore the relay, then the wall monitor.",
   },
   {
     id: "wires_signal",
@@ -141,7 +141,34 @@ const LOG_KEY = "cos_unlocked_logs";
 export const INVESTIGATION_HUD_EVENT = "cos-investigation-hud";
 
 function canUseStorage() {
-  return typeof window !== "undefined" && typeof sessionStorage !== "undefined";
+  return typeof window !== "undefined" && typeof localStorage !== "undefined";
+}
+
+function readKey(key: string): string | null {
+  if (!canUseStorage()) return null;
+  const fromLocal = localStorage.getItem(key);
+  if (fromLocal != null) return fromLocal;
+  // Migrate older sessionStorage progress so refresh keeps working
+  try {
+    const fromSession = sessionStorage.getItem(key);
+    if (fromSession != null) {
+      localStorage.setItem(key, fromSession);
+      return fromSession;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function writeKey(key: string, value: string) {
+  if (!canUseStorage()) return;
+  localStorage.setItem(key, value);
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
 }
 
 function notify() {
@@ -153,7 +180,7 @@ function notify() {
 export function getCompletedTasks(): TaskId[] {
   if (!canUseStorage()) return [];
   try {
-    const raw = sessionStorage.getItem(TASK_KEY);
+    const raw = readKey(TASK_KEY);
     return raw ? (JSON.parse(raw) as TaskId[]) : [];
   } catch {
     return [];
@@ -163,7 +190,7 @@ export function getCompletedTasks(): TaskId[] {
 export function getUnlockedLogs(): LogId[] {
   if (!canUseStorage()) return [];
   try {
-    const raw = sessionStorage.getItem(LOG_KEY);
+    const raw = readKey(LOG_KEY);
     return raw ? (JSON.parse(raw) as LogId[]) : [];
   } catch {
     return [];
@@ -178,9 +205,7 @@ export function completeTask(id: TaskId) {
     return;
   }
   const next = [...list, id];
-  if (canUseStorage()) {
-    sessionStorage.setItem(TASK_KEY, JSON.stringify(next));
-  }
+  writeKey(TASK_KEY, JSON.stringify(next));
   syncPlayerTasks(next);
   notify();
 }
@@ -191,16 +216,20 @@ export function unlockLog(id: LogId) {
     notify();
     return;
   }
-  if (canUseStorage()) {
-    sessionStorage.setItem(LOG_KEY, JSON.stringify([...list, id]));
-  }
+  writeKey(LOG_KEY, JSON.stringify([...list, id]));
   notify();
 }
 
 export function resetProgressHud() {
   if (!canUseStorage()) return;
-  sessionStorage.removeItem(TASK_KEY);
-  sessionStorage.removeItem(LOG_KEY);
+  localStorage.removeItem(TASK_KEY);
+  localStorage.removeItem(LOG_KEY);
+  try {
+    sessionStorage.removeItem(TASK_KEY);
+    sessionStorage.removeItem(LOG_KEY);
+  } catch {
+    /* ignore */
+  }
   notify();
 }
 
@@ -227,10 +256,8 @@ export function seedProgressThroughArchives() {
     "hash_diff",
     "overlay_stamp",
   ];
-  if (canUseStorage()) {
-    sessionStorage.setItem(TASK_KEY, JSON.stringify(tasks));
-    sessionStorage.setItem(LOG_KEY, JSON.stringify(logs));
-  }
+  writeKey(TASK_KEY, JSON.stringify(tasks));
+  writeKey(LOG_KEY, JSON.stringify(logs));
   syncPlayerTasks(tasks);
   notify();
 }

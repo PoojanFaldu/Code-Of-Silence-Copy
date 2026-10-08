@@ -15,6 +15,7 @@ import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
+import { loadRunSession, setRoomStep } from "@/lib/runSession";
 
 type Overlay = null | "logic" | "report" | "timeline" | "archive";
 
@@ -88,7 +89,13 @@ const RoomTwo = () => {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStepState] = useState<Step>(() => {
+    return Math.min(4, Math.max(0, loadRunSession().rooms.research.step)) as Step;
+  });
+  const setStep = (next: Step) => {
+    setStepState(next);
+    setRoomStep("research", next);
+  };
 
   const activePos = step === 0 || step === 1 ? LOGIC_POS : step === 2 || step === 3 ? MONITOR_POS : null;
 

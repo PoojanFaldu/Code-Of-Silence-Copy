@@ -53,22 +53,8 @@ function tangledPath(from: number) {
   return `M 44 ${y1} C ${cx1} ${y1 + cy1}, ${cx2} ${y2 + cy2}, 356 ${y2}`;
 }
 
-/**
- * Soft "7" after solve — stacked strokes, readable if you look, not a billboard.
- */
-function sevenPath(i: number) {
-  const paths = [
-    "M 118 58 L 282 58",
-    "M 275 60 L 168 248",
-    "M 125 62 L 278 62",
-    "M 268 64 L 175 242",
-    "M 132 56 L 270 56",
-    "M 260 68 L 182 238",
-    "M 140 64 L 265 64",
-    "M 255 72 L 188 232",
-  ];
-  return paths[i] ?? paths[0];
-}
+const TERM_FONT =
+  'ui-monospace, "JetBrains Mono", "Fira Code", "Courier New", monospace';
 
 export default function TangledWiresPuzzle({ onSolved, onClose }: TangledWiresPuzzleProps) {
   const { penalizeWrongAnswer } = useGame();
@@ -155,102 +141,129 @@ export default function TangledWiresPuzzle({ onSolved, onClose }: TangledWiresPu
       }
     >
       <div className="space-y-3">
-        <p className="text-center text-xs text-slate-400">
-          {solved
-            ? "Circuit locked. Look at the path."
-            : "Trace each grey wire — number to letter."}
-        </p>
+        {solved ? (
+          <div
+            className="relative overflow-hidden rounded-xl border border-cyan-500/25 bg-[#05070b] px-4 py-4 shadow-inner"
+            style={{ fontFamily: TERM_FONT }}
+          >
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04] bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.35)_3px)]" />
+            <div className="relative space-y-3 text-[12px] sm:text-[13px] leading-relaxed text-slate-300">
+              <p className="tracking-[0.2em] text-cyan-200">RELAY DIAGNOSTIC</p>
+              <p className="text-emerald-300/90">Connection restored.</p>
+              <div className="border-t border-white/10 pt-3 space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-slate-500">Camera system</p>
+                <p>BASELINE LEVEL: 84.2%</p>
+                <p>RELAY CHANNEL: 7</p>
+                <p>CAMERA NODE: 4</p>
+              </div>
+              <div className="border-t border-white/10 pt-3 space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-slate-500">Access format</p>
+                <p className="text-cyan-100/90">BASELINE → RELAY → CAMERA</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-center text-xs text-slate-400">
+              Trace each grey wire — number to letter.
+            </p>
 
-        <div className="relative rounded-xl border border-cyan-500/20 bg-black/50 px-2 py-3">
-          <svg viewBox="0 0 400 290" className="w-full h-auto">
-            {LEFT.map((n, i) => {
-              const matched = pairMap.get(n) === SOLUTION[n];
-              const active = pairMap.has(n);
-              return (
-                <path
-                  key={`w-${n}`}
-                  d={solved ? sevenPath(i) : tangledPath(n)}
-                  fill="none"
-                  stroke={
-                    solved
-                      ? "rgb(34 211 238)"
-                      : matched
-                        ? "rgb(34 211 238)"
-                        : active
-                          ? "rgb(251 146 60)"
-                          : "rgb(148 163 184 / 0.55)"
-                  }
-                  strokeWidth={solved ? 2.1 : matched ? 2.3 : 1.7}
-                  strokeLinecap="round"
-                  opacity={solved ? 0.5 + i * 0.05 : 1}
-                  style={{ transition: "d 0.8s ease, stroke 0.4s ease, opacity 0.5s ease" }}
-                />
-              );
-            })}
+            <div className="relative rounded-xl border border-cyan-500/20 bg-black/50 px-2 py-3">
+              <svg viewBox="0 0 400 290" className="w-full h-auto">
+                {LEFT.map((n) => {
+                  const matched = pairMap.get(n) === SOLUTION[n];
+                  const active = pairMap.has(n);
+                  return (
+                    <path
+                      key={`w-${n}`}
+                      d={tangledPath(n)}
+                      fill="none"
+                      stroke={
+                        matched
+                          ? "rgb(34 211 238)"
+                          : active
+                            ? "rgb(251 146 60)"
+                            : "rgb(148 163 184 / 0.55)"
+                      }
+                      strokeWidth={matched ? 2.3 : 1.7}
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
 
-            {LEFT.map((n) => {
-              const used = usedLeft.has(n);
-              const picking = pickLeft === n;
-              return (
-                <g key={`L${n}`} onClick={() => clickLeft(n)} className="cursor-pointer">
-                  <circle
-                    cx={26}
-                    cy={leftY(n)}
-                    r={12}
-                    fill={picking ? "rgb(8 51 68)" : used ? "rgb(22 78 99)" : "rgb(15 23 42)"}
-                    stroke={picking ? "rgb(34 211 238)" : "rgb(100 116 139)"}
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={26}
-                    y={leftY(n) + 4}
-                    textAnchor="middle"
-                    className="fill-cyan-100 text-[10px] font-mono font-bold pointer-events-none"
-                  >
-                    {n}
-                  </text>
-                </g>
-              );
-            })}
+                {LEFT.map((n) => {
+                  const used = usedLeft.has(n);
+                  const picking = pickLeft === n;
+                  return (
+                    <g key={`L${n}`} onClick={() => clickLeft(n)} className="cursor-pointer">
+                      <circle
+                        cx={26}
+                        cy={leftY(n)}
+                        r={12}
+                        fill={picking ? "rgb(8 51 68)" : used ? "rgb(22 78 99)" : "rgb(15 23 42)"}
+                        stroke={picking ? "rgb(34 211 238)" : "rgb(100 116 139)"}
+                        strokeWidth={2}
+                      />
+                      <text
+                        x={26}
+                        y={leftY(n) + 4}
+                        textAnchor="middle"
+                        className="fill-cyan-100 text-[10px] font-mono font-bold pointer-events-none"
+                      >
+                        {n}
+                      </text>
+                    </g>
+                  );
+                })}
 
-            {RIGHT.map((letter) => {
-              const used = usedRight.has(letter);
-              const lit = pickLeft != null && !used;
-              return (
-                <g key={`R${letter}`} onClick={() => clickRight(letter)} className="cursor-pointer">
-                  <rect
-                    x={360}
-                    y={rightY(letter) - 12}
-                    width={26}
-                    height={24}
-                    rx={5}
-                    fill={used ? "rgb(22 78 99)" : lit ? "rgb(8 51 68)" : "rgb(15 23 42)"}
-                    stroke={
-                      used ? "rgb(34 211 238)" : lit ? "rgb(103 232 249)" : "rgb(100 116 139)"
-                    }
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={373}
-                    y={rightY(letter) + 4}
-                    textAnchor="middle"
-                    className="fill-cyan-100 text-[10px] font-mono font-bold pointer-events-none"
-                  >
-                    {letter}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
+                {RIGHT.map((letter) => {
+                  const used = usedRight.has(letter);
+                  const lit = pickLeft != null && !used;
+                  return (
+                    <g
+                      key={`R${letter}`}
+                      onClick={() => clickRight(letter)}
+                      className="cursor-pointer"
+                    >
+                      <rect
+                        x={360}
+                        y={rightY(letter) - 12}
+                        width={26}
+                        height={24}
+                        rx={5}
+                        fill={used ? "rgb(22 78 99)" : lit ? "rgb(8 51 68)" : "rgb(15 23 42)"}
+                        stroke={
+                          used
+                            ? "rgb(34 211 238)"
+                            : lit
+                              ? "rgb(103 232 249)"
+                              : "rgb(100 116 139)"
+                        }
+                        strokeWidth={2}
+                      />
+                      <text
+                        x={373}
+                        y={rightY(letter) + 4}
+                        textAnchor="middle"
+                        className="fill-cyan-100 text-[10px] font-mono font-bold pointer-events-none"
+                      >
+                        {letter}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
 
-        {error && (
-          <p className="text-center text-xs text-rose-400">Mismatch. Trace again.</p>
-        )}
-        {!solved && pickLeft != null && (
-          <p className="text-center text-[11px] font-mono text-cyan-300/80">
-            {pickLeft} → pick a letter
-          </p>
+            {error && (
+              <p className="text-center text-xs text-rose-400">Mismatch. Trace again.</p>
+            )}
+            {pickLeft != null && (
+              <p className="text-center text-[11px] font-mono text-cyan-300/80">
+                {pickLeft} → pick a letter
+              </p>
+            )}
+          </>
         )}
       </div>
     </PuzzleShell>

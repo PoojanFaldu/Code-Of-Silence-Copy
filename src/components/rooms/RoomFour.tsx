@@ -14,6 +14,7 @@ import { useGame } from "@/contexts/GameContext";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 import { MISSION_DURATION_SECONDS, recordMurderGuess } from "@/lib/eventDb";
+import { loadRunSession, setServerRoomProgress } from "@/lib/runSession";
 
 /** 0 session → 1 flashlight → 2 UV → 3 wires → 4 monitor → accuse */
 type Step = 0 | 1 | 2 | 3 | 4;
@@ -127,22 +128,42 @@ function isRohanAccusation(raw: string) {
   return s === "rohan" || s === "desai" || s === "rohan desai" || s === "desai rohan";
 }
 
+function isSameerAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "sameer" || s === "shah" || s === "sameer shah" || s === "shah sameer";
+}
+
+const SUSPECT_CHOICES = [
+  "Dr. Arjun Mehta",
+  "Neha Rao",
+  "Karan Patel",
+  "Rohan Desai",
+  "Dr. Sameer Shah",
+] as const;
+
 const RoomFour = () => {
   const { penalizeWrongAccusation, timeRemaining } = useGame();
+  const savedServer = loadRunSession().rooms.server;
   const [showSession, setShowSession] = useState(false);
-  const [sessionDone, setSessionDone] = useState(false);
-  const [uvEnabled, setUvEnabled] = useState(false);
+  const [sessionDone, setSessionDone] = useState(() => savedServer.sessionDone);
+  const [uvEnabled, setUvEnabled] = useState(() => savedServer.uvEnabled);
   const [showUvClue, setShowUvClue] = useState(false);
   const [showWires, setShowWires] = useState(false);
-  const [wiresDone, setWiresDone] = useState(false);
+  const [wiresDone, setWiresDone] = useState(() => savedServer.wiresDone);
   const [showMonitor, setShowMonitor] = useState(false);
-  const [cctvUnlocked, setCctvUnlocked] = useState(false);
+  const [cctvUnlocked, setCctvUnlocked] = useState(() => savedServer.cctvUnlocked);
   const [showFinalQuestion, setShowFinalQuestion] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [accusation, setAccusation] = useState("");
   const [answerError, setAnswerError] = useState("");
   const [focused, setFocused] = useState<FocusedInteractable>(null);
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStepState] = useState<Step>(() => {
+    return Math.min(4, Math.max(0, savedServer.step)) as Step;
+  });
+  const setStep = (next: Step) => {
+    setStepState(next);
+    setServerRoomProgress({ step: next });
+  };
 
   const modalOpen =
     showSession || showUvClue || showWires || showMonitor || showFinalQuestion || gameWon;
@@ -210,6 +231,7 @@ const RoomFour = () => {
     if (id === "flashlight" && step === 1) {
       setUvEnabled(true);
       setStep(2);
+      setServerRoomProgress({ uvEnabled: true, step: 2 });
     }
     if (id === "paper" && step === 2 && uvEnabled) {
       setShowUvClue(true);
@@ -235,15 +257,21 @@ const RoomFour = () => {
     recordMurderGuess(accusation.trim(), false, timeUsed);
     penalizeWrongAccusation();
     if (isNehaAccusation(accusation)) {
-      setAnswerError("Neha Rao acted after 21:17.\nTry again.");
+      setAnswerError("Neha Rao was investigating after the fact.\nTry again.");
       return;
     }
     if (isKaranAccusation(accusation)) {
-      setAnswerError("Access alone is not enough.\nTry again.");
+      setAnswerError("Technical access alone does not prove the murder.\nTry again.");
       return;
     }
     if (isRohanAccusation(accusation)) {
-      setAnswerError("His admin restart is after 21:41.\nTry again.");
+      setAnswerError("Security admin work does not connect him to the murder.\nTry again.");
+      return;
+    }
+    if (isSameerAccusation(accusation)) {
+      setAnswerError(
+        "Sameer had a motive, but the evidence does not connect him to the murder.\nTry again."
+      );
       return;
     }
     setAnswerError("That name does not fit the evidence.\nTry again.");
@@ -332,6 +360,7 @@ const RoomFour = () => {
             setSessionDone(true);
             setShowSession(false);
             setStep(1);
+            setServerRoomProgress({ sessionDone: true, step: 1 });
           }}
         />
       )}
@@ -340,57 +369,56 @@ const RoomFour = () => {
         <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4 my-4">
             <h2 className="text-lg text-purple-200 font-semibold tracking-widest">UV ARCHIVE</h2>
-            <div className="font-mono text-[11px] sm:text-xs text-slate-300 space-y-1.5">
-              <div className="flex gap-3">
-                <span className="w-10 shrink-0 text-purple-300/80">20:56</span>
-                <span>VERMA — online</span>
-              </div>
-              <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
-                <span className="w-10 shrink-0 text-amber-300">21:03</span>
-                <span className="text-amber-100">A. MEHTA — lab access</span>
-              </div>
-              <div className="flex gap-3 rounded-md bg-amber-500/10 border border-amber-400/20 px-2 py-1 -mx-0.5">
-                <span className="w-10 shrink-0 text-amber-300">21:17</span>
-                <span className="text-amber-100">EXP-17 BASELINE MODIFIED · 84.2% → 91.7%</span>
-              </div>
-              <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
-                <span className="w-10 shrink-0 text-emerald-300">21:29</span>
-                <span className="text-emerald-100">N. RAO — record access</span>
-              </div>
-              <div className="flex gap-3 rounded-md bg-emerald-500/10 border border-emerald-400/20 px-2 py-1 -mx-0.5">
-                <span className="w-10 shrink-0 text-emerald-300">21:36</span>
-                <span className="text-emerald-100">N. RAO — server access</span>
-              </div>
-              <div className="flex gap-3 rounded-md bg-rose-500/10 border border-rose-400/25 px-2 py-1 -mx-0.5">
-                <span className="w-10 shrink-0 text-rose-300">21:41</span>
-                <span className="text-rose-100">VERMA TERMINAL DISCONNECTED</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="w-10 shrink-0 text-purple-300/80">21:42</span>
-                <span>SESSION CLOSED</span>
-              </div>
-              <div className="flex gap-3 opacity-90">
-                <span className="w-10 shrink-0 text-slate-500">21:44</span>
-                <span>ADMIN RESTART — R. DESAI</span>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/25 px-3 py-2.5 font-mono text-[11px] text-slate-200 space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-cyan-300/80">Network · 21:31</p>
-              <p className="text-cyan-100/90">LAB-02 → SERVER · LAB-02 = MEHTA-PC</p>
-            </div>
 
             <div className="rounded-lg border border-purple-500/25 bg-black/50 px-3 py-3 font-serif text-xs italic text-purple-50/90 leading-relaxed space-y-2">
               <p className="font-mono not-italic text-[10px] tracking-widest text-purple-300/70">
-                FINAL NOTE — D. VERMA
+                FINAL NOTE — Professor Dev Verma
               </p>
-              <p>&quot;He knows I found it.</p>
-              <p>We need to speak tonight.&quot;</p>
+              <p>&quot;Someone has been changing the research records.</p>
+              <p>I know where the discrepancy began.</p>
+              <p>I need to speak with them before this goes any further.&quot;</p>
+            </div>
+
+            <div className="space-y-2 font-mono text-[11px] text-slate-300 leading-relaxed">
+              <p className="text-[10px] uppercase tracking-widest text-purple-300/80">
+                Five threads — review
+              </p>
+              {(
+                [
+                  {
+                    name: "Dr. Arjun Mehta — Research",
+                    body: "Assigned to Experiment 17. The recorded result does not match the original research notes. Verma had been reviewing the discrepancy. His name appears repeatedly in the research records surrounding the discrepancy.",
+                  },
+                  {
+                    name: "Neha Rao — Investigation",
+                    body: "Neha accessed Verma's research records while looking into the discrepancy. Her activity suggests she was investigating the records rather than creating them.",
+                  },
+                  {
+                    name: "Karan Patel — Security / Access",
+                    body: "Karan had restricted technical access to the laboratory's network equipment. His badge was recovered near the Network Room.",
+                  },
+                  {
+                    name: "Rohan Desai — Surveillance",
+                    body: "Rohan was responsible for the laboratory's security systems and CCTV. His administrative access gave him the ability to interact with security infrastructure.",
+                  },
+                  {
+                    name: "Dr. Sameer Shah — Conflict",
+                    body: "Sameer had a serious professional dispute with Professor Dev Verma over publication credit. Verma's notes indicate that the disagreement had become increasingly difficult. A recovered message from Sameer refers to the research being published without his name.",
+                  },
+                ] as const
+              ).map((card) => (
+                <div
+                  key={card.name}
+                  className="rounded-md border border-purple-500/20 bg-black/40 px-3 py-2 space-y-1"
+                >
+                  <p className="text-purple-100">{card.name}</p>
+                  <p className="text-slate-400">{card.body}</p>
+                </div>
+              ))}
             </div>
 
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              21:17 rewrite ties to the assigned researcher. Restore the relay, then the wall
-              monitor.
+              Restore the relay, then the wall monitor.
             </p>
 
             <button
@@ -400,6 +428,7 @@ const RoomFour = () => {
                 setInvestigationState({ arjunEvidenceFound: true, finalUnlocked: true });
                 setShowUvClue(false);
                 setStep(3);
+                setServerRoomProgress({ step: 3 });
                 setShowWires(true);
               }}
               className="w-full py-3 bg-purple-600/80 hover:bg-purple-600 text-white rounded font-medium"
@@ -419,6 +448,7 @@ const RoomFour = () => {
             setWiresDone(true);
             setShowWires(false);
             setStep(4);
+            setServerRoomProgress({ wiresDone: true, step: 4 });
           }}
         />
       )}
@@ -430,6 +460,7 @@ const RoomFour = () => {
           onUnlocked={() => {
             completeTask("cctv");
             setCctvUnlocked(true);
+            setServerRoomProgress({ cctvUnlocked: true });
           }}
           onAccuse={() => {
             setShowMonitor(false);
@@ -448,6 +479,29 @@ const RoomFour = () => {
               Wrong accusation: −10:00.
             </p>
 
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 text-center">
+                Select a suspect
+              </p>
+              {SUSPECT_CHOICES.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    setAccusation(name);
+                    setAnswerError("");
+                  }}
+                  className={`w-full rounded border px-3 py-2.5 font-mono text-xs tracking-wider text-left transition ${
+                    accusation === name
+                      ? "border-red-500/50 bg-red-950/40 text-white"
+                      : "border-white/15 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+
             <form
               className="space-y-3"
               onSubmit={(e) => {
@@ -464,7 +518,7 @@ const RoomFour = () => {
                   setAccusation(e.target.value);
                   setAnswerError("");
                 }}
-                placeholder="Type the name"
+                placeholder="Or type the name"
                 autoComplete="off"
                 spellCheck={false}
                 className="w-full rounded border border-white/20 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-red-500/50 focus:outline-none"
@@ -502,10 +556,13 @@ const RoomFour = () => {
             <h1 className="text-4xl text-emerald-400 font-black tracking-widest">CASE CLOSED</h1>
             <div className="text-left text-slate-300 text-sm space-y-3 leading-relaxed">
               <p>
-                Arjun Mehta made the original Experiment 17 change. Verma found out and meant to
-                confront him that night.
+                Dr. Arjun Mehta altered Experiment 17. Professor Dev Verma discovered it and meant
+                to confront him that night.
               </p>
-              <p>Later access by others looked guilty — but came after the fact.</p>
+              <p>
+                Neha Rao, Karan Patel, Rohan Desai, and Dr. Sameer Shah each looked suspicious for
+                different reasons — but the evidence did not connect them to the murder.
+              </p>
             </div>
             <div className="flex flex-col gap-2 items-center">
               <button

@@ -17,9 +17,11 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
           label: "Note",
           content: (
             <div className="rounded-xl border border-amber-700/30 bg-[#1a140e] p-5 space-y-4">
-              <p className="font-mono text-[10px] tracking-widest text-amber-500/80">20:41 — D. VERMA</p>
+              <p className="font-mono text-[10px] tracking-widest text-amber-500/80">
+                NOTE — Professor Dev Verma
+              </p>
               <p className="font-serif text-base leading-relaxed text-amber-50/90 italic">
-                EXP-17 was altered before the later record changes.
+                Experiment 17 was altered before the later record changes.
                 <br />
                 <br />
                 I finally know where the original discrepancy came from.
@@ -38,15 +40,20 @@ export default function DrawerNote({ onContinue, onClose }: DrawerNoteProps) {
           label: "Scrap",
           content: (
             <div className="space-y-3">
-              <div className="rounded-xl border border-dashed border-amber-500/30 bg-black/30 p-6 text-center space-y-2">
-                <p className="font-mono text-xs tracking-widest text-amber-200/70">ENCRYPTED SCRAP</p>
-                <p className="font-mono text-sm text-slate-400">FKHFN WKH …</p>
+              <div className="rounded-xl border border-dashed border-amber-500/30 bg-black/30 p-5 space-y-3">
+                <p className="font-mono text-[10px] tracking-widest text-amber-200/70 text-center">
+                  PERSONAL NOTE — Professor Dev Verma
+                </p>
+                <p className="font-serif text-sm text-amber-50/90 italic leading-relaxed text-center px-1">
+                  Dr. Sameer Shah came by again today.
+                  <br />
+                  <br />
+                  We argued about the publication.
+                  <br />
+                  <br />
+                  I will not let him pressure me into changing the results.
+                </p>
               </div>
-              <p className="font-serif text-sm text-amber-50/70 italic text-center px-2">
-                &quot;The record ends before the night does.
-                <br />
-                If someone asks, I never finished reviewing Experiment 17.&quot;
-              </p>
             </div>
           ),
         },

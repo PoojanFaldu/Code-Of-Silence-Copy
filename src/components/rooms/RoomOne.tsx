@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import LaserDeflectionPuzzle from "@/components/rooms/roomOne/LaserDeflectionPuzzle";
 import DrawerNote from "@/components/rooms/roomOne/DrawerNote";
 import CipherPuzzle from "@/components/rooms/roomOne/CipherPuzzle";
-import BlueFolderReveal from "@/components/rooms/roomOne/BlueFolderReveal";
+import SecurityCabinetPuzzle from "@/components/rooms/roomOne/SecurityCabinetPuzzle";
 import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
 import FocusDetector from "@/components/rooms/interaction/FocusDetector";
@@ -15,6 +15,7 @@ import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
+import { loadRunSession, setRoomStep } from "@/lib/runSession";
 
 type Overlay = null | "laser" | "drawer" | "cipher" | "folder";
 
@@ -127,7 +128,14 @@ const RoomOne = () => {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStepState] = useState<Step>(() => {
+    const s = Math.min(4, Math.max(0, loadRunSession().rooms.verma.step)) as Step;
+    return s;
+  });
+  const setStep = (next: Step) => {
+    setStepState(next);
+    setRoomStep("verma", next);
+  };
 
   const activePos =
     step === 0
@@ -165,7 +173,7 @@ const RoomOne = () => {
       },
       {
         id: "folder",
-        label: "Blue folder",
+        label: "Security cabinet",
         position: FOLDER_POS,
         active: step === 3,
         maxDistance: 2.6,
@@ -249,7 +257,7 @@ const RoomOne = () => {
       )}
 
       {overlay === "folder" && (
-        <BlueFolderReveal
+        <SecurityCabinetPuzzle
           onClose={() => setOverlay(null)}
           onComplete={() => {
             completeTask("folder");

@@ -10,7 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist.zip
 *.local
+.env
+.env.*
+
+# Persistent event DB written by the Vite event API
+/data/event-db.json
+/tools/
 
 # Editor directories and files
 .vscode/*

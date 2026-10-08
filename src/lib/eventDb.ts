@@ -1,4 +1,4 @@
-/** Local event database for player runs + leaderboard. */
+/** Event database for player runs + leaderboard (local + disk-backed API). */
 
 export type MurderGuessResult = "correct" | "incorrect" | "none";
 
@@ -42,6 +42,12 @@ function notify() {
   }
 }
 
+function saveLocal(db: EventDb) {
+  if (!canUseStorage()) return;
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  notify();
+}
+
 export function loadEventDb(): EventDb {
   if (!canUseStorage()) return { players: [] };
   try {
@@ -54,10 +60,77 @@ export function loadEventDb(): EventDb {
   }
 }
 
+/** Push local DB to disk-backed API (survives server restart). */
+async function pushToServer(db: EventDb) {
+  try {
+    await fetch("/api/event-db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(db),
+    });
+  } catch {
+    /* static hosts / offline — localStorage remains */
+  }
+}
+
 function saveEventDb(db: EventDb) {
+  saveLocal(db);
+  void pushToServer(db);
+}
+
+/** Pull disk-backed leaderboard on boot (merges with local by player id). */
+export async function hydrateEventDbFromServer(): Promise<void> {
   if (!canUseStorage()) return;
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
-  notify();
+  try {
+    const res = await fetch("/api/event-db");
+    if (!res.ok) return;
+    const remote = (await res.json()) as EventDb;
+    const remotePlayers = Array.isArray(remote.players) ? remote.players : [];
+    if (remotePlayers.length === 0) {
+      // Seed server from local if server empty
+      const local = loadEventDb();
+      if (local.players.length > 0) await pushToServer(local);
+      return;
+    }
+    const local = loadEventDb();
+    const byId = new Map<string, PlayerRecord>();
+    local.players.forEach((p) => byId.set(p.id, p));
+    remotePlayers.forEach((p) => {
+      const existing = byId.get(p.id);
+      if (!existing) {
+        byId.set(p.id, p);
+        return;
+      }
+      // Prefer the record with a later finishedAt / more progress
+      const remoteScore = (p.puzzlesPassed ?? 0) + (p.finishedAt ? 1000 : 0);
+      const localScore = (existing.puzzlesPassed ?? 0) + (existing.finishedAt ? 1000 : 0);
+      byId.set(p.id, remoteScore >= localScore ? p : existing);
+    });
+    const merged: EventDb = { players: [...byId.values()] };
+    saveLocal(merged);
+    await pushToServer(merged);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Server-side password check when API is available; falls back to client env. */
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { ok?: boolean };
+      return Boolean(data.ok);
+    }
+    if (res.status === 401) return false;
+  } catch {
+    /* fall through */
+  }
+  return password === getAdminPassword();
 }
 
 function uid() {
@@ -69,7 +142,7 @@ export function normalizeSuspectFullName(raw: string): string {
   const s = raw
     .trim()
     .toLowerCase()
-    .replace(/[.,]/g, " ")
+    .replace(/[.,']/g, " ")
     .replace(/\s+/g, " ")
     .replace(/^dr\s+/, "")
     .trim();
@@ -86,8 +159,10 @@ export function normalizeSuspectFullName(raw: string): string {
   if (s === "rohan" || s === "desai" || s === "rohan desai" || s === "desai rohan") {
     return "Rohan Desai";
   }
+  if (s === "sameer" || s === "shah" || s === "sameer shah" || s === "shah sameer") {
+    return "Sameer Shah";
+  }
   if (!s || s === "(timed out)") return "(timed out)";
-  // Preserve unknown free-text with basic title case
   return raw
     .trim()
     .split(/\s+/)

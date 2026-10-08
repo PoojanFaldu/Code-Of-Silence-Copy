@@ -4,6 +4,8 @@ import { TitleScreen } from "@/components/intro/TitleScreen";
 import { LogoReveal } from "@/components/intro/LogoReveal";
 import { TeamIdentification } from "@/components/intro/TeamIdentification";
 import { InvestigationMap } from "@/components/intro/InvestigationMap";
+import { hasResumableMission } from "@/lib/runSession";
+import { useGame } from "@/contexts/GameContext";
 
 type Phase = "title" | "logo" | "team" | "investigation";
 
@@ -11,10 +13,11 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const skipToMap = searchParams.get("skipIntro") === "true";
   const newPlayer = searchParams.get("newPlayer") === "1";
+  const { missionStarted } = useGame();
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (newPlayer) return "team";
-    if (skipToMap) return "investigation";
+    if (skipToMap || hasResumableMission() || missionStarted) return "investigation";
     return "title";
   });
 

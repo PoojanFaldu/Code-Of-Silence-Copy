@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { getAdminPassword, startGameAsPlayer } from "@/lib/eventDb";
+import { startGameAsPlayer, verifyAdminPassword } from "@/lib/eventDb";
 import { useGame } from "@/contexts/GameContext";
 import { resetProgressHud } from "@/lib/investigationProgress";
 import { resetInvestigationState } from "@/lib/investigationState";
+import { clearRunSession } from "@/lib/runSession";
 
 interface TeamIdentificationProps {
   onComplete: (playerName: string) => void;
@@ -18,18 +19,20 @@ export const TeamIdentification = ({ onComplete }: TeamIdentificationProps) => {
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
 
-  const begin = () => {
+  const begin = async () => {
     setError("");
-    if (adminPassword !== getAdminPassword()) {
-      setError("Incorrect admin password.");
-      return;
-    }
     const name = playerName.trim();
     if (!name) {
       setError("Enter a player name.");
       return;
     }
+    const ok = await verifyAdminPassword(adminPassword);
+    if (!ok) {
+      setError("Incorrect admin password.");
+      return;
+    }
     resetGame();
+    clearRunSession();
     resetProgressHud();
     resetInvestigationState();
     startGameAsPlayer(name);
