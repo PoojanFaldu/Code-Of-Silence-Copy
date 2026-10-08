@@ -5,6 +5,8 @@ interface HashFingerprintPuzzleProps {
   isOpen: boolean;
   onClose: () => void;
   onSolved: () => void;
+  onProceedToArchive?: () => void;
+  /** @deprecated use onProceedToArchive */
   onProceedToOverlay?: () => void;
   onOpenNotebook?: () => void;
   initialSolved?: boolean;
@@ -20,9 +22,11 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
   isOpen,
   onClose,
   onSolved,
+  onProceedToArchive,
   onProceedToOverlay,
   initialSolved = false,
 }) => {
+  const proceed = onProceedToArchive ?? onProceedToOverlay;
   const [selected, setSelected] = useState<string | null>(initialSolved ? "current" : null);
   const [error, setError] = useState(false);
   const [solved, setSolved] = useState(initialSolved);
@@ -94,7 +98,7 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
             accent="cyan"
             onClick={() => {
               onClose();
-              onProceedToOverlay?.();
+              proceed?.();
             }}
           >
             CONTINUE

@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { RoomThree3DObjects, ROOM3_TARGET_POSITIONS } from "./room3/RoomThree3DObjects";
 import { HashFingerprintPuzzle } from "./room3/HashFingerprintPuzzle";
-import { OverlayMaskPuzzle } from "./room3/OverlayMaskPuzzle";
+import { ArchiveComparisonPuzzle } from "./room3/ArchiveComparisonPuzzle";
 import EvidenceTrailModal from "@/components/rooms/EvidenceTrailModal";
 import { playKeyClick, playPaperSlide } from "./room3/audio";
 import FirstPersonController from "@/components/rooms/interaction/FirstPersonController";
@@ -16,7 +16,7 @@ import type { FocusedInteractable, InteractTarget } from "@/components/rooms/int
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
-/** 0 hash → 1 overlay → 2 complete */
+/** 0 hash → 1 archive comparison → 2 complete */
 type Step = 0 | 1 | 2;
 
 const ROOM3_BOUNDARY = {
@@ -48,12 +48,12 @@ const RoomThree = () => {
   const navigate = useNavigate();
 
   const [isHashPuzzleOpen, setIsHashPuzzleOpen] = useState(false);
-  const [isOverlayPuzzleOpen, setIsOverlayPuzzleOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [showTrail, setShowTrail] = useState(false);
   const [step, setStep] = useState<Step>(0);
   const [isHashSolved, setIsHashSolved] = useState(false);
-  const [isOverlaySolved, setIsOverlaySolved] = useState(false);
+  const [isArchiveSolved, setIsArchiveSolved] = useState(false);
 
   const handleProceedToServerRoom = () => {
     playKeyClick();
@@ -66,16 +66,20 @@ const RoomThree = () => {
       nehaRedHerringRevealed: true,
       finalUnlocked: true,
     });
-    setIsOverlayPuzzleOpen(false);
+    setIsArchiveOpen(false);
     setIsHashPuzzleOpen(false);
     setShowTrail(true);
   };
 
-  const isAnyModalOpen = isHashPuzzleOpen || isOverlayPuzzleOpen || showTrail;
+  const isAnyModalOpen = isHashPuzzleOpen || isArchiveOpen || showTrail;
   const controlsEnabled = !isAnyModalOpen;
 
   const activePos =
-    step === 0 ? ROOM3_TARGET_POSITIONS.hash : step === 1 ? ROOM3_TARGET_POSITIONS.overlay : null;
+    step === 0
+      ? ROOM3_TARGET_POSITIONS.hash
+      : step === 1
+        ? ROOM3_TARGET_POSITIONS.archive
+        : null;
 
   const targets: InteractTarget[] = useMemo(
     () => [
@@ -87,9 +91,9 @@ const RoomThree = () => {
         maxDistance: 3.0,
       },
       {
-        id: "overlay",
-        label: "Overlay lightbox",
-        position: ROOM3_TARGET_POSITIONS.overlay,
+        id: "archive",
+        label: "Archive comparison station",
+        position: ROOM3_TARGET_POSITIONS.archive,
         active: step === 1,
         maxDistance: 2.8,
       },
@@ -102,9 +106,9 @@ const RoomThree = () => {
       playKeyClick();
       setIsHashPuzzleOpen(true);
     }
-    if (id === "overlay" && step === 1) {
+    if (id === "archive" && step === 1) {
       playPaperSlide();
-      setIsOverlayPuzzleOpen(true);
+      setIsArchiveOpen(true);
     }
   };
 
@@ -119,7 +123,7 @@ const RoomThree = () => {
 
         <Suspense fallback={null}>
           <LoadModel />
-          <RoomThree3DObjects isHashSolved={isHashSolved} isOverlaySolved={isOverlaySolved} />
+          <RoomThree3DObjects isHashSolved={isHashSolved} isOverlaySolved={isArchiveSolved} />
           {activePos && <ActivePulse position={activePos} visible={controlsEnabled} />}
           <FirstPersonController
             boundary={ROOM3_BOUNDARY}
@@ -139,7 +143,7 @@ const RoomThree = () => {
 
       {showTrail && (
         <EvidenceTrailModal
-          findings={["The records were altered.", "An offline session log may still exist on the server."]}
+          findings={["Records were altered.", "An offline session log remains."]}
           nextRoomLabel="Server Room"
           onStay={() => setShowTrail(false)}
           onProceed={() => navigate("/game?room=server")}
@@ -155,23 +159,23 @@ const RoomThree = () => {
           setIsHashSolved(true);
           setStep(1);
         }}
-        onProceedToOverlay={() => {
+        onProceedToArchive={() => {
           setIsHashPuzzleOpen(false);
-          setIsOverlayPuzzleOpen(true);
+          setIsArchiveOpen(true);
         }}
         initialSolved={isHashSolved}
       />
 
-      <OverlayMaskPuzzle
-        isOpen={isOverlayPuzzleOpen}
-        onClose={() => setIsOverlayPuzzleOpen(false)}
+      <ArchiveComparisonPuzzle
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
         onSolved={() => {
           completeTask("overlay");
           unlockLog("overlay_stamp");
-          setIsOverlaySolved(true);
+          setIsArchiveSolved(true);
         }}
         onProceedToServerRoom={handleProceedToServerRoom}
-        initialSolved={isOverlaySolved}
+        initialSolved={isArchiveSolved}
       />
     </div>
   );

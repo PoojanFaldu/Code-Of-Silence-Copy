@@ -7,7 +7,7 @@ import FocusDetector from "@/components/rooms/interaction/FocusDetector";
 import CrosshairHud from "@/components/rooms/interaction/CrosshairHud";
 import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
-import SessionReconstructionPuzzle from "@/components/rooms/roomFour/SessionReconstructionPuzzle";
+import SessionIdentificationPuzzle from "@/components/rooms/roomFour/SessionIdentificationPuzzle";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 
@@ -24,7 +24,8 @@ const ROOM4_BOUNDARY = {
 
 const BOX_POS: [number, number, number] = [0.45, 2.505, 5.05];
 const FLASHLIGHT_POS: [number, number, number] = [-0.2, 2.76, 4.2];
-const PAPER_POS: [number, number, number] = [0.1, 2.95, 4.1];
+/** Glass coffee table — small nudge up/in from the rim seat. */
+const PAPER_POS: [number, number, number] = [0.08, 2.820, 4.08];
 
 const LoadModel = () => {
   const { scene } = useGLTF("/model/RoomFourModel.glb");
@@ -45,16 +46,40 @@ const LoadModel = () => {
 
 function UvPaperSheet({ uvOn }: { uvOn: boolean }) {
   return (
-    <group position={PAPER_POS} rotation={[-0.15, 0.2, 0]}>
-      <mesh castShadow>
-        <boxGeometry args={[0.16, 0.002, 0.2]} />
+    <group position={PAPER_POS} rotation={[0.02, 0.35, 0]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.18, 0.003, 0.22]} />
         <meshStandardMaterial color={uvOn ? "#e9d5ff" : "#e7e5e4"} />
       </mesh>
     </group>
   );
 }
 
-type Suspect = "arjun" | "neha" | "karan";
+/** Normalize typed accusation: ignore case, punctuation, and extra spaces. */
+function normalizeAccusation(raw: string) {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^dr\s+/, "")
+    .trim();
+}
+
+function isArjunAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "arjun" || s === "mehta" || s === "arjun mehta" || s === "mehta arjun";
+}
+
+function isNehaAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "neha" || s === "rao" || s === "neha rao" || s === "rao neha";
+}
+
+function isKaranAccusation(raw: string) {
+  const s = normalizeAccusation(raw);
+  return s === "karan" || s === "patel" || s === "karan patel" || s === "patel karan";
+}
 
 const RoomFour = () => {
   const [showSession, setShowSession] = useState(false);
@@ -63,6 +88,7 @@ const RoomFour = () => {
   const [showUvClue, setShowUvClue] = useState(false);
   const [showFinalQuestion, setShowFinalQuestion] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [accusation, setAccusation] = useState("");
   const [answerError, setAnswerError] = useState("");
   const [focused, setFocused] = useState<FocusedInteractable>(null);
   const [step, setStep] = useState<Step>(0);
@@ -114,19 +140,23 @@ const RoomFour = () => {
     }
   };
 
-  const accuse = (suspect: Suspect) => {
-    if (suspect === "arjun") {
+  const accuse = () => {
+    if (isArjunAccusation(accusation)) {
       completeTask("accusation");
       setInvestigationState({ room4Complete: true, caseSolved: true });
       setGameWon(true);
       setShowFinalQuestion(false);
       return;
     }
-    if (suspect === "neha") {
+    if (isNehaAccusation(accusation)) {
       setAnswerError("The timeline does not match.\nTry again.");
       return;
     }
-    setAnswerError("Access alone is not enough.\nTry again.");
+    if (isKaranAccusation(accusation)) {
+      setAnswerError("Access alone is not enough.\nTry again.");
+      return;
+    }
+    setAnswerError("That name does not fit the evidence.\nTry again.");
   };
 
   return (
@@ -194,7 +224,7 @@ const RoomFour = () => {
       )}
 
       {showSession && (
-        <SessionReconstructionPuzzle
+        <SessionIdentificationPuzzle
           onClose={() => setShowSession(false)}
           onSolved={() => {
             completeTask("session");
@@ -253,26 +283,35 @@ const RoomFour = () => {
               WHO KILLED PROFESSOR DEV VERMA?
             </h2>
 
-            <div className="space-y-3">
-              {(
-                [
-                  ["arjun", "DR. ARJUN MEHTA"],
-                  ["neha", "NEHA RAO"],
-                  ["karan", "KARAN PATEL"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    setAnswerError("");
-                    accuse(id);
-                  }}
-                  className="w-full py-3 border border-white/20 bg-white/5 hover:bg-white/10 text-white rounded font-mono text-sm tracking-wider"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAnswerError("");
+                accuse();
+              }}
+            >
+              <input
+                type="text"
+                autoFocus
+                value={accusation}
+                onChange={(e) => {
+                  setAccusation(e.target.value);
+                  setAnswerError("");
+                }}
+                placeholder="Type the name"
+                autoComplete="off"
+                spellCheck={false}
+                className="w-full rounded border border-white/20 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-red-500/50 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!accusation.trim()}
+                className="w-full py-3 border border-red-900/60 bg-red-950/40 hover:bg-red-900/50 disabled:opacity-40 disabled:hover:bg-red-950/40 text-white rounded font-mono text-sm tracking-wider"
+              >
+                ACCUSE
+              </button>
+            </form>
 
             {answerError && (
               <p className="text-rose-400 text-center text-sm whitespace-pre-line">{answerError}</p>

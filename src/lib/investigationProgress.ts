@@ -58,7 +58,7 @@ export const ROOM_TASKS: {
     label: "Archives",
     tasks: [
       { id: "hash", label: "Hash" },
-      { id: "overlay", label: "Overlay" },
+      { id: "overlay", label: "Archive" },
     ],
   },
   {
@@ -114,8 +114,8 @@ export const EVIDENCE_LOGS: {
   },
   {
     id: "session_full",
-    title: "Session Rebuild",
-    body: "20:56  VERMA ENTERED\n21:03  ARJUN RESEARCH\n21:17  EXP-17 MODIFIED\n21:29  NEHA ACCESS\n21:36  UNKNOWN\n21:41  VERMA DISCONNECT\n21:42  ACTIVITY CEASED",
+    title: "Session Verified",
+    body: "21:36  UNKNOWN SESSION 7F2A\nTerminal: SRV-03\nAUTH 2290 → K. PATEL",
   },
   {
     id: "uv_archive",

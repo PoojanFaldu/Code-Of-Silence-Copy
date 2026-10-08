@@ -71,7 +71,7 @@ export const RoomThree3DObjects: React.FC<RoomThree3DObjectsProps> = ({
         </mesh>
       </group>
 
-      {/* Overlay lightbox on table — muted */}
+      {/* Archive comparison station on table — muted */}
       <group ref={lightboxRef} position={[-0.1, 2.52, 4.2]} rotation={[0, 0.05, 0]}>
         <mesh position={[0, 0.01, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.36, 0.02, 0.26]} />
@@ -98,5 +98,8 @@ export const ROOM3_TARGET_POSITIONS = {
   notebook: [-1.25, 2.73, 4.0] as [number, number, number],
   dossier: [-0.95, 2.72, 4.15] as [number, number, number],
   hash: [1.72, 3.02, 3.32] as [number, number, number],
+  /** Archive comparison station (former overlay lightbox) */
+  archive: [-0.1, 2.55, 4.2] as [number, number, number],
+  /** @deprecated use archive */
   overlay: [-0.1, 2.55, 4.2] as [number, number, number],
 };
