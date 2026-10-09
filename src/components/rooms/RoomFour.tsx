@@ -28,16 +28,29 @@ const ROOM4_BOUNDARY = {
   y: 3,
 };
 
-const BOX_POS: [number, number, number] = [0.45, 2.505, 5.05];
+const BOX_POS: [number, number, number] = [0.81, 2.805, 4.5];
 const FLASHLIGHT_POS: [number, number, number] = [-0.2, 2.76, 4.2];
 /** Glass coffee table — small nudge up/in from the rim seat. */
-const PAPER_POS: [number, number, number] = [0.08, 2.820, 4.08];
+const PAPER_POS: [number, number, number] = [0.78, 2.850, 5.38];
 /** Note on the window table displaying the code for the monitor. */
 const MONITOR_CODE_POS: [number, number, number] = [0.26, 2.824, 4.08];
-/** CCTV monitor stand base position on the equipment stand where the unused TV was located. */
-const MONITOR_STAND_POS: [number, number, number] = [0.01, 2.627, 5.56];
-/** Interaction target center at the monitor screen face. */
-const MONITOR_POS: [number, number, number] = [0.01, 2.762, 5.54];
+/**
+ * CCTV monitor — edit ONLY these two.
+ * Position = stand base. Rotation = [x, y, z] radians (try y: 0, ±Math.PI/2, Math.PI).
+ * Interact target is derived from the screen face so you don't need a second position.
+ */
+const MONITOR_POS: [number, number, number] = [-0.61, 2.827, 5.49];
+const MONITOR_ROT: [number, number, number] = [0, Math.PI / 2, 0];
+/** Local offset of the screen plane inside MonitorMesh (keep in sync with that mesh). */
+const MONITOR_SCREEN_LOCAL: [number, number, number] = [0, 0.135, 0.021];
+
+function monitorInteractPos(): [number, number, number] {
+  const local = new THREE.Vector3(...MONITOR_SCREEN_LOCAL);
+  local.applyEuler(new THREE.Euler(...MONITOR_ROT, "XYZ"));
+  return [MONITOR_POS[0] + local.x, MONITOR_POS[1] + local.y, MONITOR_POS[2] + local.z];
+}
+
+const MONITOR_INTERACT_POS = monitorInteractPos();
 const WIRES_POS: [number, number, number] = [0.35, 2.7, 5.35];
 
 const LoadModel = () => {
@@ -88,7 +101,7 @@ const LoadModel = () => {
 
 function UvPaperSheet({ uvOn }: { uvOn: boolean }) {
   return (
-    <group position={PAPER_POS} rotation={[0.02, 0.35, 0]}>
+    <group position={PAPER_POS} rotation={[0.02, 0.35, 0]} scale={0.4}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[0.18, 0.003, 0.22]} />
         <meshStandardMaterial color={uvOn ? "#e9d5ff" : "#e7e5e4"} />
@@ -114,7 +127,7 @@ function RelayPanelMesh() {
 
 function MonitorMesh({ lit }: { lit: boolean }) {
   return (
-    <group position={MONITOR_STAND_POS} rotation={[0, Math.PI, 0]}>
+    <group position={MONITOR_POS} rotation={MONITOR_ROT}>
       {/* Heavy Desktop Stand Base (sits flush on equipment stand at y=0) */}
       <mesh position={[0, 0.005, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.16, 0.01, 0.13]} />
@@ -328,7 +341,7 @@ const RoomFour = () => {
           : step === 3
             ? WIRES_POS
             : step === 4
-              ? MONITOR_POS
+              ? MONITOR_INTERACT_POS
               : null;
 
   const targets: InteractTarget[] = useMemo(
@@ -364,7 +377,7 @@ const RoomFour = () => {
       {
         id: "monitor",
         label: cctvUnlocked ? "CCTV feed" : "CCTV monitor",
-        position: MONITOR_POS,
+        position: MONITOR_INTERACT_POS,
         active: step === 4 && wiresDone,
         maxDistance: 2.3,
       },

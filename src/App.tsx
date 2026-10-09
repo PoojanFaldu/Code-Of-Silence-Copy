@@ -9,13 +9,14 @@ import Game from "./pages/Game";
 import NotFound from "./pages/NotFound";
 import CodeOfSilence from "./pages/CodeOfSilence";
 import Leaderboard from "./pages/Leaderboard";
+import Admin from "./pages/Admin";
 import { useGame } from "./contexts/GameContext";
 import GlobalTimer from "./components/common/GlobalTimer";
 
 const queryClient = new QueryClient();
 
 const TimedOutOverlay = () => {
-  const { timedOut, missionStarted, clearTimedOut, resetGame } = useGame();
+  const { timedOut, missionStarted, resetGame } = useGame();
   const navigate = useNavigate();
 
   if (!timedOut || !missionStarted) return null;
@@ -28,10 +29,12 @@ const TimedOutOverlay = () => {
           The mission timer reached zero. This run is recorded as timed out on the leaderboard.
         </p>
         <div className="flex flex-col gap-2">
-            <button
+          <button
             type="button"
             onClick={() => {
-              clearTimedOut();
+              // End the mission fully — clearTimedOut alone left missionStarted=true with
+              // remaining=0, so the ticker immediately re-opened this overlay.
+              resetGame();
               navigate("/leaderboard");
             }}
             className="w-full py-3 bg-white text-black rounded font-bold text-sm tracking-widest"
@@ -42,7 +45,6 @@ const TimedOutOverlay = () => {
             type="button"
             onClick={() => {
               resetGame();
-              clearTimedOut();
               navigate("/?newPlayer=1");
             }}
             className="w-full py-2.5 border border-white/15 rounded font-mono text-xs tracking-wider text-slate-300 hover:text-white"
@@ -68,6 +70,7 @@ const App = () => (
           <Route path="/game" element={<Game />} />
           <Route path="/code-of-silence" element={<CodeOfSilence />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

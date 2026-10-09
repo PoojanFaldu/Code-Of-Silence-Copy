@@ -224,9 +224,6 @@ export default function SessionIdentificationPuzzle({
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-500 text-center leading-relaxed">
-                  Tip: like SOS → Secret Outpost Signal, take the first letter of each word.
-                </p>
               </div>
 
               {/* Input form */}

@@ -2,7 +2,17 @@ import { createContext, useCallback, useContext, useState, useEffect, useRef, Re
 import { toast } from "sonner";
 import { resetInvestigationState } from "@/lib/investigationState";
 import { resetProgressHud } from "@/lib/investigationProgress";
-import { getActivePlayerId, MISSION_DURATION_SECONDS, recordTimeout } from "@/lib/eventDb";
+import {
+  getActivePlayerId,
+  getAppliedBonusSeconds,
+  loadEventDb,
+  MISSION_DURATION_SECONDS,
+  pushPlayerHeartbeat,
+  recordTimeout,
+  refreshEventDbFromServer,
+  setAppliedBonusSeconds,
+} from "@/lib/eventDb";
+import { getCompletedTasks } from "@/lib/investigationProgress";
 import { clearRunSession, loadRunSession, saveRunSession } from "@/lib/runSession";
 
 /** Deducted from the mission timer on each wrong puzzle guess. */
@@ -23,9 +33,12 @@ interface GameContextType {
   /** Call after admin password + name succeed — starts the 60:00 countdown. */
   startMission: () => void;
   deductTime: (seconds: number) => void;
+  /** Add time to the active mission clock (admin bonus). */
+  addTime: (seconds: number) => void;
   penalizeWrongAnswer: () => void;
   penalizeWrongAccusation: () => void;
   clearTimedOut: () => void;
+  gameStartTime: number | null;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -53,7 +66,7 @@ function initialFromSession() {
   }
 
   const elapsed = Math.floor((Date.now() - (s.gameStartTime as number)) / 1000);
-  const remaining = Math.max(0, GAME_DURATION - elapsed);
+  const remaining = Math.max(0, GAME_DURATION + getAppliedBonusSeconds() - elapsed);
   return {
     gameStartTime: s.gameStartTime,
     missionStarted: true,
@@ -79,13 +92,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const tick = () => {
       const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-      const remaining = Math.max(0, GAME_DURATION - elapsed);
+      const remaining = Math.max(0, GAME_DURATION + getAppliedBonusSeconds() - elapsed);
       setTimeRemaining(remaining);
 
       if (remaining <= 0) {
         setTimedOut(true);
         saveRunSession({ timedOut: true, missionStarted: true, gameStartTime });
-        recordTimeout(GAME_DURATION);
+        recordTimeout(GAME_DURATION + getAppliedBonusSeconds());
       }
     };
 
@@ -114,28 +127,38 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setWebsiteUrlState(url);
   };
 
-  const deductTime = useCallback(
-    (seconds: number) => {
-      const now = Date.now();
-      setMissionStarted(true);
-      setGameStartTime((prev) => {
-        const base = prev ?? (now - (GAME_DURATION - timeRemainingRef.current) * 1000);
-        const next = base - seconds * 1000;
-        saveRunSession({ gameStartTime: next, missionStarted: true });
-        return next;
-      });
-      setTimeRemaining((prev) => {
-        const next = Math.max(0, prev - seconds);
-        if (next <= 0) {
-          setTimedOut(true);
-          saveRunSession({ timedOut: true });
-          recordTimeout(GAME_DURATION);
-        }
-        return next;
-      });
-    },
-    []
-  );
+  const deductTime = useCallback((seconds: number) => {
+    if (seconds <= 0) return;
+    const now = Date.now();
+    setMissionStarted(true);
+    setTimedOut(false);
+    setGameStartTime((prev) => {
+      const base = prev ?? (now - (GAME_DURATION + getAppliedBonusSeconds() - timeRemainingRef.current) * 1000);
+      // Positive seconds = lose time (start earlier so elapsed grows).
+      const next = base - seconds * 1000;
+      saveRunSession({ gameStartTime: next, missionStarted: true, timedOut: false });
+      return next;
+    });
+    setTimeRemaining((prev) => {
+      const next = Math.max(0, prev - seconds);
+      if (next <= 0) {
+        setTimedOut(true);
+        saveRunSession({ timedOut: true });
+        recordTimeout(GAME_DURATION + getAppliedBonusSeconds());
+      }
+      return next;
+    });
+  }, []);
+
+  const addTime = useCallback((seconds: number) => {
+    if (seconds <= 0) return;
+    setTimedOut(false);
+    setAppliedBonusSeconds(getAppliedBonusSeconds() + seconds);
+    setTimeRemaining((prev) => prev + seconds);
+    toast.success(
+      `+${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} added by admin.`
+    );
+  }, []);
 
   const penalizeWrongAnswer = useCallback(() => {
     deductTime(WRONG_ANSWER_PENALTY_SECONDS);
@@ -161,7 +184,43 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     clearRunSession();
     resetInvestigationState();
     resetProgressHud();
+    setAppliedBonusSeconds(0);
   };
+
+  // Heartbeat + apply admin time bonuses
+  useEffect(() => {
+    if (!missionStarted || gameStartTime == null) return;
+
+    const beat = () => {
+      pushPlayerHeartbeat({
+        completedTaskIds: getCompletedTasks(),
+        gameStartTime,
+        timeRemaining: timeRemainingRef.current,
+      });
+    };
+
+    const pollBonus = async () => {
+      await refreshEventDbFromServer();
+      const id = getActivePlayerId();
+      if (!id) return;
+      const player = loadEventDb().players.find((p) => p.id === id);
+      if (!player) return;
+      const remoteBonus = player.timeBonusSeconds ?? 0;
+      const applied = getAppliedBonusSeconds();
+      if (remoteBonus > applied) {
+        addTime(remoteBonus - applied);
+      }
+    };
+
+    beat();
+    const hb = window.setInterval(beat, 5000);
+    const bonus = window.setInterval(() => void pollBonus(), 4000);
+    void pollBonus();
+    return () => {
+      window.clearInterval(hb);
+      window.clearInterval(bonus);
+    };
+  }, [missionStarted, gameStartTime, addTime]);
 
   const startMission = useCallback(() => {
     const existing = loadRunSession();
@@ -195,9 +254,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         resetGame,
         startMission,
         deductTime,
+        addTime,
         penalizeWrongAnswer,
         penalizeWrongAccusation,
         clearTimedOut,
+        gameStartTime,
       }}
     >
       {children}
