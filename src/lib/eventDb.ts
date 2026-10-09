@@ -24,7 +24,7 @@ export type EventDb = {
 const DB_KEY = "cos_event_db";
 const ACTIVE_PLAYER_KEY = "cos_active_player_id";
 export const EVENT_DB_EVENT = "cos-event-db";
-export const MISSION_DURATION_SECONDS = 3600;
+export const MISSION_DURATION_SECONDS = 2700; // 45 minutes
 
 const DEFAULT_ADMIN_PASSWORD = "csi-admin-2026";
 

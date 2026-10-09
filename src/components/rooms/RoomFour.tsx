@@ -9,12 +9,13 @@ import ActivePulse from "@/components/rooms/interaction/ActivePulse";
 import type { FocusedInteractable, InteractTarget } from "@/components/rooms/interaction/types";
 import SessionIdentificationPuzzle from "@/components/rooms/roomFour/SessionIdentificationPuzzle";
 import TangledWiresPuzzle from "@/components/rooms/roomFour/TangledWiresPuzzle";
-import CctvMonitor from "@/components/rooms/roomFour/CctvMonitor";
+import CctvMonitor, { CCTV_CODE } from "@/components/rooms/roomFour/CctvMonitor";
 import { useGame } from "@/contexts/GameContext";
 import { setInvestigationState } from "@/lib/investigationState";
 import { completeTask, unlockLog } from "@/lib/investigationProgress";
 import { MISSION_DURATION_SECONDS, recordMurderGuess } from "@/lib/eventDb";
 import { loadRunSession, setServerRoomProgress } from "@/lib/runSession";
+import { Eye, Sparkles, ArrowRight, X, FileText } from "lucide-react";
 
 /** 0 session → 1 flashlight → 2 UV → 3 wires → 4 monitor → accuse */
 type Step = 0 | 1 | 2 | 3 | 4;
@@ -31,8 +32,12 @@ const BOX_POS: [number, number, number] = [0.45, 2.505, 5.05];
 const FLASHLIGHT_POS: [number, number, number] = [-0.2, 2.76, 4.2];
 /** Glass coffee table — small nudge up/in from the rim seat. */
 const PAPER_POS: [number, number, number] = [0.08, 2.820, 4.08];
-/** Wall CCTV monitor — back-right of the server room. */
-const MONITOR_POS: [number, number, number] = [0.52, 3.05, 5.55];
+/** Note on the window table displaying the code for the monitor. */
+const MONITOR_CODE_POS: [number, number, number] = [0.26, 2.824, 4.08];
+/** CCTV monitor stand base position on the equipment stand where the unused TV was located. */
+const MONITOR_STAND_POS: [number, number, number] = [0.01, 2.627, 5.56];
+/** Interaction target center at the monitor screen face. */
+const MONITOR_POS: [number, number, number] = [0.01, 2.762, 5.54];
 const WIRES_POS: [number, number, number] = [0.35, 2.7, 5.35];
 
 const LoadModel = () => {
@@ -42,8 +47,37 @@ const LoadModel = () => {
     if (scene) {
       scene.traverse((child: THREE.Object3D) => {
         if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+          const mesh = child as THREE.Mesh;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+
+          // Remove the unused retro TV mesh from the equipment stand so our monitor sits there cleanly
+          if (mesh.name === "Object_47" && mesh.geometry && mesh.geometry.index && !mesh.userData.tvFiltered) {
+            mesh.userData.tvFiltered = true;
+            const indexAttr = mesh.geometry.index;
+            const posAttr = mesh.geometry.attributes.position;
+            const indices = indexAttr.array;
+            const newIndices: number[] = [];
+
+            for (let i = 0; i < indices.length; i += 3) {
+              const i0 = indices[i];
+              const i1 = indices[i + 1];
+              const i2 = indices[i + 2];
+
+              const cx = (posAttr.getX(i0) + posAttr.getX(i1) + posAttr.getX(i2)) / 3;
+              const cy = (posAttr.getY(i0) + posAttr.getY(i1) + posAttr.getY(i2)) / 3;
+              const cz = (posAttr.getZ(i0) + posAttr.getZ(i1) + posAttr.getZ(i2)) / 3;
+
+              // Filter out the vintage TV model on the stand (local mesh coordinates)
+              if (cx >= -3.55 && cx <= -0.70 && cy >= -1.07 && cy <= 0.80 && cz >= 2.55 && cz <= 7.30) {
+                continue;
+              }
+              newIndices.push(i0, i1, i2);
+            }
+
+            mesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(newIndices), 1));
+            mesh.geometry.needsUpdate = true;
+          }
         }
       });
     }
@@ -80,18 +114,140 @@ function RelayPanelMesh() {
 
 function MonitorMesh({ lit }: { lit: boolean }) {
   return (
-    <group position={MONITOR_POS} rotation={[0, -0.55, 0]}>
-      <mesh castShadow>
-        <boxGeometry args={[0.22, 0.16, 0.04]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.35} roughness={0.45} />
+    <group position={MONITOR_STAND_POS} rotation={[0, Math.PI, 0]}>
+      {/* Heavy Desktop Stand Base (sits flush on equipment stand at y=0) */}
+      <mesh position={[0, 0.005, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.16, 0.01, 0.13]} />
+        <meshStandardMaterial color="#1f2329" metalness={0.8} roughness={0.3} />
       </mesh>
-      <mesh position={[0, 0, 0.022]}>
-        <planeGeometry args={[0.18, 0.12]} />
+
+      {/* Chamfered Base Rim */}
+      <mesh position={[0, 0.002, 0]}>
+        <boxGeometry args={[0.168, 0.004, 0.138]} />
+        <meshStandardMaterial color="#0f1115" metalness={0.6} roughness={0.5} />
+      </mesh>
+
+      {/* Vertical Stand Column / Riser */}
+      <mesh position={[0, 0.065, -0.018]} castShadow>
+        <boxGeometry args={[0.03, 0.12, 0.024]} />
+        <meshStandardMaterial color="#1a1d22" metalness={0.85} roughness={0.25} />
+      </mesh>
+
+      {/* Swivel Tilt Hinge at top of stand neck */}
+      <mesh position={[0, 0.125, -0.012]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.014, 0.014, 0.034, 12]} />
+        <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
+      </mesh>
+
+      {/* VESA Mounting Bracket on back of monitor */}
+      <mesh position={[0, 0.135, -0.02]} castShadow>
+        <boxGeometry args={[0.08, 0.08, 0.01]} />
+        <meshStandardMaterial color="#2a2e36" metalness={0.7} roughness={0.3} />
+      </mesh>
+
+      {/* Monitor Main Housing / Bezel */}
+      <mesh position={[0, 0.135, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.26, 0.18, 0.036]} />
+        <meshStandardMaterial color="#111317" metalness={0.4} roughness={0.5} />
+      </mesh>
+
+      {/* Inner Screen Bezel Frame */}
+      <mesh position={[0, 0.135, 0.018]}>
+        <boxGeometry args={[0.23, 0.155, 0.004]} />
+        <meshStandardMaterial color="#08090b" roughness={0.7} />
+      </mesh>
+
+      {/* Screen Display Face (lit / glowing CCTV feed or dark standby) */}
+      <mesh position={[0, 0.135, 0.021]}>
+        <planeGeometry args={[0.215, 0.14]} />
         <meshStandardMaterial
-          color={lit ? "#22d3ee" : "#0ea5e9"}
-          emissive={lit ? "#0891b2" : "#164e63"}
-          emissiveIntensity={lit ? 1.4 : 0.35}
+          color={lit ? "#22d3ee" : "#0f172a"}
+          emissive={lit ? "#0891b2" : "#020617"}
+          emissiveIntensity={lit ? 1.5 : 0.15}
+          roughness={0.25}
         />
+      </mesh>
+
+      {/* Status LEDs on bottom-right bezel (Green power when lit / Red standby when unlit) */}
+      <mesh position={[0.09, 0.065, 0.02]}>
+        <circleGeometry args={[0.003, 8]} />
+        <meshBasicMaterial color={lit ? "#10b981" : "#ef4444"} />
+      </mesh>
+      <mesh position={[0.10, 0.065, 0.02]}>
+        <circleGeometry args={[0.0025, 8]} />
+        <meshBasicMaterial color={lit ? "#38bdf8" : "#334155"} />
+      </mesh>
+
+      {/* Desktop Cable Coil (runs from stand neck back towards the wall) */}
+      <mesh position={[0.015, 0.004, -0.05]} rotation={[0, 0.25, Math.PI / 2]}>
+        <cylinderGeometry args={[0.004, 0.004, 0.08, 8]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function MonitorCodeNote() {
+  const noteTexture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 384;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // Bright amber/yellow sticky note background
+    ctx.fillStyle = "#fef08a";
+    ctx.fillRect(0, 0, 512, 384);
+
+    // Warm border
+    ctx.strokeStyle = "#eab308";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, 502, 374);
+
+    // Dark header banner
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(24, 28, 464, 76);
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "bold 32px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("CODE FOR MONITOR", 256, 66);
+
+    // Large 3-digit CCTV code (847)
+    ctx.fillStyle = "#020617";
+    ctx.font = "900 128px monospace";
+    ctx.fillText(CCTV_CODE, 256, 215);
+
+    // Bottom caption
+    ctx.fillStyle = "#475569";
+    ctx.font = "bold 24px monospace";
+    ctx.fillText("CCTV ACCESS CODE", 256, 318);
+
+    // Top tape strip
+    ctx.fillStyle = "rgba(251, 191, 36, 0.85)";
+    ctx.fillRect(206, 0, 100, 22);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+
+  return (
+    <group position={MONITOR_CODE_POS} rotation={[-Math.PI / 2 + 0.16, 0, -0.15]}>
+      <mesh castShadow receiveShadow>
+        <planeGeometry args={[0.18, 0.135]} />
+        {noteTexture ? (
+          <meshStandardMaterial
+            map={noteTexture}
+            emissive="#ca8a04"
+            emissiveIntensity={0.25}
+            roughness={0.4}
+            side={THREE.DoubleSide}
+          />
+        ) : (
+          <meshStandardMaterial color="#fef08a" side={THREE.DoubleSide} />
+        )}
       </mesh>
     </group>
   );
@@ -133,14 +289,6 @@ function isSameerAccusation(raw: string) {
   return s === "sameer" || s === "shah" || s === "sameer shah" || s === "shah sameer";
 }
 
-const SUSPECT_CHOICES = [
-  "Dr. Arjun Mehta",
-  "Neha Rao",
-  "Karan Patel",
-  "Rohan Desai",
-  "Dr. Sameer Shah",
-] as const;
-
 const RoomFour = () => {
   const { penalizeWrongAccusation, timeRemaining } = useGame();
   const savedServer = loadRunSession().rooms.server;
@@ -152,6 +300,7 @@ const RoomFour = () => {
   const [wiresDone, setWiresDone] = useState(() => savedServer.wiresDone);
   const [showMonitor, setShowMonitor] = useState(false);
   const [cctvUnlocked, setCctvUnlocked] = useState(() => savedServer.cctvUnlocked);
+  const [showMonitorCodeNote, setShowMonitorCodeNote] = useState(false);
   const [showFinalQuestion, setShowFinalQuestion] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [accusation, setAccusation] = useState("");
@@ -166,7 +315,7 @@ const RoomFour = () => {
   };
 
   const modalOpen =
-    showSession || showUvClue || showWires || showMonitor || showFinalQuestion || gameWon;
+    showSession || showUvClue || showWires || showMonitor || showFinalQuestion || gameWon || showMonitorCodeNote;
   const controlsEnabled = !modalOpen;
 
   const activePos =
@@ -217,13 +366,23 @@ const RoomFour = () => {
         label: cctvUnlocked ? "CCTV feed" : "CCTV monitor",
         position: MONITOR_POS,
         active: step === 4 && wiresDone,
-        maxDistance: 1.9,
+        maxDistance: 2.3,
+      },
+      {
+        id: "monitor_code",
+        label: "Code for monitor",
+        position: MONITOR_CODE_POS,
+        active: true,
+        maxDistance: 2.5,
       },
     ],
     [step, sessionDone, uvEnabled, wiresDone, cctvUnlocked]
   );
 
   const handleInteract = (id: string) => {
+    if (id === "monitor_code") {
+      setShowMonitorCodeNote(true);
+    }
     if (id === "box" && step === 0) {
       if (sessionDone) setStep(1);
       else setShowSession(true);
@@ -300,7 +459,8 @@ const RoomFour = () => {
           <LoadModel />
           {(step >= 2 || uvEnabled) && <UvPaperSheet uvOn={uvEnabled} />}
           {step === 3 && !wiresDone && <RelayPanelMesh />}
-          {(wiresDone || step >= 4) && <MonitorMesh lit={step === 4 || cctvUnlocked} />}
+          <MonitorMesh lit={step === 4 || cctvUnlocked} />
+          <MonitorCodeNote />
 
           <group position={BOX_POS}>
             <Box scale={[0.15, 0.08, 0.15]}>
@@ -366,62 +526,107 @@ const RoomFour = () => {
       )}
 
       {showUvClue && !showWires && !showMonitor && !showFinalQuestion && !gameWon && (
-        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#12081c] border border-purple-500/40 p-6 rounded-xl max-w-md w-full space-y-4 my-4">
-            <h2 className="text-lg text-purple-200 font-semibold tracking-widest">UV ARCHIVE</h2>
-
-            <div className="rounded-lg border border-purple-500/25 bg-black/50 px-3 py-3 font-serif text-xs italic text-purple-50/90 leading-relaxed space-y-2">
-              <p className="font-mono not-italic text-[10px] tracking-widest text-purple-300/70">
-                FINAL NOTE — Professor Dev Verma
-              </p>
-              <p>&quot;Someone has been changing the research records.</p>
-              <p>I know where the discrepancy began.</p>
-              <p>I need to speak with them before this goes any further.&quot;</p>
-            </div>
-
-            <div className="space-y-2 font-mono text-[11px] text-slate-300 leading-relaxed">
-              <p className="text-[10px] uppercase tracking-widest text-purple-300/80">
-                Five threads — review
-              </p>
-              {(
-                [
-                  {
-                    name: "Dr. Arjun Mehta — Research",
-                    body: "Assigned to Experiment 17. The recorded result does not match the original research notes. Verma had been reviewing the discrepancy. His name appears repeatedly in the research records surrounding the discrepancy.",
-                  },
-                  {
-                    name: "Neha Rao — Investigation",
-                    body: "Neha accessed Verma's research records while looking into the discrepancy. Her activity suggests she was investigating the records rather than creating them.",
-                  },
-                  {
-                    name: "Karan Patel — Security / Access",
-                    body: "Karan had restricted technical access to the laboratory's network equipment. His badge was recovered near the Network Room.",
-                  },
-                  {
-                    name: "Rohan Desai — Surveillance",
-                    body: "Rohan was responsible for the laboratory's security systems and CCTV. His administrative access gave him the ability to interact with security infrastructure.",
-                  },
-                  {
-                    name: "Dr. Sameer Shah — Conflict",
-                    body: "Sameer had a serious professional dispute with Professor Dev Verma over publication credit. Verma's notes indicate that the disagreement had become increasingly difficult. A recovered message from Sameer refers to the research being published without his name.",
-                  },
-                ] as const
-              ).map((card) => (
-                <div
-                  key={card.name}
-                  className="rounded-md border border-purple-500/20 bg-black/40 px-3 py-2 space-y-1"
-                >
-                  <p className="text-purple-100">{card.name}</p>
-                  <p className="text-slate-400">{card.body}</p>
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="relative bg-[#0d0714] border border-purple-500/40 p-5 sm:p-6 rounded-2xl max-w-lg w-full space-y-4 my-auto shadow-2xl shadow-purple-950/60">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300">
+                  <Eye className="h-4 w-4" />
                 </div>
-              ))}
+                <div>
+                  <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-purple-100">UV ARCHIVE</h2>
+                  <p className="text-[10px] font-mono text-purple-400/80">ULTRAVIOLET PRINT RECOVERY</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUvClue(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Restore the relay, then the wall monitor.
+            {/* Verma's Note */}
+            <div className="rounded-xl border border-purple-500/25 bg-purple-950/20 p-3.5 space-y-1 shadow-inner">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-purple-300/80">
+                <Sparkles className="h-3 w-3 text-purple-400" />
+                <span>Recovered Note · Prof. Dev Verma</span>
+              </div>
+              <p className="font-serif italic text-xs text-purple-100/90 leading-relaxed">
+                &ldquo;Someone has been altering the research records. I know where the discrepancy began. I need to speak with them before this goes any further.&rdquo;
+              </p>
+            </div>
+
+            {/* 5 Suspect Threads - Compact cards */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-purple-300/80 px-0.5">
+                <span>Suspect Threads</span>
+                <span className="text-slate-500">5 Profiles</span>
+              </div>
+
+              <div className="space-y-1.5 font-mono text-xs">
+                {(
+                  [
+                    {
+                      name: "Dr. Arjun Mehta",
+                      tag: "RESEARCH",
+                      badge: "border-rose-500/40 bg-rose-500/15 text-rose-300",
+                      summary: "Altered Exp-17 results (84.2% → 91.7%). Verma planned to confront him.",
+                    },
+                    {
+                      name: "Neha Rao",
+                      tag: "INVESTIGATOR",
+                      badge: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
+                      summary: "Reviewed archive to trace discrepancies; actions indicate investigation.",
+                    },
+                    {
+                      name: "Karan Patel",
+                      tag: "NETWORK",
+                      badge: "border-cyan-500/40 bg-cyan-500/15 text-cyan-300",
+                      summary: "Server equipment access. Badge found near Network Room; no murder link.",
+                    },
+                    {
+                      name: "Rohan Desai",
+                      tag: "SECURITY",
+                      badge: "border-indigo-500/40 bg-indigo-500/15 text-indigo-300",
+                      summary: "Administered CCTV & surveillance infrastructure across the facility.",
+                    },
+                    {
+                      name: "Dr. Sameer Shah",
+                      tag: "DISPUTE",
+                      badge: "border-amber-500/40 bg-amber-500/15 text-amber-300",
+                      summary: "Heated credit dispute over publications; strong motive, but no forensic tie.",
+                    },
+                  ] as const
+                ).map((card) => (
+                  <div
+                    key={card.name}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 rounded-xl border border-purple-500/20 bg-black/60 px-3 py-2 transition hover:border-purple-400/40"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-100 text-xs">{card.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase tracking-wider ${card.badge}`}>
+                        {card.tag}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 leading-tight sm:text-right max-w-sm">
+                      {card.summary}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-500 text-center font-mono">
+              Next step: Restore the relay circuit, then access the wall monitor.
             </p>
 
+            {/* Action button */}
             <button
+              type="button"
               onClick={() => {
                 completeTask("uv");
                 unlockLog("uv_archive");
@@ -431,9 +636,10 @@ const RoomFour = () => {
                 setServerRoomProgress({ step: 3 });
                 setShowWires(true);
               }}
-              className="w-full py-3 bg-purple-600/80 hover:bg-purple-600 text-white rounded font-medium"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold tracking-widest shadow-lg shadow-purple-950/50 transition cursor-pointer"
             >
-              OPEN RELAY CIRCUIT
+              <span>OPEN RELAY CIRCUIT</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -469,66 +675,105 @@ const RoomFour = () => {
         />
       )}
 
+      {showMonitorCodeNote && (
+        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-950 border border-amber-500/40 p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl shadow-amber-950/40 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-amber-400" />
+                <span>Recovered Note · Window Table</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowMonitorCodeNote(false)}
+                className="text-slate-400 hover:text-white p-1 rounded transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="bg-amber-100 rounded-xl p-6 text-slate-900 space-y-2 shadow-inner border border-amber-300">
+              <p className="text-[11px] font-mono uppercase tracking-widest text-amber-800 font-bold">
+                CODE FOR MONITOR
+              </p>
+              <div className="text-4xl font-mono font-black tracking-widest text-slate-950 py-1">
+                {CCTV_CODE}
+              </div>
+              <p className="text-[10px] font-mono text-amber-700">
+                3-digit access code for CCTV terminal
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMonitorCodeNote(false)}
+              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono text-xs font-bold tracking-widest transition cursor-pointer shadow-md"
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
+
       {showFinalQuestion && !gameWon && (
         <div className="absolute inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-          <div className="bg-black border border-red-900/50 p-8 rounded-xl max-w-md w-full space-y-5">
-            <h2 className="text-xl text-white font-bold text-center tracking-wide">
-              WHO KILLED PROFESSOR DEV VERMA?
-            </h2>
-            <p className="text-center text-xs text-slate-500 leading-relaxed">
-              Wrong accusation: −10:00.
-            </p>
-
-            <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 text-center">
-                Select a suspect
+          <div className="bg-black/90 border border-red-900/60 p-8 rounded-2xl max-w-md w-full space-y-6 shadow-2xl shadow-red-950/40 backdrop-blur-md">
+            <div className="text-center space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-red-500/80 bg-red-950/40 border border-red-900/40 px-2.5 py-1 rounded-full">
+                Final Accusation
+              </span>
+              <h2 className="text-xl sm:text-2xl text-white font-black tracking-wide font-mono mt-2">
+                WHO KILLED PROFESSOR DEV VERMA?
+              </h2>
+              <p className="text-xs text-rose-400/80 font-mono">
+                Penalty for wrong accusation: −10:00
               </p>
-              {SUSPECT_CHOICES.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => {
-                    setAccusation(name);
-                    setAnswerError("");
-                  }}
-                  className={`w-full rounded border px-3 py-2.5 font-mono text-xs tracking-wider text-left transition ${
-                    accusation === name
-                      ? "border-red-500/50 bg-red-950/40 text-white"
-                      : "border-white/15 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {name}
-                </button>
-              ))}
             </div>
 
             <form
-              className="space-y-3"
+              className="space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 setAnswerError("");
                 accuse();
               }}
             >
-              <input
-                type="text"
-                autoFocus
-                value={accusation}
-                onChange={(e) => {
-                  setAccusation(e.target.value);
-                  setAnswerError("");
-                }}
-                placeholder="Or type the name"
-                autoComplete="off"
-                spellCheck={false}
-                className="w-full rounded border border-white/20 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 focus:border-red-500/50 focus:outline-none"
-              />
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="suspect-input"
+                  className="block text-[10px] font-mono uppercase tracking-widest text-slate-400 text-center"
+                >
+                  Type the killer's name
+                </label>
+                <input
+                  id="suspect-input"
+                  type="text"
+                  autoFocus
+                  value={accusation}
+                  onChange={(e) => {
+                    setAccusation(e.target.value);
+                    setAnswerError("");
+                  }}
+                  placeholder="Enter suspect name..."
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full rounded-xl border border-white/20 bg-white/[0.04] px-4 py-3.5 font-mono text-sm text-center text-white placeholder:text-slate-600 focus:border-red-500/70 focus:bg-red-950/10 focus:outline-none transition"
+                />
+              </div>
+
+              {answerError && (
+                <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 px-3.5 py-2.5 text-center text-xs font-mono text-rose-300 whitespace-pre-line leading-relaxed">
+                  {answerError}
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={!accusation.trim()}
-                className="w-full py-3 border border-red-900/60 bg-red-950/40 hover:bg-red-900/50 disabled:opacity-40 disabled:hover:bg-red-950/40 text-white rounded font-mono text-sm tracking-wider"
+                className="w-full py-3.5 border border-red-800/80 bg-red-950/60 hover:bg-red-900/70 disabled:opacity-40 disabled:hover:bg-red-950/60 text-white rounded-xl font-mono text-xs font-bold tracking-widest shadow-lg shadow-red-950/50 transition cursor-pointer"
               >
-                ACCUSE
+                SUBMIT ACCUSATION
               </button>
             </form>
 
@@ -538,14 +783,10 @@ const RoomFour = () => {
                 setShowFinalQuestion(false);
                 setShowMonitor(true);
               }}
-              className="w-full py-2 text-xs font-mono tracking-wider text-slate-400 hover:text-slate-200"
+              className="w-full py-2 text-xs font-mono tracking-wider text-slate-400 hover:text-slate-200 transition text-center cursor-pointer"
             >
               ← BACK TO CCTV
             </button>
-
-            {answerError && (
-              <p className="text-rose-400 text-center text-sm whitespace-pre-line">{answerError}</p>
-            )}
           </div>
         </div>
       )}

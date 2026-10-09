@@ -66,20 +66,91 @@ function LogicTerminal({ solved }: { solved: boolean }) {
 function ArchiveWorkstation({ unlocked, restored }: { unlocked: boolean; restored: boolean }) {
   return (
     <group position={MONITOR_POS} rotation={[0, -0.4, 0]}>
-      <mesh position={[0, -0.18, 0.02]} castShadow>
-        <boxGeometry args={[0.3, 0.04, 0.18]} />
-        <meshStandardMaterial color="#334155" metalness={0.35} roughness={0.5} />
+      {/* Laptop Base (Keyboard Deck & Palm Rest) */}
+      <mesh position={[0, -0.192, 0.01]} castShadow receiveShadow>
+        <boxGeometry args={[0.42, 0.016, 0.28]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.25} />
       </mesh>
-      <mesh castShadow>
-        <boxGeometry args={[0.52, 0.34, 0.05]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.45} roughness={0.35} />
+
+      {/* Recessed Keyboard Well */}
+      <mesh position={[0, -0.183, -0.025]}>
+        <boxGeometry args={[0.35, 0.002, 0.13]} />
+        <meshStandardMaterial color="#090d16" roughness={0.8} />
       </mesh>
-      <mesh position={[0, 0, 0.03]}>
-        <boxGeometry args={[0.44, 0.26, 0.01]} />
-        <meshStandardMaterial
-          color={restored ? "#0c4a6e" : unlocked ? "#172554" : "#111827"}
-        />
+
+      {/* Keyboard Keybed */}
+      <mesh position={[0, -0.181, -0.025]}>
+        <boxGeometry args={[0.34, 0.003, 0.12]} />
+        <meshStandardMaterial color="#172033" metalness={0.2} roughness={0.6} />
       </mesh>
+
+      {/* Spacebar Accent */}
+      <mesh position={[0, -0.179, 0.022]}>
+        <boxGeometry args={[0.12, 0.002, 0.018]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.5} />
+      </mesh>
+
+      {/* Touchpad */}
+      <mesh position={[0, -0.183, 0.082]}>
+        <boxGeometry args={[0.13, 0.002, 0.08]} />
+        <meshStandardMaterial color="#334155" metalness={0.5} roughness={0.3} />
+      </mesh>
+
+      {/* Front Lip Opening Groove */}
+      <mesh position={[0, -0.183, 0.148]}>
+        <boxGeometry args={[0.07, 0.003, 0.006]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.7} />
+      </mesh>
+
+      {/* Chassis Side LED Indicator */}
+      <mesh position={[0.211, -0.192, 0.06]}>
+        <sphereGeometry args={[0.0025, 8, 8]} />
+        <meshBasicMaterial color={restored ? "#38bdf8" : unlocked ? "#22c55e" : "#0284c7"} />
+      </mesh>
+
+      {/* Display Clamshell Lid & Screen (Pivoting from back hinge) */}
+      <group position={[0, -0.184, -0.13]} rotation={[-0.32, 0, 0]}>
+        {/* Cylindrical Display Hinge */}
+        <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.007, 0.007, 0.38, 16]} />
+          <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.25} />
+        </mesh>
+
+        {/* Outer Lid Aluminum Backing */}
+        <mesh position={[0, 0.13, -0.005]} castShadow>
+          <boxGeometry args={[0.42, 0.27, 0.01]} />
+          <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.25} />
+        </mesh>
+
+        {/* Display Inner Bezel */}
+        <mesh position={[0, 0.13, 0.001]}>
+          <boxGeometry args={[0.40, 0.255, 0.002]} />
+          <meshStandardMaterial color="#0a0e17" roughness={0.7} />
+        </mesh>
+
+        {/* Active Screen Display (lit/glowing activity log) */}
+        <mesh position={[0, 0.13, 0.003]}>
+          <planeGeometry args={[0.38, 0.23]} />
+          <meshStandardMaterial
+            color={restored ? "#38bdf8" : unlocked ? "#0284c7" : "#0f172a"}
+            emissive={restored ? "#0284c7" : unlocked ? "#0369a1" : "#070d18"}
+            emissiveIntensity={restored ? 1.5 : unlocked ? 1.0 : 0.25}
+            roughness={0.2}
+          />
+        </mesh>
+
+        {/* Top Bezel HD Webcam Lens */}
+        <mesh position={[0, 0.25, 0.003]}>
+          <circleGeometry args={[0.0025, 10]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+
+        {/* Bottom Bezel Manufacturer Badge */}
+        <mesh position={[0, 0.014, 0.003]}>
+          <boxGeometry args={[0.04, 0.004, 0.001]} />
+          <meshStandardMaterial color="#64748b" metalness={0.7} />
+        </mesh>
+      </group>
     </group>
   );
 }

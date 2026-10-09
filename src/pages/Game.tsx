@@ -34,13 +34,11 @@ const Game = () => {
   const [skipReady, setSkipReady] = useState(!skipPrior);
 
   useEffect(() => {
-    if (!skipPrior) {
-      setSkipReady(true);
-      return;
+    if (skipPrior) {
+      unlockServerRoomForTesting();
+      seedProgressThroughArchives();
+      setPuzzleSolved(true);
     }
-    unlockServerRoomForTesting();
-    seedProgressThroughArchives();
-    setPuzzleSolved(true);
     if (!missionStarted) startMission();
     setSkipReady(true);
   }, [skipPrior, missionStarted, startMission, setPuzzleSolved]);

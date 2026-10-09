@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { toast } from "sonner";
 import { resetInvestigationState } from "@/lib/investigationState";
 import { resetProgressHud } from "@/lib/investigationProgress";
@@ -40,8 +40,7 @@ function initialFromSession() {
     s.missionStarted &&
     s.gameStartTime != null &&
     !s.timedOut &&
-    Boolean(activeId) &&
-    (s.playerId == null || s.playerId === activeId);
+    (activeId ? (s.playerId == null || s.playerId === activeId) : true);
 
   if (!resumable) {
     return {
@@ -72,6 +71,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [websiteUrl, setWebsiteUrlState] = useState<string>(DEFAULT_WEBSITE_URL);
   const [timeRemaining, setTimeRemaining] = useState<number>(boot.timeRemaining);
   const [timedOut, setTimedOut] = useState(boot.timedOut);
+  const timeRemainingRef = useRef(boot.timeRemaining);
+  timeRemainingRef.current = timeRemaining;
 
   useEffect(() => {
     if (!missionStarted || timedOut || gameStartTime == null) return;
@@ -115,10 +116,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const deductTime = useCallback(
     (seconds: number) => {
-      if (!missionStarted) return;
+      const now = Date.now();
+      setMissionStarted(true);
       setGameStartTime((prev) => {
-        if (prev == null) return prev;
-        const next = prev - seconds * 1000;
+        const base = prev ?? (now - (GAME_DURATION - timeRemainingRef.current) * 1000);
+        const next = base - seconds * 1000;
         saveRunSession({ gameStartTime: next, missionStarted: true });
         return next;
       });
@@ -132,7 +134,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return next;
       });
     },
-    [missionStarted]
+    []
   );
 
   const penalizeWrongAnswer = useCallback(() => {
@@ -162,30 +164,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const startMission = useCallback(() => {
-    const start = Date.now();
+    const existing = loadRunSession();
+    const start = existing.gameStartTime ?? Date.now();
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    const remaining = Math.max(0, GAME_DURATION - elapsed);
     setTimedOut(false);
-    setPuzzleSolvedState(false);
-    setTimeRemaining(GAME_DURATION);
+    setPuzzleSolvedState(existing.puzzleSolved ?? false);
+    setTimeRemaining(existing.gameStartTime ? remaining : GAME_DURATION);
     setGameStartTime(start);
     setMissionStarted(true);
     saveRunSession({
       missionStarted: true,
       gameStartTime: start,
       timedOut: false,
-      puzzleSolved: false,
+      puzzleSolved: existing.puzzleSolved ?? false,
       playerId: getActivePlayerId(),
-      rooms: {
-        verma: { step: 0 },
-        research: { step: 0 },
-        archive: { step: 0, hashSolved: false, archiveSolved: false },
-        server: {
-          step: 0,
-          sessionDone: false,
-          uvEnabled: false,
-          wiresDone: false,
-          cctvUnlocked: false,
-        },
-      },
     });
   }, []);
 

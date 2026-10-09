@@ -92,7 +92,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "folder_log",
     title: "Security Cabinet",
-    body: "BADGE ASSIGNMENT VERIFIED\n\nDr. Arjun Mehta → A-17\nNeha Rao → B-04\nKaran Patel → C-22\nRohan Desai → D-09\n\nBADGE C-22\nOWNER: Karan Patel\nACCESS: Technical\nAUTHORIZED AREA: Network Room\n\nBadge C-22 was recovered near the Network Room.\n\nAlso on file:\nDr. Sameer Shah — research partner of Professor Dev Verma.\nRecent disagreement over publication ownership.",
+    body: "BADGE & CALLSIGN REGISTRY\n\nDr. Arjun Mehta → A-17 (ALPHA · ROMEO · JULIETT · UNIFORM · NOVEMBER)\nNeha Rao → B-04 (NOVEMBER · ECHO · HOTEL · ALPHA)\nKaran Patel → C-22 (KILO · ALPHA · ROMEO · ALPHA · NOVEMBER)\nRohan Desai → D-09 (ROMEO · OSCAR · HOTEL · ALPHA · NOVEMBER)\n\nBADGE C-22\nOWNER: Karan Patel\nACCESS: Technical\nAUTHORIZED AREA: Network Room\n\nBadge C-22 was recovered near the Network Room.\n\nAlso on file:\nDr. Sameer Shah — research partner of Professor Dev Verma.\nRecent disagreement over publication ownership.",
   },
   {
     id: "exp17_report",
@@ -127,7 +127,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "uv_archive",
     title: "UV Archive",
-    body: "FINAL NOTE — Professor Dev Verma\n\n\"Someone has been changing the research records.\nI know where the discrepancy began.\nI need to speak with them before this goes any further.\"\n\nFIVE THREADS — REVIEW\n\nDr. Arjun Mehta — Research\nAssigned to Experiment 17.\nThe recorded result does not match the original research notes.\nVerma had been reviewing the discrepancy.\nHis name appears repeatedly in the research records surrounding the discrepancy.\n\nNeha Rao — Investigation\nNeha accessed Verma's research records while looking into the discrepancy.\nHer activity suggests she was investigating the records rather than creating them.\n\nKaran Patel — Security / Access\nKaran had restricted technical access to the laboratory's network equipment.\nHis badge was recovered near the Network Room.\n\nRohan Desai — Surveillance\nRohan was responsible for the laboratory's security systems and CCTV.\nHis administrative access gave him the ability to interact with security infrastructure.\n\nDr. Sameer Shah — Conflict\nSameer had a serious professional dispute with Professor Dev Verma over publication credit.\nVerma's notes indicate that the disagreement had become increasingly difficult.\nA recovered message from Sameer refers to the research being published without his name.\n\nRestore the relay, then the wall monitor.",
+    body: "FINAL NOTE — Professor Dev Verma\n\"Someone has been altering the research records. I know where the discrepancy began. I need to speak with them before this goes any further.\"\n\nSUSPECT THREADS\n• Dr. Arjun Mehta [RESEARCH]: Altered Exp-17 results (84.2% → 91.7%). Verma planned to confront him.\n• Neha Rao [INVESTIGATION]: Reviewed archive to trace discrepancies; actions indicate investigation.\n• Karan Patel [NETWORK]: Server equipment access. Badge near Network Room; no murder link.\n• Rohan Desai [SECURITY]: Administered CCTV & surveillance infrastructure.\n• Dr. Sameer Shah [DISPUTE]: Heated credit dispute; strong motive, but no forensic tie.\n\nNext: Restore the relay circuit, then access the wall monitor.",
   },
   {
     id: "wires_signal",
