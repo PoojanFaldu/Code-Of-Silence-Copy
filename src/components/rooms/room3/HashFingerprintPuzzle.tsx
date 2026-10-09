@@ -40,13 +40,11 @@ export interface ArchiveFileRecord {
 }
 
 /**
- * 3 Master files with long cryptographic hashes.
- * All 3 files have distinct hashes on the terminal.
+ * 3 Master files with 12-character cryptographic hashes.
  * In Dr. Verma's letter:
  * - EXP17_TELEMETRY.dat matches exactly
  * - EXP17_SYNTHESIS.log matches exactly
- * - EXP17_FINAL_REPORT.enc has a subtle 1-character difference:
- *   Terminal: ...71B4... vs Verma's Letter: ...71D4... (B vs D in block 6)
+ * - EXP17_FINAL_REPORT.enc differs: Terminal F407 vs Letter F487
  */
 export const HASH_PUZZLE_FILES: ArchiveFileRecord[] = [
   {
@@ -54,8 +52,8 @@ export const HASH_PUZZLE_FILES: ArchiveFileRecord[] = [
     name: "EXP17_TELEMETRY.dat",
     type: "Sensor Telemetry Stream",
     size: "42.8 MB",
-    terminalHash: "8F4B-92A1-C7D3-E05B-41F8-6A92-D38E-5C14",
-    vermaHash: "8F4B-92A1-C7D3-E05B-41F8-6A92-D38E-5C14",
+    terminalHash: "8F4B-92A1-C7D3",
+    vermaHash: "8F4B-92A1-C7D3",
     isModified: false,
     info: "Continuous biosensor feeds and reaction chamber environmental logs from incubation unit 4.",
     diffNote: "Hashes match Dr. Verma's recorded digest identically (Unmodified).",
@@ -65,8 +63,8 @@ export const HASH_PUZZLE_FILES: ArchiveFileRecord[] = [
     name: "EXP17_SYNTHESIS.log",
     type: "Reagent Protocol Log",
     size: "18.4 MB",
-    terminalHash: "3C7E-A59D-1F08-4B26-9E41-83D7-F602-B85A",
-    vermaHash: "3C7E-A59D-1F08-4B26-9E41-83D7-F602-B85A",
+    terminalHash: "3C7E-A59D-1F08",
+    vermaHash: "3C7E-A59D-1F08",
     isModified: false,
     info: "Automated compound formulation, catalytic sequencing, and solvent purification telemetry.",
     diffNote: "Hashes match Dr. Verma's recorded digest identically (Unmodified).",
@@ -76,12 +74,12 @@ export const HASH_PUZZLE_FILES: ArchiveFileRecord[] = [
     name: "EXP17_FINAL_REPORT.enc",
     type: "Master Anomaly Deposition",
     size: "128.6 MB",
-    // Notice: Block 6 is 71B4 on the live terminal, but 71D4 in Dr. Verma's letter!
-    terminalHash: "D26A-8B1E-F407-3C9A-5E82-71B4-9A3B-E605",
-    vermaHash: "D26A-8B1E-F407-3C9A-5E82-71D4-9A3B-E605",
+    // Terminal keeps F407; Verma's letter recorded F487
+    terminalHash: "D26A-8B1E-F407",
+    vermaHash: "D26A-8B1E-F487",
     isModified: true,
     info: "Dr. Verma's signed deposition documenting critical trial anomalies, chemical toxicity, and safety breaches.",
-    diffNote: "Mismatch at Block 6: Live terminal shows 71B4 while Dr. Verma's letter recorded 71D4. Tampering detected!",
+    diffNote: "Mismatch in final block: Live terminal shows F407 while Dr. Verma's letter recorded F487. Tampering detected!",
   },
 ];
 
@@ -322,9 +320,9 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
                       <strong className="text-emerald-300 block mb-0.5">
                         TAMPERING VERIFIED: EXP17_FINAL_REPORT.enc
                       </strong>
-                      Block 6 mismatch: Live terminal shows{" "}
-                      <code className="text-rose-300 font-bold">71B4</code> whereas Dr. Verma's
-                      letter recorded <code className="text-emerald-300 font-bold">71D4</code>.
+                      Final block mismatch: Live terminal shows{" "}
+                      <code className="text-rose-300 font-bold">F407</code> whereas Dr. Verma's
+                      letter recorded <code className="text-emerald-300 font-bold">F487</code>.
                       Unauthorized alterations detected!
                     </div>
                   </div>
@@ -463,58 +461,62 @@ export const HashFingerprintPuzzle: React.FC<HashFingerprintPuzzleProps> = ({
               </div>
             </div>
 
-            {/* Letter Image Display Container */}
+            {/* Letter Image + transcribed digests */}
             <div
               className={`mt-3 relative rounded-xl border border-amber-700/40 bg-black/85 flex flex-col shadow-inner overflow-hidden transition-all ${
                 isMaximized ? "flex-1 min-h-0" : "h-[60vh] sm:h-[66vh]"
               }`}
             >
-              {/* Secondary Status & Hint Bar */}
               <div className="px-3 py-1.5 bg-black/60 border-b border-amber-900/30 flex items-center justify-between text-[11px] font-mono text-amber-300/70 shrink-0 select-none">
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                   <span>PARCHMENT VIEWER • {Math.round(zoomLevel * 100)}% SCALE</span>
-                  {isMaximized && (
-                    <span className="hidden md:inline px-1.5 py-0.2 rounded bg-amber-900/40 text-amber-300 text-[10px] border border-amber-700/30 font-bold uppercase">
-                      Fullscreen Mode
-                    </span>
-                  )}
                 </div>
-                <div className="flex items-center gap-2 text-amber-400/60">
-                  <span className="hidden sm:inline">
-                    Click image to toggle zoom • Scroll horizontally/vertically to examine hashes
-                  </span>
-                  {!isMaximized && (
-                    <button
-                      type="button"
-                      onClick={handleToggleMaximize}
-                      className="text-[10px] text-amber-300 hover:text-amber-100 underline decoration-amber-500/50"
-                    >
-                      Maximize
-                    </button>
-                  )}
-                </div>
+                <span className="hidden sm:inline text-amber-400/60">
+                  Compare these digests against the live terminal
+                </span>
               </div>
 
-              {/* Scrollable image viewport */}
-              <div className="flex-1 min-h-0 overflow-auto p-2 sm:p-4 flex items-center justify-center">
-                <img
-                  src="/evidence/verma_letter.jpg"
-                  alt="Dr. Verma's Handwritten Archival Letter"
-                  style={{
-                    width: isMaximized
-                      ? `${Math.round(1100 * zoomLevel)}px`
-                      : `${Math.round(780 * zoomLevel)}px`,
-                    maxWidth: zoomLevel <= 1 && !isMaximized ? "100%" : "none",
-                    transition: "width 200ms ease-out",
-                  }}
-                  className="h-auto object-contain rounded-lg cursor-pointer select-none shadow-2xl drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] hover:brightness-105 transition"
-                  onClick={() => {
-                    playTone(550, 0.04);
-                    setZoomLevel((prev) => (prev > 1.1 ? 1 : 1.6));
-                  }}
-                  title="Click to toggle 160% zoom"
-                />
+              <div className="flex-1 min-h-0 overflow-auto p-2 sm:p-4 space-y-3">
+                <div className="flex justify-center">
+                  <img
+                    src="/evidence/verma_letter.jpg"
+                    alt="Dr. Verma's Handwritten Archival Letter"
+                    style={{
+                      width: isMaximized
+                        ? `${Math.round(1100 * zoomLevel)}px`
+                        : `${Math.round(780 * zoomLevel)}px`,
+                      maxWidth: zoomLevel <= 1 && !isMaximized ? "100%" : "none",
+                      transition: "width 200ms ease-out",
+                    }}
+                    className="h-auto object-contain rounded-lg cursor-pointer select-none shadow-2xl drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] hover:brightness-105 transition"
+                    onClick={() => {
+                      playTone(550, 0.04);
+                      setZoomLevel((prev) => (prev > 1.1 ? 1 : 1.6));
+                    }}
+                    title="Click to toggle 160% zoom"
+                  />
+                </div>
+
+                <div className="rounded-xl border border-amber-600/40 bg-amber-950/40 p-3 space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-amber-300 font-mono font-bold">
+                    Recorded Digests (12-char) — Verma&apos;s Letter
+                  </p>
+                  {HASH_PUZZLE_FILES.map((file, idx) => (
+                    <div
+                      key={file.id}
+                      className="rounded-lg border border-amber-800/40 bg-black/50 px-3 py-2 font-mono text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-amber-100 font-semibold">
+                          [{idx + 1}] {file.name}
+                        </span>
+                        <span className="text-[10px] text-amber-400/70">{file.size}</span>
+                      </div>
+                      <div className="text-amber-200 tracking-wider select-all">{file.vermaHash}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -69,7 +69,7 @@ export const ArchiveTerminalPuzzle = ({
 
   const [lines, setLines] = useState<Line[]>([
     { kind: "sys", text: "ARCHIVE TERMINAL v1.4" },
-    { kind: "sys", text: 'Type "help" for available commands, or "hint" for clues (-5:00 penalty).' },
+    { kind: "sys", text: 'Commands: list, read, verify, conclude. Type "help" or "hint" (-5:00).' },
     { kind: "sys", text: "" },
   ]);
   const [input, setInput] = useState("");
@@ -113,9 +113,9 @@ export const ArchiveTerminalPuzzle = ({
     toast.error("−5:00 deducted from mission timer for Hint.");
     push(
       { kind: "sys", text: "--- HINT PROTOCOL UNLOCKED (-5:00 DEDUCTED) ---" },
-      { kind: "out", text: "1. Read notes: cat notes.txt -> Assigned researcher: Dr. Arjun Mehta" },
-      { kind: "out", text: "2. Check files: check results.txt (modified!) & check backup.txt (original)" },
-      { kind: "out", text: "3. Run 'conclude' -> Which file was altered? results.txt -> Who was assigned? Arjun Mehta" },
+      { kind: "out", text: "1. read notes.txt  -> Assigned researcher: Dr. Arjun Mehta" },
+      { kind: "out", text: "2. verify results.txt (modified!) & verify backup.txt (original)" },
+      { kind: "out", text: "3. conclude -> answer results.txt, then Arjun Mehta" },
       { kind: "sys", text: "------------------------------------------------" },
       { kind: "out", text: "" }
     );
@@ -134,13 +134,12 @@ export const ArchiveTerminalPuzzle = ({
     if (cmd === "help") {
       push(
         { kind: "out", text: "AVAILABLE COMMANDS" },
-        { kind: "out", text: "  ls" },
-        { kind: "out", text: "  cat <filename>" },
-        { kind: "out", text: "  check <filename>" },
-        { kind: "out", text: "  conclude" },
-        { kind: "out", text: "  hint (-5:00 penalty on first use)" },
-        { kind: "out", text: "  clear" },
-        { kind: "out", text: "  help" },
+        { kind: "out", text: "  list                 — show files" },
+        { kind: "out", text: "  read <filename>      — open a file" },
+        { kind: "out", text: "  verify <filename>    — compare against original" },
+        { kind: "out", text: "  conclude             — finish investigation" },
+        { kind: "out", text: "  hint                 — clues (-5:00 first use)" },
+        { kind: "out", text: "  clear / help" },
         { kind: "out", text: "" }
       );
       return;
@@ -151,8 +150,8 @@ export const ArchiveTerminalPuzzle = ({
         setShowHintBanner(true);
         push(
           { kind: "sys", text: "--- ARCHIVE TERMINAL HINTS ---" },
-          { kind: "out", text: "1. cat notes.txt -> Assigned researcher: Dr. Arjun Mehta" },
-          { kind: "out", text: "2. check results.txt & check backup.txt -> results.txt was modified" },
+          { kind: "out", text: "1. read notes.txt -> Assigned researcher: Dr. Arjun Mehta" },
+          { kind: "out", text: "2. verify results.txt & verify backup.txt -> results.txt modified" },
           { kind: "out", text: "3. conclude -> Answer 'results.txt', then 'Arjun Mehta'" },
           { kind: "sys", text: "------------------------------" },
           { kind: "out", text: "" }
@@ -177,7 +176,7 @@ export const ArchiveTerminalPuzzle = ({
       return;
     }
 
-    if (cmd === "ls") {
+    if (cmd === "list" || cmd === "ls") {
       push(
         ...FILES.map((f) => ({ kind: "out" as const, text: f })),
         { kind: "out", text: "" }
@@ -185,9 +184,9 @@ export const ArchiveTerminalPuzzle = ({
       return;
     }
 
-    if (cmd === "cat") {
+    if (cmd === "read" || cmd === "cat" || cmd === "open") {
       if (!arg) {
-        push({ kind: "err", text: "Usage: cat <filename>" }, { kind: "out", text: "" });
+        push({ kind: "err", text: "Usage: read <filename>" }, { kind: "out", text: "" });
         return;
       }
       if (arg === "research.txt") {
@@ -243,9 +242,9 @@ export const ArchiveTerminalPuzzle = ({
       return;
     }
 
-    if (cmd === "check") {
+    if (cmd === "verify" || cmd === "check") {
       if (!arg) {
-        push({ kind: "err", text: "Usage: check <filename>" }, { kind: "out", text: "" });
+        push({ kind: "err", text: "Usage: verify <filename>" }, { kind: "out", text: "" });
         return;
       }
       if (arg === "results.txt") {
@@ -283,7 +282,7 @@ export const ArchiveTerminalPuzzle = ({
           { kind: "out", text: arg },
           { kind: "out", text: "" },
           { kind: "out", text: "STATUS: REFERENCE ONLY" },
-          { kind: "out", text: "Use check on results.txt or backup.txt." },
+          { kind: "out", text: "Use verify on results.txt or backup.txt." },
           { kind: "out", text: "" }
         );
         return;
@@ -292,12 +291,17 @@ export const ArchiveTerminalPuzzle = ({
       return;
     }
 
-    if (cmd === "conclude") {
+    if (cmd === "conclude" || cmd === "done" || cmd === "finish") {
       if (!(sawCheckResults && sawCheckBackup && sawNotes)) {
+        const missing: string[] = [];
+        if (!sawNotes) missing.push("read notes.txt");
+        if (!sawCheckResults) missing.push("verify results.txt");
+        if (!sawCheckBackup) missing.push("verify backup.txt");
         push(
           { kind: "err", text: "Investigation incomplete." },
-          { kind: "out", text: "Inspect the files, then check results and backup." },
-          { kind: "out", text: "Read notes.txt before concluding." },
+          { kind: "out", text: "You still need to run:" },
+          ...missing.map((m) => ({ kind: "err" as const, text: `  → ${m}` })),
+          { kind: "out", text: "Then type conclude again." },
           { kind: "out", text: "" }
         );
         return;
@@ -417,9 +421,9 @@ export const ArchiveTerminalPuzzle = ({
               style={{ fontFamily: TERM_FONT }}
             >
               <span className="text-slate-500 normal-case tracking-normal">Available:</span>
-              <span>ls</span>
-              <span>cat &lt;file&gt;</span>
-              <span>check &lt;file&gt;</span>
+              <span>list</span>
+              <span>read &lt;file&gt;</span>
+              <span>verify &lt;file&gt;</span>
               <span>conclude</span>
               <span>hint</span>
               <span>help</span>
@@ -458,12 +462,12 @@ export const ArchiveTerminalPuzzle = ({
               </div>
               <ul className="list-disc list-inside space-y-1 text-slate-200 text-[11px] leading-relaxed">
                 <li>
-                  Run <span className="text-emerald-300 font-semibold">cat notes.txt</span> to find the assigned researcher (
+                  Run <span className="text-emerald-300 font-semibold">read notes.txt</span> to find the assigned researcher (
                   <strong>Dr. Arjun Mehta</strong>).
                 </li>
                 <li>
-                  Run <span className="text-emerald-300 font-semibold">check results.txt</span> and{" "}
-                  <span className="text-emerald-300 font-semibold">check backup.txt</span> to discover that{" "}
+                  Run <span className="text-emerald-300 font-semibold">verify results.txt</span> and{" "}
+                  <span className="text-emerald-300 font-semibold">verify backup.txt</span> to discover that{" "}
                   <strong>results.txt</strong> was modified.
                 </li>
                 <li>

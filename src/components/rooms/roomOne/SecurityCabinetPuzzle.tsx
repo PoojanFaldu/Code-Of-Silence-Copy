@@ -52,7 +52,6 @@ export default function SecurityCabinetPuzzle({
   const placeBadge = (staff: StaffId, badge: BadgeId) => {
     setAssignments((prev) => {
       const next = { ...prev };
-      // Remove badge from any previous owner
       (Object.keys(next) as StaffId[]).forEach((id) => {
         if (next[id] === badge) delete next[id];
       });
@@ -149,10 +148,11 @@ export default function SecurityCabinetPuzzle({
 
         <div className="rounded-xl border border-white/10 bg-black/40 px-3 py-3 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Staff record</p>
-          <p>• Rohan Desai has badge D-09.</p>
-          <p>• Neha Rao has badge B-04.</p>
-          <p>• Dr. Arjun Mehta&apos;s badge letter comes before C.</p>
-          <p>• Karan Patel&apos;s badge number is greater than Dr. Arjun Mehta&apos;s.</p>
+          <p>• Only one badge belongs to a doctor — that badge letter is first in the alphabet.</p>
+          <p>• Neha Rao holds the badge with the smallest number.</p>
+          <p>• Rohan Desai&apos;s badge letter comes after everyone else&apos;s.</p>
+          <p>• Karan Patel&apos;s badge number is greater than 20.</p>
+          <p>• Dr. Arjun Mehta&apos;s letter comes immediately before Neha Rao&apos;s.</p>
         </div>
 
         <div>

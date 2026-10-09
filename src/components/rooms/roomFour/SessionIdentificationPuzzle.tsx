@@ -25,12 +25,8 @@ const TERM_FONT =
 // 6 and a half minutes = 6 mins 30 secs = 390 seconds
 const PENALTY_SECONDS = 390;
 
-const CALLSIGN_BLOCKS = [
-  { phonetic: "NOVEMBER", letter: "N" },
-  { phonetic: "ECHO", letter: "E" },
-  { phonetic: "HOTEL", letter: "H" },
-  { phonetic: "ALPHA", letter: "A" },
-] as const;
+/** First letter of each word → operator name (N-E-H-A). */
+const SIGNAL_WORDS = ["Never", "Ending", "Hostile", "Access"] as const;
 
 export default function SessionIdentificationPuzzle({
   onSolved,
@@ -166,22 +162,23 @@ export default function SessionIdentificationPuzzle({
                 </span>
               </div>
               <p className="text-slate-200 text-[11px] leading-relaxed">
-                Use the first letter of every signal to know the operator&apos;s name:
+                Same idea as <span className="text-amber-200 font-semibold">SOS (Secret Outpost Signal)</span> —
+                take the <strong className="text-emerald-300">first letter of each word</strong>:
               </p>
               <div className="flex flex-wrap gap-2 pt-1 font-mono text-[11px]">
-                <span className="bg-black/50 border border-amber-500/30 px-2 py-0.5 rounded text-amber-200">
-                  <strong className="text-emerald-300">N</strong>OVEMBER &rarr; N
-                </span>
-                <span className="bg-black/50 border border-amber-500/30 px-2 py-0.5 rounded text-amber-200">
-                  <strong className="text-emerald-300">E</strong>CHO &rarr; E
-                </span>
-                <span className="bg-black/50 border border-amber-500/30 px-2 py-0.5 rounded text-amber-200">
-                  <strong className="text-emerald-300">H</strong>OTEL &rarr; H
-                </span>
-                <span className="bg-black/50 border border-amber-500/30 px-2 py-0.5 rounded text-amber-200">
-                  <strong className="text-emerald-300">A</strong>LPHA &rarr; A
-                </span>
+                {SIGNAL_WORDS.map((word) => (
+                  <span
+                    key={word}
+                    className="bg-black/50 border border-amber-500/30 px-2 py-0.5 rounded text-amber-200"
+                  >
+                    <strong className="text-emerald-300">{word[0]}</strong>
+                    {word.slice(1)} &rarr; {word[0]}
+                  </span>
+                ))}
               </div>
+              <p className="text-emerald-300/90 text-[11px] pt-0.5">
+                Never Ending Hostile Access &rarr; <strong>NEHA</strong>
+              </p>
             </div>
           )}
 
@@ -198,29 +195,38 @@ export default function SessionIdentificationPuzzle({
                   SYSTEM ACCESS
                 </p>
                 <p className="text-[11px] text-slate-500 tracking-wider">
-                  RADIO CALLSIGN INTERCEPT REQUIRED
+                  OPERATOR SIGNAL INTERCEPT
                 </p>
               </div>
 
               <p className="text-[11px] text-slate-400 leading-relaxed border-t border-white/5 pt-3">
-                An unauthorized session was logged at 21:14. The terminal buffer recorded the operator&apos;s incoming radio callsign:
+                An unauthorized session was logged at 21:14. The terminal buffer captured this operator
+                tag — coded the same way as{" "}
+                <span className="text-emerald-300/90 font-semibold">SOS (Secret Outpost Signal)</span>:
               </p>
 
-              {/* Phonetic transmission cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border border-white/10 bg-black/50 p-2.5 rounded-lg">
-                {CALLSIGN_BLOCKS.map((item, idx) => (
-                  <div
-                    key={item.phonetic}
-                    className="flex flex-col items-center justify-center rounded-md border border-emerald-500/20 bg-emerald-950/20 py-2.5 px-1 text-center"
-                  >
-                    <span className="text-[9px] font-mono tracking-widest text-slate-500 uppercase">
-                      Signal 0{idx + 1}
-                    </span>
-                    <span className="text-xs font-mono font-bold tracking-wider text-emerald-300 pt-0.5">
-                      {item.phonetic}
-                    </span>
-                  </div>
-                ))}
+              <div className="rounded-lg border border-white/10 bg-black/50 p-3.5 space-y-3">
+                <p className="text-center font-mono text-sm sm:text-base font-bold tracking-[0.18em] text-emerald-300">
+                  {SIGNAL_WORDS.join(" ")}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {SIGNAL_WORDS.map((word, idx) => (
+                    <div
+                      key={word}
+                      className="flex flex-col items-center justify-center rounded-md border border-emerald-500/20 bg-emerald-950/20 py-2 px-1 text-center"
+                    >
+                      <span className="text-[9px] font-mono tracking-widest text-slate-500 uppercase">
+                        Word 0{idx + 1}
+                      </span>
+                      <span className="text-xs font-mono font-bold tracking-wider text-emerald-300 pt-0.5">
+                        {word}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 text-center leading-relaxed">
+                  Tip: like SOS → Secret Outpost Signal, take the first letter of each word.
+                </p>
               </div>
 
               {/* Input form */}
@@ -302,7 +308,7 @@ export default function SessionIdentificationPuzzle({
                 6 minutes and 30 seconds will be deducted from your countdown timer for this hint.
               </p>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Unlocking this hint reveals the method to decode the operator&apos;s radio callsign.
+                Unlocking this hint shows how to read the operator tag (first letter of each word).
               </p>
 
               <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">

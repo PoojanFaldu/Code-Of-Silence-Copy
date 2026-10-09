@@ -60,11 +60,45 @@ function Gate({
   );
 }
 
-function InputNode({ x, y, label, on }: { x: number; y: number; label: string; on: boolean }) {
+function InputNode({
+  x,
+  y,
+  label,
+  on,
+  onToggle,
+  disabled,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  on: boolean;
+  onToggle?: () => void;
+  disabled?: boolean;
+}) {
   return (
-    <g>
-      <circle cx={x} cy={y} r={14} fill={on ? "#34d399" : "#1e293b"} stroke="#94a3b8" strokeWidth={2} />
-      <text x={x} y={y + 4} textAnchor="middle" fill={on ? "#052e1b" : "#e2e8f0"} fontSize="12" fontWeight="700">
+    <g
+      onClick={() => {
+        if (!disabled && onToggle) onToggle();
+      }}
+      style={{ cursor: disabled ? "default" : "pointer" }}
+    >
+      <circle
+        cx={x}
+        cy={y}
+        r={16}
+        fill={on ? "#34d399" : "#1e293b"}
+        stroke={on ? "#6ee7b7" : "#94a3b8"}
+        strokeWidth={2}
+      />
+      <text
+        x={x}
+        y={y + 4}
+        textAnchor="middle"
+        fill={on ? "#052e1b" : "#e2e8f0"}
+        fontSize="12"
+        fontWeight="700"
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
         {label}
       </text>
     </g>
@@ -114,6 +148,8 @@ function CircuitDiagram({
   notE,
   out3,
   out4,
+  onToggle,
+  disabled,
 }: {
   a: boolean;
   b: boolean;
@@ -125,18 +161,20 @@ function CircuitDiagram({
   notE: boolean;
   out3: boolean;
   out4: boolean;
+  onToggle?: (key: "a" | "b" | "c" | "d" | "e") => void;
+  disabled?: boolean;
 }) {
   // Each row owns a horizontal band. Shared inputs travel on left rails only.
   const rows = [48, 118, 188, 258];
 
   return (
     <svg viewBox="0 0 560 310" className="w-full h-auto rounded-lg border border-emerald-400/20 bg-[#04100c]">
-      {/* Input column */}
-      <InputNode x={32} y={rows[0] - 12} label="A" on={a} />
-      <InputNode x={32} y={rows[0] + 28} label="B" on={b} />
-      <InputNode x={32} y={rows[1]} label="C" on={c} />
-      <InputNode x={32} y={rows[2] - 12} label="D" on={d} />
-      <InputNode x={32} y={rows[2] + 28} label="E" on={e} />
+      {/* Input column — click letters to toggle */}
+      <InputNode x={32} y={rows[0] - 12} label="A" on={a} disabled={disabled} onToggle={() => onToggle?.("a")} />
+      <InputNode x={32} y={rows[0] + 28} label="B" on={b} disabled={disabled} onToggle={() => onToggle?.("b")} />
+      <InputNode x={32} y={rows[1]} label="C" on={c} disabled={disabled} onToggle={() => onToggle?.("c")} />
+      <InputNode x={32} y={rows[2] - 12} label="D" on={d} disabled={disabled} onToggle={() => onToggle?.("d")} />
+      <InputNode x={32} y={rows[2] + 28} label="E" on={e} disabled={disabled} onToggle={() => onToggle?.("e")} />
 
       {/* Left stub rails (no crossing in gate area) */}
       <line x1={46} y1={rows[0] - 12} x2={120} y2={rows[0] - 12} stroke={wire(a)} strokeWidth={3} />
@@ -207,9 +245,9 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
   const { penalizeWrongAnswer } = useGame();
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
-  const [c, setC] = useState(true);
+  const [c, setC] = useState(false);
   const [d, setD] = useState(false);
-  const [e, setE] = useState(true);
+  const [e, setE] = useState(false);
   const [message, setMessage] = useState("");
   const [solved, setSolved] = useState(false);
 
@@ -279,10 +317,26 @@ export default function LogicGatesPuzzle({ onSolved, onClose }: LogicGatesPuzzle
           content: (
             <div className="space-y-3">
               <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 px-3 py-2 text-center font-mono text-xs text-emerald-100">
-                Target · all OUT = 1
+                Target · all OUT = 1 · click A–E on the diagram or use the toggles
               </div>
               <div className="overflow-x-auto">
-                <CircuitDiagram a={a} b={b} c={c} d={d} e={e} {...circuit} />
+                <CircuitDiagram
+                  a={a}
+                  b={b}
+                  c={c}
+                  d={d}
+                  e={e}
+                  {...circuit}
+                  disabled={solved}
+                  onToggle={(key) => {
+                    if (solved) return;
+                    if (key === "a") setA((v) => !v);
+                    if (key === "b") setB((v) => !v);
+                    if (key === "c") setC((v) => !v);
+                    if (key === "d") setD((v) => !v);
+                    if (key === "e") setE((v) => !v);
+                  }}
+                />
               </div>
               <div className="grid grid-cols-5 gap-2">
                 <Toggle label="A" value={a} onToggle={() => !solved && setA((v) => !v)} />

@@ -26,7 +26,7 @@ const ACTIVE_PLAYER_KEY = "cos_active_player_id";
 export const EVENT_DB_EVENT = "cos-event-db";
 export const MISSION_DURATION_SECONDS = 2700; // 45 minutes
 
-const DEFAULT_ADMIN_PASSWORD = "csi-admin-2026";
+const DEFAULT_ADMIN_PASSWORD = "2345";
 
 export function getAdminPassword(): string {
   return (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined)?.trim() || DEFAULT_ADMIN_PASSWORD;

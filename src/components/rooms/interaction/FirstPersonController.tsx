@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { RoomBoundary } from "./types";
+import type { RoomBoundary, RoomObstacle } from "./types";
 
 type FirstPersonControllerProps = {
   boundary: RoomBoundary;
@@ -12,6 +12,18 @@ type FirstPersonControllerProps = {
 };
 
 const PITCH_LIMIT = 1.2; // ~70 degrees
+const PLAYER_RADIUS = 0.14;
+
+function hitsObstacle(x: number, z: number, obstacles: RoomObstacle[] | undefined) {
+  if (!obstacles?.length) return false;
+  return obstacles.some(
+    (o) =>
+      x + PLAYER_RADIUS > o.minX &&
+      x - PLAYER_RADIUS < o.maxX &&
+      z + PLAYER_RADIUS > o.minZ &&
+      z - PLAYER_RADIUS < o.maxZ
+  );
+}
 
 export default function FirstPersonController({
   boundary,
@@ -32,18 +44,29 @@ export default function FirstPersonController({
   boundaryRef.current = boundary;
 
   useEffect(() => {
-    // Seed look from initial camera orientation
     const e = new THREE.Euler().setFromQuaternion(camera.quaternion, "YXZ");
     yaw.current = e.y;
     pitch.current = e.x;
   }, [camera]);
 
-  const clampPosition = useCallback((position: THREE.Vector3) => {
+  const resolveMove = useCallback((from: THREE.Vector3, delta: THREE.Vector3) => {
     const b = boundaryRef.current;
-    position.x = THREE.MathUtils.clamp(position.x, b.minX, b.maxX);
-    position.z = THREE.MathUtils.clamp(position.z, b.minZ, b.maxZ);
-    position.y = b.y;
-    return position;
+    const obstacles = b.obstacles;
+    const next = from.clone();
+    next.y = b.y;
+
+    // Axis-separated collision so walls block without trapping the player
+    const tryX = THREE.MathUtils.clamp(from.x + delta.x, b.minX, b.maxX);
+    if (!hitsObstacle(tryX, from.z, obstacles)) {
+      next.x = tryX;
+    }
+
+    const tryZ = THREE.MathUtils.clamp(from.z + delta.z, b.minZ, b.maxZ);
+    if (!hitsObstacle(next.x, tryZ, obstacles)) {
+      next.z = tryZ;
+    }
+
+    return next;
   }, []);
 
   const handleKeyDown = useCallback(
@@ -140,11 +163,10 @@ export default function FirstPersonController({
     if (moveState.current.right) direction.current.x += 1;
     if (direction.current.length() > 0) direction.current.normalize();
 
-    // Horizontal movement only (ignore pitch)
     direction.current.applyEuler(new THREE.Euler(0, yaw.current, 0, "YXZ"));
     velocity.current.addScaledVector(direction.current, moveSpeed);
 
-    const next = clampPosition(camera.position.clone().add(velocity.current));
+    const next = resolveMove(camera.position, velocity.current);
     camera.position.copy(next);
     onPositionUpdate?.([next.x, next.y, next.z]);
   });

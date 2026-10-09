@@ -59,7 +59,7 @@ function adminPassword() {
   return (
     process.env.ADMIN_PASSWORD?.trim() ||
     process.env.VITE_ADMIN_PASSWORD?.trim() ||
-    "csi-admin-2026"
+    "2345"
   );
 }
 

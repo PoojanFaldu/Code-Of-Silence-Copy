@@ -14,6 +14,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      allowedHosts: ["csi.kjsitlabs.com", "localhost", "127.0.0.1"],
+    },
+    preview: {
+      host: "127.0.0.1",
+      port: 4173,
+      strictPort: true,
+      allowedHosts: ["csi.kjsitlabs.com", "localhost", "127.0.0.1"],
     },
     plugins: [react(), eventApiPlugin(), mode === "development" && componentTagger()].filter(
       Boolean

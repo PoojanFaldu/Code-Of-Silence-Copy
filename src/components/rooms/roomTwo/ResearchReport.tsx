@@ -14,24 +14,24 @@ const ENTRIES: {
   label: string;
   detail?: { commit: string; author: string; file: string; action: string; note: string };
 }[] = [
-  { id: "2056", time: "20:56", label: "VERMA" },
-  { id: "2103", time: "21:03", label: "A. MEHTA" },
+  { id: "2056", time: "20:56", label: "Professor Dev Verma" },
+  { id: "2103", time: "21:03", label: "Dr. Arjun Mehta" },
   {
     id: "2117",
     time: "21:17",
-    label: "A. MEHTA",
+    label: "Dr. Arjun Mehta",
     detail: {
       commit: "7F3A",
-      author: "A. MEHTA",
+      author: "Dr. Arjun Mehta",
       file: "EXP17_BASELINE",
       action: "MODIFY",
       note: "PREVIOUS RESULT: 84.2%\nCURRENT RESULT:  91.7%\n\nKeep the original figures. They matter later.",
     },
   },
-  { id: "2129", time: "21:29", label: "N. RAO" },
-  { id: "2136", time: "21:36", label: "UNKNOWN" },
-  { id: "2141", time: "21:41", label: "INTERRUPT" },
-  { id: "2142", time: "21:42", label: "UNAVAILABLE" },
+  { id: "2129", time: "21:29", label: "Neha Rao" },
+  { id: "2136", time: "21:36", label: "Unknown User" },
+  { id: "2141", time: "21:41", label: "Record Interrupted" },
+  { id: "2142", time: "21:42", label: "Unavailable" },
 ];
 
 /**
@@ -70,7 +70,7 @@ export default function ResearchReport({ onClose, onContinue }: ResearchReportPr
                     }`}
                   >
                     <span className="text-lime-300/80">{row.time}</span>
-                    <span className={row.label === "UNAVAILABLE" ? "text-rose-300" : undefined}>
+                    <span className={row.label === "Unavailable" ? "text-rose-300" : undefined}>
                       {row.label}
                     </span>
                   </button>

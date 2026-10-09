@@ -50,7 +50,7 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
   };
 
   const handleTabChange = (targetTab: string) => {
-    if (targetTab === "map" && !mapUnlocked) {
+    if (targetTab === "key" && !mapUnlocked) {
       setShowConfirmModal(true);
       return;
     }
@@ -61,8 +61,8 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
     deductTime(PENALTY_SECONDS);
     setMapUnlocked(true);
     setShowConfirmModal(false);
-    setActiveTab("map");
-    toast.error("5:00 deducted from mission timer for Map section clues.");
+    setActiveTab("key");
+    toast.error("5:00 deducted from mission timer for Cipher Key clues.");
   };
 
   const estimatedNewTime = Math.max(0, timeRemaining - PENALTY_SECONDS);
@@ -86,25 +86,32 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
                     {CIPHERTEXT}
                   </p>
                 </div>
-                <div className="flex justify-center gap-5 font-mono text-sm">
+                <p className="text-center text-[11px] text-slate-400 leading-relaxed px-1">
+                  Each cipher letter shifts <span className="text-violet-300 font-semibold">3 places backward</span> to
+                  reveal the real letter.
+                </p>
+                <div className="flex justify-center gap-3 sm:gap-5 font-mono text-sm">
                   {[
-                    ["C", "F"],
-                    ["A", "D"],
-                    ["T", "W"],
-                  ].map(([p, c]) => (
+                    ["D", "A"],
+                    ["E", "B"],
+                    ["F", "C"],
+                  ].map(([cipher, plain]) => (
                     <button
-                      key={p}
+                      key={cipher}
                       type="button"
                       className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 hover:border-violet-400/40 transition"
-                      onMouseEnter={() => setHover(c)}
+                      onMouseEnter={() => setHover(cipher)}
                       onMouseLeave={() => setHover(null)}
                     >
-                      <div className="text-emerald-300 font-bold">{p}</div>
-                      <div className="text-[10px] text-slate-500">+3</div>
-                      <div className="text-amber-300 font-bold">{c}</div>
+                      <div className="text-amber-300 font-bold">{cipher}</div>
+                      <div className="text-[10px] text-slate-500">→</div>
+                      <div className="text-emerald-300 font-bold">{plain}</div>
                     </button>
                   ))}
                 </div>
+                <p className="text-center text-[10px] text-slate-500 font-mono tracking-wide">
+                  D→A · E→B · F→C · …
+                </p>
                 <input
                   value={input}
                   onChange={(e) => {
@@ -121,16 +128,16 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
             ),
           },
           {
-            id: "map",
-            label: mapUnlocked ? "Map (Unlocked)" : "Map (-5 Mins)",
+            id: "key",
+            label: mapUnlocked ? "Key (Unlocked)" : "Key (-5 Mins)",
             content: (
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-violet-950/30 border border-violet-500/20 text-[11px] font-mono text-violet-200">
                   <span className="flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-                    Alphabet Substitution Clues Active
+                    Full cipher key — each letter shifts back by 3
                   </span>
-                  <span className="text-slate-400">Shift Key: -3</span>
+                  <span className="text-slate-400">D→A …</span>
                 </div>
 
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-[45vh] overflow-y-auto p-0.5">
@@ -190,19 +197,19 @@ export default function CipherPuzzle({ onSolved, onClose }: CipherPuzzleProps) {
                 <h3 className="text-base font-bold uppercase tracking-wider text-amber-200">
                   Time Penalty Warning
                 </h3>
-                <p className="text-xs text-amber-400/80 font-mono">MAP SECTION ACCESS</p>
+                <p className="text-xs text-amber-400/80 font-mono">CIPHER KEY ACCESS</p>
               </div>
             </div>
 
             {/* Core message */}
             <div className="rounded-xl border border-white/10 bg-black/50 p-4 mb-4 space-y-2.5">
               <p className="text-sm font-semibold text-white leading-snug">
-                5 mins will be deducted for using the map section.
+                5 mins will be deducted for unlocking the cipher key.
               </p>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Opening the Map tab reveals the full decryption clues and character mapping for this
-                cipher, but costs <strong className="text-amber-300">5 minutes</strong> from your
-                countdown timer.
+                Opening the Key tab reveals the full alphabet mapping (cipher letter → real letter),
+                but costs <strong className="text-amber-300">5 minutes</strong> from your countdown
+                timer.
               </p>
 
               {/* Time preview */}

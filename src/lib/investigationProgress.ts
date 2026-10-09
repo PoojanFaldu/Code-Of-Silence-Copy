@@ -92,7 +92,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "folder_log",
     title: "Security Cabinet",
-    body: "BADGE & CALLSIGN REGISTRY\n\nDr. Arjun Mehta → A-17 (ALPHA · ROMEO · JULIETT · UNIFORM · NOVEMBER)\nNeha Rao → B-04 (NOVEMBER · ECHO · HOTEL · ALPHA)\nKaran Patel → C-22 (KILO · ALPHA · ROMEO · ALPHA · NOVEMBER)\nRohan Desai → D-09 (ROMEO · OSCAR · HOTEL · ALPHA · NOVEMBER)\n\nBADGE C-22\nOWNER: Karan Patel\nACCESS: Technical\nAUTHORIZED AREA: Network Room\n\nBadge C-22 was recovered near the Network Room.\n\nAlso on file:\nDr. Sameer Shah — research partner of Professor Dev Verma.\nRecent disagreement over publication ownership.",
+    body: "BADGE REGISTRY\n\nDr. Arjun Mehta → A-17\nNeha Rao → B-04\nKaran Patel → C-22\nRohan Desai → D-09\n\nBADGE C-22\nOWNER: Karan Patel\nACCESS: Technical\nAUTHORIZED AREA: Network Room\n\nBadge C-22 was recovered near the Network Room.\n\nAlso on file:\nDr. Sameer Shah — research partner of Professor Dev Verma.\nRecent disagreement over publication ownership.",
   },
   {
     id: "exp17_report",
@@ -112,7 +112,7 @@ export const EVIDENCE_LOGS: {
   {
     id: "hash_diff",
     title: "Hash Discrepancy",
-    body: "TAMPERING IDENTIFIED in EXP17_FINAL_REPORT.enc:\nTerminal Hash:  D26A-8B1E-F407-3C9A-5E82-71B4-9A3B-E605\nVerma's Letter: D26A-8B1E-F407-3C9A-5E82-71D4-9A3B-E605\nBlock 6 alteration (71B4 ≠ 71D4) proves the anomaly report was rewritten.\n\nSECURITY NOTE\nKaran Patel has access to restricted technical areas and equipment.\nThat knowledge could theoretically let someone interfere with systems.\nThis proves a file was rewritten — not who committed the murder.\n\nPARTNERSHIP NOTE\nA recovered memo mentions Dr. Sameer Shah:\n\"Sameer threatened to make sure this research would never be published\nwithout his name attached.\"\nThe conflict was serious — but it is about publication credit, not the murder.",
+    body: "TAMPERING IDENTIFIED in EXP17_FINAL_REPORT.enc:\nTerminal Hash:  D26A-8B1E-F407\nVerma's Letter: D26A-8B1E-F487\nFinal block alteration (F407 ≠ F487) proves the anomaly report was rewritten.\n\nSECURITY NOTE\nKaran Patel has access to restricted technical areas and equipment.\nThat knowledge could theoretically let someone interfere with systems.\nThis proves a file was rewritten — not who committed the murder.\n\nPARTNERSHIP NOTE\nA recovered memo mentions Dr. Sameer Shah:\n\"Sameer threatened to make sure this research would never be published\nwithout his name attached.\"\nThe conflict was serious — but it is about publication credit, not the murder.",
   },
   {
     id: "overlay_stamp",

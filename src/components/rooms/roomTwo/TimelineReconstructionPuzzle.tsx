@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PuzzleShell, { PuzzlePrimaryButton } from "@/components/rooms/interaction/PuzzleShell";
 import { useGame } from "@/contexts/GameContext";
+import { GripVertical } from "lucide-react";
 
 interface TimelineReconstructionPuzzleProps {
   onSolved: () => void;
@@ -45,17 +46,19 @@ export default function TimelineReconstructionPuzzle({
   const [order, setOrder] = useState<EventId[]>(() => shuffle(EVENTS.map((e) => e.id)));
   const [error, setError] = useState(false);
   const [done, setDone] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  const move = (index: number, dir: -1 | 1) => {
-    const next = index + dir;
-    if (next < 0 || next >= order.length) return;
+  const byId = (id: EventId) => EVENTS.find((e) => e.id === id)!;
+
+  const reorder = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length) return;
     const copy = [...order];
-    [copy[index], copy[next]] = [copy[next], copy[index]];
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
     setOrder(copy);
     setError(false);
   };
-
-  const byId = (id: EventId) => EVENTS.find((e) => e.id === id)!;
 
   if (done) {
     return (
@@ -89,31 +92,44 @@ export default function TimelineReconstructionPuzzle({
           label: "Order",
           content: (
             <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 text-center pb-1">
+                Drag entries to reorder the timeline
+              </p>
               {order.map((id, index) => {
                 const e = byId(id);
+                const isDragging = dragIndex === index;
+                const isOver = overIndex === index && dragIndex !== null && dragIndex !== index;
                 return (
                   <div
                     key={id}
-                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
+                    draggable
+                    onDragStart={() => setDragIndex(index)}
+                    onDragEnd={() => {
+                      setDragIndex(null);
+                      setOverIndex(null);
+                    }}
+                    onDragOver={(ev) => {
+                      ev.preventDefault();
+                      setOverIndex(index);
+                    }}
+                    onDrop={(ev) => {
+                      ev.preventDefault();
+                      if (dragIndex !== null) reorder(dragIndex, index);
+                      setDragIndex(null);
+                      setOverIndex(null);
+                    }}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 cursor-grab active:cursor-grabbing transition ${
+                      isDragging
+                        ? "opacity-40 border-sky-400/40 bg-sky-500/10"
+                        : isOver
+                          ? "border-sky-400/60 bg-sky-500/15 scale-[1.01]"
+                          : "border-white/10 bg-white/[0.03]"
+                    }`}
                   >
+                    <GripVertical className="h-4 w-4 text-slate-500 shrink-0" />
                     <span className="font-mono text-[10px] text-slate-500 w-10">{e.stamp}</span>
                     <span className="flex-1 font-mono text-[11px] text-slate-200">{e.label}</span>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => move(index, -1)}
-                        className="h-8 w-8 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => move(index, 1)}
-                        className="h-8 w-8 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10"
-                      >
-                        ↓
-                      </button>
-                    </div>
+                    <span className="text-[10px] text-slate-600 font-mono">#{index + 1}</span>
                   </div>
                 );
               })}
